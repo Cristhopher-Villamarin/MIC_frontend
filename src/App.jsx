@@ -153,7 +153,7 @@ export default function App() {
       formData.append('xlsx_file', xlsxFile);
       formData.append('max_steps', 4);
 
-      const response = await axios.post('http://localhost:8000/propagate', formData, {
+      const response = await axios.post('https://mic-backend-vw4z.onrender.com/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
