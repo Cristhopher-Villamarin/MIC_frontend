@@ -1,0 +1,150 @@
+// src/components/RealWorldGraph3D.jsx
+import { useEffect, useRef, useState, memo } from 'react';
+import ForceGraph3D from 'react-force-graph-3d';
+import * as THREE from 'three';
+import SpriteText from 'three-spritetext';
+
+function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
+  const fgRef = useRef();
+  const isTransitioning = useRef(false);
+  const [tempHighlightId, setTempHighlightId] = useState(''); // Estado para resaltado temporal
+
+  // Colores
+  const defaultNodeColor = '#808080'; // Gris predeterminado
+  const highlightNodeColor = '#FFFF00'; // Amarillo fosforescente para resaltado
+
+  // Centra la red al cargar o cambiar datos
+  useEffect(() => {
+    if (!isTransitioning.current && fgRef.current) {
+      setTimeout(() => {
+        if (fgRef.current) {
+          fgRef.current.zoomToFit(400, 100);
+        }
+      }, 200);
+    }
+  }, [data.nodes, data.links]);
+
+  // Enfoca al nodo destacado y activa el resaltado temporal
+  useEffect(() => {
+    if (!highlightId || !fgRef.current || !data.nodes.length || isTransitioning.current) return;
+
+    // Activar resaltado temporal
+    setTempHighlightId(highlightId);
+
+    // Limpiar resaltado después de 5 segundos
+    const timer = setTimeout(() => {
+      setTempHighlightId('');
+    }, 5000);
+
+    const node = data.nodes.find(n => n.id === highlightId);
+    if (!node) {
+      console.warn('Node not found:', highlightId);
+      return;
+    }
+
+    const focusNode = () => {
+      isTransitioning.current = true;
+      const { x = 0, y = 0, z = 0 } = node;
+      const bounds = calculateGraphBounds(data.nodes);
+      const graphSize = Math.max(bounds.maxDistance, 10);
+      const distance = graphSize * 1.5;
+
+      fgRef.current.cameraPosition(
+        { x: x + distance, y: y + distance * 0.5, z },
+        { x, y, z },
+        1500
+      );
+
+      isTransitioning.current = false;
+    };
+
+    setTimeout(focusNode, 100);
+
+    // Limpieza del temporizador al desmontar o cambiar highlightId
+    return () => clearTimeout(timer);
+  }, [highlightId, data.nodes]);
+
+  // Resetea la vista
+  useEffect(() => {
+    if (!highlightId && fgRef.current && !isTransitioning.current) {
+      isTransitioning.current = true;
+      fgRef.current.zoomToFit(400, 100);
+      setTempHighlightId(''); // Limpiar resaltado al resetear
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, 500);
+    }
+  }, [highlightId]);
+
+  // Calcular límites del grafo
+  const calculateGraphBounds = (nodes) => {
+    if (!nodes.length) return { maxDistance: 10 };
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const x = node.x || 0;
+      const y = node.y || 0;
+      const z = node.z || 0;
+
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
+    }
+
+    return {
+      maxDistance: Math.max(maxX - minX, maxY - minY, maxZ - minZ)
+    };
+  };
+
+  return (
+    <ForceGraph3D
+      ref={fgRef}
+      graphData={data}
+      backgroundColor="#111"
+      linkOpacity={0.85}
+      linkWidth={0.8}
+      linkColor="#828282"
+      linkDirectionalArrowLength={5}
+      linkDirectionalArrowRelPos={1}
+      linkDirectionalArrowColor="#FFFFFF"
+      linkDirectionalArrowResolution={8}
+      d3VelocityDecay={0.3}
+      warmupTicks={100}
+      cooldownTicks={100}
+      onNodeClick={onNodeInfo}
+      nodeThreeObject={node => {
+        const group = new THREE.Group();
+
+        const material = new THREE.MeshBasicMaterial({
+          color: node.id === tempHighlightId ? highlightNodeColor : defaultNodeColor,
+          transparent: true,
+          opacity: 0.8
+        });
+
+        const sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(6, 16, 16),
+          material
+        );
+        group.add(sphere);
+
+        const label = new SpriteText(String(node.id));
+        label.color = 'white';
+        label.textHeight = 3;
+        label.material.depthWrite = false;
+        label.material.depthTest = false;
+        group.add(label);
+
+        return group;
+      }}
+    />
+  );
+}
+
+export default memo(RealWorldGraph3D);

@@ -1,3 +1,4 @@
+/* src/App.css */
 * {
   margin: 0;
   padding: 0;
@@ -8,30 +9,53 @@ body {
   font-family: 'Inter', sans-serif;
   color: #1a1a1a;
   background-color: #f5f5f5;
-  overflow-x: hidden; /* Eliminar scroll horizontal del body */
+  overflow-x: hidden;
 }
 
 .app-container {
   display: flex;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Evitar scrolls en el contenedor principal */
+  overflow: hidden;
 }
 
 .main-content {
   margin-left: 250px;
-  width: calc(100vw - 250px); /* Usar 100vw en lugar de 100% */
+  width: calc(100vw - 250px);
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Evitar scrolls en el contenido principal */
+  overflow: hidden;
 }
 
 .graph-container {
   width: 100%;
   height: calc(100vh - 64px);
   position: relative;
-  overflow: hidden; /* Evitar scrolls en el contenedor del grafo */
+  overflow: hidden;
+}
+
+.welcome-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e5e7eb 100%);
+}
+
+.welcome-message h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.welcome-message p {
+  font-size: 1.2rem;
+  color: #4b5563;
 }
 
 .button {
@@ -69,7 +93,7 @@ body {
 .propagation-button-container {
   position: fixed;
   top: 300px;
-  left: 320px; /* Simplificado: 250px del sidebar + 70px de margen */
+  left: 320px;
   z-index: 9;
 }
 
@@ -85,7 +109,7 @@ body {
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
   color: #000000;
-  max-width: 250px; /* Limitar ancho para evitar overflow */
+  max-width: 250px;
 }
 
 .legend-title {
