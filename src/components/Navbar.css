@@ -1,9 +1,8 @@
-/* src/components/Navbar.css */
 .navbar {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100%;
+  left: 250px; /* Ajustado: Comienza después del Sidebar */
+  width: calc(100% - 250px); /* Ajustado: Resta el ancho del Sidebar */
   height: 64px;
   background-color: #ffffff;
   padding: 0 16px;

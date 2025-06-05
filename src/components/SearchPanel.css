@@ -1,8 +1,7 @@
-/* src/components/SearchPanel.css */
 .search-panel {
   position: fixed;
   top: 80px; /* Debajo de la navbar */
-  left: 16px;
+  left: 270px; /* 250px (ancho del sidebar) + 20px (margen) */
   width: 280px;
   background-color: #ffffff;
   padding: 36px;

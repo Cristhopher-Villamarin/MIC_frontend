@@ -6,6 +6,7 @@ import PropagationModal from './components/PropagationModal';
 import NodeModal from './components/NodeModal';
 import PropagationResult from './components/PropagationResult';
 import Graph3D from './components/Graph3D';
+import Sidebar from './components/Sidebar';
 import { readCsv, readXlsx, buildGraph } from './utils/loadFiles';
 import axios from 'axios';
 import './App.css';
@@ -31,6 +32,13 @@ export default function App() {
   const [propagationResult, setPropagationResult] = useState(null);
   const [highlightedLinks, setHighlightedLinks] = useState([]);
   const [propagationLog, setPropagationLog] = useState([]);
+
+  // Función para manejar la selección de opciones del menú
+  const handleMenuSelect = (key) => {
+    console.log(`Opción seleccionada: ${key}`);
+    // Aquí puedes implementar la lógica para cada opción del menú
+    // Por ejemplo, cambiar el estado para cargar diferentes tipos de redes o modelos
+  };
 
   // Lee archivos CSV
   useEffect(() => {
@@ -82,13 +90,10 @@ export default function App() {
 
   // Maneja el clic en un nodo
   const handleNodeClick = (node) => {
-    // Buscar el último estado emocional del nodo en propagationLog
     const nodeHistory = propagationLog
       .filter(entry => entry.receiver === node.id)
-      .sort((a, b) => b.t - a.t); // Ordenar por timeStep descendente
-
+      .sort((a, b) => b.t - a.t);
     const latestState = nodeHistory.length > 0 ? nodeHistory[0].state_in_after : null;
-
     const emotional_vector_in = latestState
       ? {
           subjectivity: latestState[0] ?? 'N/A',
@@ -114,7 +119,6 @@ export default function App() {
           disgust: node.in_disgust ?? 'N/A',
           joy: node.in_joy ?? 'N/A',
         };
-
     const emotional_vector_out = {
       subjectivity: node.out_subjectivity ?? 'N/A',
       polarity: node.out_polarity ?? 'N/A',
@@ -127,7 +131,6 @@ export default function App() {
       disgust: node.out_disgust ?? 'N/A',
       joy: node.out_joy ?? 'N/A',
     };
-
     const nodeWithVectors = {
       ...node,
       emotional_vector_in,
@@ -152,20 +155,14 @@ export default function App() {
       formData.append('csv_file', csvFile);
       formData.append('xlsx_file', xlsxFile);
       formData.append('max_steps', 4);
-
-      const response = await axios.post('https://mic-backend-vw4z.onrender.com/propagate', formData, {
+      const response = await axios.post('http://localhost:8000/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       setPropagationResult(response.data);
       setPropagationStatus('Propagación completada.');
-
-      // Store the propagation log
       const propagationLog = response.data.log || [];
       console.log('Propagation log from backend:', propagationLog);
       setPropagationLog(propagationLog);
-
-      // Generate highlightedLinks with emotional vector
       const linksToHighlight = propagationLog
         .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
         .sort((a, b) => a.t - b.t)
@@ -174,16 +171,14 @@ export default function App() {
             source: String(entry.sender),
             target: String(entry.receiver),
             timeStep: entry.t,
-            animationDelay: index * 4000, // 4s por enlace
-            vector: entry.state_in_after // Incluir el vector emocional del receptor
+            animationDelay: index * 4000,
+            vector: entry.state_in_after,
           };
           console.log(`Generated link [${index}]:`, link);
           return link;
         });
       console.log('Total highlightedLinks:', linksToHighlight);
       setHighlightedLinks(linksToHighlight);
-
-      // Enfocar al usuario inicial
       setHighlightId(selectedUser);
       setIsPropagationModalOpen(false);
     } catch (error) {
@@ -209,83 +204,84 @@ export default function App() {
   };
 
   return (
-    <>
-      <Navbar
-        csvFile={csvFile}
-        setCsvFile={setCsvFile}
-        xlsxFile={xlsxFile}
-        setXlsxFile={setXlsxFile}
-        networkList={networkList}
-        selectedNet={selectedNet}
-        setSelectedNet={setSelectedNet}
-      />
-      <SearchPanel
-        searchText={searchText}
-        setSearchText={setSearchText}
-        highlightId={highlightId}
-        setHighlightId={setHighlightId}
-        status={status}
-        selectedNode={selectedNode}
-        handleResetView={handleResetView}
-      />
-      <div className="propagation-button-container">
-        <button
-          onClick={() => setIsPropagationModalOpen(true)}
-          className="button"
-        >
-          Iniciar Propagación
-        </button>
-      </div>
-      <div className="legend-container">
-        <h4 className="legend-title">Leyenda de Colores</h4>
-        <ul className="legend-list">
-          <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
-          <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
-          <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
-          <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
-          <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
-          <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
-          <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
-          <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
-        </ul>
-      </div>
-      <PropagationModal
-        isOpen={isPropagationModalOpen}
-        setIsOpen={setIsPropagationModalOpen}
-        selectedUser={selectedUser}
-        setSelectedUser={setSelectedUser}
-        message={message}
-        setMessage={setMessage}
-        nodes={graphData.nodes}
-        handlePropagation={handlePropagation}
-        propagationStatus={propagationStatus}
-      />
-      <NodeModal
-        isOpen={isNodeModalOpen}
-        setIsOpen={setIsNodeModalOpen}
-        modalNode={modalNode}
-        propagationLog={propagationLog}
-      />
-   // In App.jsx, replace the PropagationResult component call with:
-        // En App.jsx, reemplazar la llamada a PropagationResult con:
-      <PropagationResult
-        propagationLog={propagationLog}
-        selectedUser={selectedUser}
-        onClose={() => {
-          setPropagationResult(null);
-          setPropagationLog([]);
-          setHighlightedLinks([]);
-        }}
-      />
-      <div className="graph-container">
-        <Graph3D
-          data={graphData}
-          onNodeInfo={handleNodeClick}
-          highlightId={highlightId}
-          highlightedLinks={highlightedLinks}
-          onResetView={handleResetView}
+    <div className="app-container">
+      <Sidebar onMenuSelect={handleMenuSelect} />
+      <div className="main-content">
+        <Navbar
+          csvFile={csvFile}
+          setCsvFile={setCsvFile}
+          xlsxFile={xlsxFile}
+          setXlsxFile={setXlsxFile}
+          networkList={networkList}
+          selectedNet={selectedNet}
+          setSelectedNet={setSelectedNet}
         />
+        <SearchPanel
+          searchText={searchText}
+          setSearchText={setSearchText}
+          highlightId={highlightId}
+          setHighlightId={setHighlightId}
+          status={status}
+          selectedNode={selectedNode}
+          handleResetView={handleResetView}
+        />
+        <div className="propagation-button-container">
+          <button
+            onClick={() => setIsPropagationModalOpen(true)}
+            className="button"
+          >
+            Iniciar Propagación
+          </button>
+        </div>
+        <div className="legend-container">
+          <h4 className="legend-title">Leyenda de Colores</h4>
+          <ul className="legend-list">
+            <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
+            <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
+            <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
+            <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
+            <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
+            <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
+            <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
+            <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
+          </ul>
+        </div>
+        <PropagationModal
+          isOpen={isPropagationModalOpen}
+          setIsOpen={setIsPropagationModalOpen}
+          selectedUser={selectedUser}
+          setSelectedUser={setSelectedUser}
+          message={message}
+          setMessage={setMessage}
+          nodes={graphData.nodes}
+          handlePropagation={handlePropagation}
+          propagationStatus={propagationStatus}
+        />
+        <NodeModal
+          isOpen={isNodeModalOpen}
+          setIsOpen={setIsNodeModalOpen}
+          modalNode={modalNode}
+          propagationLog={propagationLog}
+        />
+        <PropagationResult
+          propagationLog={propagationLog}
+          selectedUser={selectedUser}
+          onClose={() => {
+            setPropagationResult(null);
+            setPropagationLog([]);
+            setHighlightedLinks([]);
+          }}
+        />
+        <div className="graph-container">
+          <Graph3D
+            data={graphData}
+            onNodeInfo={handleNodeClick}
+            highlightId={highlightId}
+            highlightedLinks={highlightedLinks}
+            onResetView={handleResetView}
+          />
+        </div>
       </div>
-    </>
+    </div>
   );
 }
