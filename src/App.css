@@ -6,33 +6,39 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  color: #1a1a1a; /* Negro suave */
-  background-color: #f5f5f5; /* Fondo gris claro para contraste */
+  color: #1a1a1a;
+  background-color: #f5f5f5;
+  overflow-x: hidden; /* Eliminar scroll horizontal del body */
 }
 
 .app-container {
   display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Evitar scrolls en el contenedor principal */
 }
 
 .main-content {
-  margin-left: 250px; /* Ancho del sidebar */
-  width: calc(100% - 250px);
+  margin-left: 250px;
+  width: calc(100vw - 250px); /* Usar 100vw en lugar de 100% */
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  overflow: hidden; /* Evitar scrolls en el contenido principal */
 }
 
 .graph-container {
   width: 100%;
-  height: calc(100vh - 64px); /* Ajustado para la altura de la navbar */
+  height: calc(100vh - 64px);
   position: relative;
+  overflow: hidden; /* Evitar scrolls en el contenedor del grafo */
 }
 
 .button {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  background-color: #4b89dc; /* Azul suave */
+  background-color: #4b89dc;
   color: white;
   font-size: 14px;
   font-weight: 500;
@@ -41,7 +47,7 @@ body {
 }
 
 .button:hover {
-  background-color: #3b6db0; /* Azul más oscuro */
+  background-color: #3b6db0;
   transform: translateY(-1px);
 }
 
@@ -53,8 +59,8 @@ body {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  background-color: #d1d5db; /* Gris claro */
-  color: #6b7280; /* Gris texto */
+  background-color: #d1d5db;
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
   cursor: not-allowed;
@@ -63,7 +69,7 @@ body {
 .propagation-button-container {
   position: fixed;
   top: 300px;
-  left: calc(70px + 250px); /* Ajustado: 70px original + 250px del Sidebar */
+  left: 320px; /* Simplificado: 250px del sidebar + 70px de margen */
   z-index: 9;
 }
 
@@ -79,6 +85,7 @@ body {
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
   color: #000000;
+  max-width: 250px; /* Limitar ancho para evitar overflow */
 }
 
 .legend-title {
