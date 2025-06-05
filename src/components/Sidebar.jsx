@@ -1,4 +1,3 @@
-// src/components/Sidebar.jsx
 import PropTypes from 'prop-types';
 import './Sidebar.css';
 
@@ -7,16 +6,16 @@ export default function Sidebar({ onMenuSelect }) {
     {
       title: 'Visualización de Redes',
       items: [
-        { label: 'Redes Barabási-Albert', key: 'barabasi-albert' },
-        { label: 'Redes Holme-Kim Dirigidas', key: 'holme-kim' },
+        { label: 'Redes Barabási-Albert', key: 'barabasi-albert', disabled: true },
+        { label: 'Redes Holme-Kim Dirigidas', key: 'holme-kim', disabled: true },
         { label: 'Redes del Mundo Real', key: 'real-world' },
       ],
     },
     {
       title: 'Propagación de Información',
       items: [
-        { label: 'Barabási - Modelo SI Clásico', key: 'barabasi-si' },
-        { label: 'Holme-Kim SI Adaptado', key: 'holme-kim-si' },
+        { label: 'Barabási - Modelo SI Clásico', key: 'barabasi-si', disabled: true },
+        { label: 'Holme-Kim SI Adaptado', key: 'holme-kim-si', disabled: true },
         { label: 'Mundo Real - Modelo RIP-DSN', key: 'real-world-rip' },
       ],
     },
@@ -43,6 +42,7 @@ export default function Sidebar({ onMenuSelect }) {
                 <button
                   className="sidebar-button"
                   onClick={() => onMenuSelect(item.key)}
+                  disabled={item.disabled || false}
                 >
                   {item.label}
                 </button>
