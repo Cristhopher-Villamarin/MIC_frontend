@@ -1,4 +1,3 @@
-/* src/components/NodeModal.css */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -48,8 +47,28 @@
   margin: 0;
   font-size: 1em;
   padding: 10px;
-  background: #a66736;
   border-radius: 4px;
+}
+
+/* Cluster-specific background colors for modal-cluster */
+.modal-cluster.cluster-0 {
+  background: #800080; /* Purple for Cluster 0 */
+}
+
+.modal-cluster.cluster-1 {
+  background: #0000FF; /* Blue for Cluster 1 */
+}
+
+.modal-cluster.cluster-2 {
+  background: #008000; /* Green for Cluster 2 */
+}
+
+.modal-cluster.cluster-3 {
+  background: #c9c936; /* Yellow for Cluster 3 */
+}
+
+.modal-cluster.cluster-default {
+  background: #a66736; /* Default background (original) */
 }
 
 .modal-vectors-container {
@@ -80,16 +99,6 @@
   border: 1px solid #000000;
 }
 
-.modal-history {
-  margin-top: 20px;
-}
-
-.modal-history-title {
-  font-size: 1.3em;
-  margin-bottom: 15px;
-  color: #ddd;
-}
-
 .modal-history-entry {
   margin-bottom: 15px;
   padding: 15px;
@@ -105,21 +114,10 @@
   color: #ffffff;
 }
 
-.modal-history-states {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.modal-history-state {
-  flex: 1;
-  min-width: 250px;
-}
-
-.modal-history-state h6 {
-  margin: 0 0 8px;
-  font-size: 1em;
-  color: #ffffff;
+.modal-history-chart {
+  background: #3f504c; /* Dark green to match modal-history-entry */
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .modal-footer {

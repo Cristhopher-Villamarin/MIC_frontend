@@ -26,7 +26,7 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
   ];
 
-  // Radar chart options with enhanced styling
+  // Radar chart options with provided styling
   const chartOptions = {
     scales: {
       r: {
@@ -99,6 +99,9 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
     backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle white background for chart
   };
 
+  // Determine cluster class for the cluster paragraph
+  const clusterClass = modalNode.cluster != null ? `cluster-${modalNode.cluster}` : 'cluster-default';
+
   return (
     <>
       <div className="modal-overlay fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
@@ -106,7 +109,7 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
         <h3 className="modal-title text-2xl font-bold mb-4 text-gray-800">Información del Nodo: {modalNode.id}</h3>
         <div className="modal-section mb-6">
           <h4 className="modal-section-title text-lg font-semibold mb-2 text-gray-700">Detalles del Nodo</h4>
-          <p className="modal-cluster text-gray-600">
+          <p className={`modal-cluster text-gray-600 ${clusterClass}`}>
             <b>Cluster:</b> {modalNode.cluster ?? 'Sin cluster'}
           </p>
         </div>
@@ -167,10 +170,10 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
                   <h5 className="modal-history-header text-base font-medium mb-2 text-gray-700">
                     Paso {entry.timeStep} (Interacción con {entry.sender})
                   </h5>
-                  <div className="modal-history-chart mb-4 bg-white p-4 rounded-lg shadow">
+                  <div className="modal-history-chart mb-4 p-4 rounded-lg shadow">
                     <Radar data={chartData} options={chartOptions} />
                   </div>
-                  <h5 className="modal-history-header text-base font-medium text-gray-700">
+                  <h5 className="modal-history-header text-base font-medium mb-2 text-gray-700">
                     Acción: {entry.action} el mensaje
                   </h5>
                 </div>
