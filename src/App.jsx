@@ -408,57 +408,59 @@ export default function App() {
           </div>
         </>
       )}
-      {viewMode === 'rip-dsn' && (
-        <>
-          <RealWorldNavbar
-            nodesCsvFile={nodesCsvFile}
-            setNodesCsvFile={setNodesCsvFile}
-            linksCsvFile={linksCsvFile}
-            setLinksCsvFile={setLinksCsvFile}
-            networkList={realWorldNetworkList}
-            selectedNet={realWorldSelectedNet}
-            setSelectedNet={setRealWorldSelectedNet}
-            viewMode={viewMode} // Pasar viewMode
-          />
-          <div className="propagation-button-container">
-            <button
-              onClick={() => setIsPropagationModalOpen(true)}
-              className="button"
-            >
-              Iniciar Propagación
-            </button>
-          </div>
-          <PropagationModal
-            isOpen={isPropagationModalOpen}
-            setIsOpen={setIsPropagationModalOpen}
-            selectedUser={selectedUser}
-            setSelectedUser={setSelectedUser}
-            message={message}
-            setMessage={setMessage}
-            nodes={realWorldGraphData.nodes}
-            handlePropagation={handleRipDsnPropagation}
-            propagationStatus={ripDsnPropagationStatus}
-          />
-          <RipDsnPropagationResult
-            propagationLog={ripDsnPropagationLog}
-            selectedUser={selectedUser}
-            onClose={() => {
-              setRipDsnPropagationResult(null);
-              setRipDsnPropagationLog([]);
-              setRipDsnHighlightedLinks([]);
-            }}
-          />
-          <div className="graph-container">
-            <RipDsnGraph3D
-              data={realWorldGraphData}
-              onNodeInfo={handleNodeClick}
-              highlightId={highlightId}
-              highlightedLinks={ripDsnHighlightedLinks}
-              onResetView={handleResetView}
-            />
-          </div>
-        </>
-      )}
+{viewMode === 'rip-dsn' && (
+  <>
+    <RealWorldNavbar
+      nodesCsvFile={nodesCsvFile}
+      setNodesCsvFile={setNodesCsvFile}
+      linksCsvFile={linksCsvFile}
+      setLinksCsvFile={setLinksCsvFile}
+      networkList={realWorldNetworkList}
+      selectedNet={realWorldSelectedNet}
+      setSelectedNet={setRealWorldSelectedNet}
+      viewMode={viewMode}
+    />
+    <div className="propagation-button-container">
+      <button
+        onClick={() => setIsPropagationModalOpen(true)}
+        className="button"
+      >
+        Iniciar Propagación
+      </button>
+    </div>
+    <PropagationModal
+      isOpen={isPropagationModalOpen}
+      setIsOpen={setIsPropagationModalOpen}
+      selectedUser={selectedUser}
+      setSelectedUser={setSelectedUser}
+      message={message}
+      setMessage={setMessage}
+      nodes={realWorldGraphData.nodes}
+      handlePropagation={handleRipDsnPropagation}
+      propagationStatus={ripDsnPropagationStatus}
+    />
+    {ripDsnPropagationResult && (
+      <RipDsnPropagationResult
+        propagationLog={ripDsnPropagationLog}
+        selectedUser={selectedUser}
+        onClose={() => {
+          setRipDsnPropagationResult(null);
+          setRipDsnPropagationLog([]);
+          setRipDsnHighlightedLinks([]);
+        }}
+      />
+    )}
+    <div className="graph-container">
+      <RipDsnGraph3D
+        data={realWorldGraphData}
+        onNodeInfo={handleNodeClick}
+        highlightId={highlightId}
+        highlightedLinks={ripDsnHighlightedLinks}
+        onResetView={handleResetView}
+      />
+    </div>
+  </>
+)}
       {viewMode === 'simulation' && (
         <>
           <Navbar

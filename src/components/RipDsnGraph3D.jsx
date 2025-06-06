@@ -1,7 +1,10 @@
-import { useEffect, useRef, memo, useMemo, useCallback } from "react";
+import { useEffect, useRef, memo, useMemo, useCallback, useContext, createContext } from "react";
 import ForceGraph3D from "react-force-graph-3d";
 import * as THREE from "three";
 import SpriteText from "three-spritetext";
+
+// Crear un contexto para eventos de propagación
+const PropagationEventContext = createContext();
 
 function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, onResetView }) {
   const fgRef = useRef();
@@ -27,9 +30,9 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
       return {
         ANIMATION_DELAY: 4000,
         ANIMATION_DURATION: 4000,
-        BATCH_SIZE: 1, // Un enlace a la vez
+        BATCH_SIZE: 1,
         VISIBILITY_DURATION: 4000,
-        REFRESH_THROTTLE: 50, // Throttle más agresivo
+        REFRESH_THROTTLE: 50,
       };
     } else if (isLargePropagation) {
       return {
@@ -125,7 +128,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
       const delay = isExtensivePropagation ? 300 : 200;
       setTimeout(() => {
         if (fgRef.current) {
-          fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
+          fgRef.current.zoomToFit(400, 0);
         }
       }, delay);
     }
@@ -181,7 +184,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
   useEffect(() => {
     if (!highlightId && fgRef.current && !isTransitioning.current) {
       isTransitioning.current = true;
-      fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
+      fgRef.current.zoomToFit(400, 0);
       setTimeout(() => {
         isTransitioning.current = false;
       }, 500);
@@ -248,7 +251,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     throttledRefresh();
   }, [filteredData.links, clearAllTimeouts, throttledRefresh]);
 
-  // Animación secuencial de enlaces
+  // Animación secuencial de enlaces con eventos
   useEffect(() => {
     cleanupAnimation();
 
@@ -301,6 +304,12 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
 
       console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${sourceId} -> ${targetId}`);
 
+      // Emitir evento cuando la línea se pinta de cian
+      const propagationEvent = new CustomEvent('propagationUpdate', {
+        detail: { t: highlight.timeStep, sender: sourceId, receiver: targetId }
+      });
+      window.dispatchEvent(propagationEvent);
+
       throttledRefresh();
 
       const animationEndTimeout = setTimeout(() => {
@@ -327,7 +336,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
 
     const totalDuration = sortedHighlightedLinks.length * config.ANIMATION_DELAY + config.ANIMATION_DURATION;
     const finalTimeout = setTimeout(() => {
-      console.log('Animación secuencial completada');
+      console.log('Animation sequential completed');
       animationTimeoutRefs.current.delete(finalTimeout);
     }, totalDuration);
 
@@ -336,8 +345,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     return () => {
       cleanupAnimation();
     };
-  }, [highlightedLinks, filteredData.links, isExtensivePropagation, isLargePropagation,
-      cleanupAnimation, getAnimationConfig, throttledRefresh]);
+  }, [highlightedLinks, filteredData.links, isExtensivePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh]);
 
   // Cleanup al desmontar
   useEffect(() => {
@@ -346,7 +354,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     };
   }, [clearAllTimeouts]);
 
-  // Memoizar geometría para mejor rendimiento
+  // Memoizar geometrías para mejor rendimiento
   const sphereGeometry = useMemo(() => {
     return isExtensivePropagation
       ? new THREE.SphereGeometry(6, 8, 8)
@@ -354,66 +362,68 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
   }, [isExtensivePropagation]);
 
   return (
-    <ForceGraph3D
-      ref={fgRef}
-      graphData={filteredData}
-      backgroundColor="#111"
-      linkOpacity={0.85}
-      linkWidth={link => {
-        if (link.__isCurrentlyAnimating) {
-          return 1.2;
-        } else if (link.__isPermanentlyHighlighted) {
-          return 1.2;
-        }
-        return 0.8;
-      }}
-      linkColor={link => {
-        if (link.__isCurrentlyAnimating) {
-          return animatingLinkColor;
-        } else if (link.__isPermanentlyHighlighted) {
-          return permanentLinkColor;
-        }
-        return defaultLinkColor;
-      }}
-      linkDirectionalArrowLength={5}
-      linkDirectionalArrowRelPos={1}
-      linkDirectionalArrowColor={link => {
-        if (link.__isCurrentlyAnimating) {
-          return animatingLinkColor;
-        } else if (link.__isPermanentlyHighlighted) {
-          return permanentLinkColor;
-        }
-        return "#FFFFFF";
-      }}
-      linkDirectionalArrowResolution={isExtensivePropagation ? 4 : 8}
-      d3VelocityDecay={isExtensivePropagation ? 0.4 : 0.3}
-      warmupTicks={isExtensivePropagation ? 20 : 100}
-      cooldownTicks={isExtensivePropagation ? 20 : 100}
-      onNodeClick={onNodeInfo}
-      nodeThreeObject={node => {
-        const group = new THREE.Group();
+    <PropagationEventContext.Provider value={{}}>
+      <ForceGraph3D
+        ref={fgRef}
+        graphData={filteredData}
+        backgroundColor="#111"
+        linkOpacity={0.85}
+        linkWidth={link => {
+          if (link.__isCurrentlyAnimating) {
+            return 1.2;
+          } else if (link.__isPermanentlyHighlighted) {
+            return 1.2;
+          }
+          return 0.8;
+        }}
+        linkColor={link => {
+          if (link.__isCurrentlyAnimating) {
+            return animatingLinkColor;
+          } else if (link.__isPermanentlyHighlighted) {
+            return permanentLinkColor;
+          }
+          return defaultLinkColor;
+        }}
+        linkDirectionalArrowLength={5}
+        linkDirectionalArrowRelPos={1}
+        linkDirectionalArrowColor={link => {
+          if (link.__isCurrentlyAnimating) {
+            return animatingLinkColor;
+          } else if (link.__isPermanentlyHighlighted) {
+            return permanentLinkColor;
+          }
+          return "#FFFFFF";
+        }}
+        linkDirectionalArrowResolution={isExtensivePropagation ? 4 : 8}
+        d3VelocityDecay={isExtensivePropagation ? 0.4 : 0.3}
+        warmupTicks={isExtensivePropagation ? 20 : 100}
+        cooldownTicks={isExtensivePropagation ? 20 : 50}
+        onNodeClick={onNodeInfo}
+        nodeThreeObject={node => {
+          const group = new THREE.Group();
 
-        const material = new THREE.MeshBasicMaterial({
-          color: defaultNodeColor,
-          transparent: true,
-          opacity: 0.8,
-        });
+          const material = new THREE.MeshBasicMaterial({
+            color: defaultNodeColor,
+            transparent: true,
+            opacity: 0.8,
+          });
 
-        const sphere = new THREE.Mesh(sphereGeometry, material);
-        group.add(sphere);
+          const sphere = new THREE.Mesh(sphereGeometry, material);
+          group.add(sphere);
 
-        const label = new SpriteText(String(node.id));
-        label.color = "white";
-        label.textHeight = isExtensivePropagation ? 2.5 : 3;
-        label.material.depthWrite = false;
-        label.material.depthTest = false;
-        group.add(label);
+          const label = new SpriteText(String(node.id));
+          label.color = "white";
+          label.textHeight = isExtensivePropagation ? 2.5 : 3;
+          label.material.depthWrite = false;
+          label.material.depthTest = false;
+          group.add(label);
 
-        return group;
-      }}
-      width={window.innerWidth - 250} // Ajustado para ocupar el espacio disponible
-      height={window.innerHeight - 120} // Ajustado según la altura del navbar
-    />
+          return group;
+        }}
+        width={window.innerWidth - 250}
+        height={window.innerHeight - 120}
+      />
+    </PropagationEventContext.Provider>
   );
 }
 

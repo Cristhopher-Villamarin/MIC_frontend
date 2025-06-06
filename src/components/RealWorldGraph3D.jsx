@@ -9,7 +9,7 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
   const [tempHighlightId, setTempHighlightId] = useState(''); // Estado para resaltado temporal
 
   // Colores
-  const defaultNodeColor = '#808080'; // Gris predeterminado
+  const defaultNodeColor = '#7b8a84'; // Gris predeterminado
   const highlightNodeColor = '#FFFF00'; // Amarillo fosforescente para resaltado
 
   // Centra la red al cargar o cambiar datos
@@ -107,7 +107,7 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
       ref={fgRef}
       graphData={data}
       backgroundColor="#111"
-      linkOpacity={0.85}
+      linkOpacity={0.4}
       linkWidth={0.8}
       linkColor="#828282"
       linkDirectionalArrowLength={5}
@@ -124,7 +124,9 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
         const material = new THREE.MeshBasicMaterial({
           color: node.id === tempHighlightId ? highlightNodeColor : defaultNodeColor,
           transparent: true,
-          opacity: 0.8
+          opacity: 1,
+         
+
         });
 
         const sphere = new THREE.Mesh(
