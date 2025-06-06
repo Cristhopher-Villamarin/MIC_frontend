@@ -533,7 +533,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
       graphData={filteredData}
       backgroundColor="#111"
       // Configuración de enlaces
-      linkOpacity={0.85}
+      linkOpacity={0.6}
       linkWidth={link => {
         if (link.__isCurrentlyAnimating) {
           return 1.2;

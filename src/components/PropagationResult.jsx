@@ -27,8 +27,8 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
   };
 
   // Tiempos de animación (coinciden con Graph3D.jsx)
-  const animationDelay = 5000; // ANIMATION_DELAY de getAnimationConfig
-  const subStepDelay = animationDelay / 2; // ~1667ms
+  const animationDelay = 4000; // ANIMATION_DELAY de getAnimationConfig
+  const subStepDelay = animationDelay / 3; // ~1667ms
 
   // Ordenar el log por timeStep, excluyendo entradas inválidas
   const sortedLog = propagationLog
