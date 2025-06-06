@@ -1,4 +1,3 @@
-// src/components/RipDsnGraph3D.jsx
 import { useEffect, useRef, memo, useMemo, useCallback } from "react";
 import ForceGraph3D from "react-force-graph-3d";
 import * as THREE from "three";
@@ -20,8 +19,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
   // Determinar si estamos en modo propagación y el tamaño
   const isInPropagationMode = highlightedLinks.length > 0;
   const isLargePropagation = highlightedLinks.length > 50;
-  const
-isExtensivePropagation = highlightedLinks.length > 200;
+  const isExtensivePropagation = highlightedLinks.length > 200;
 
   // Configuración dinámica basada en el tamaño de la propagación
   const getAnimationConfig = useCallback(() => {
@@ -127,7 +125,7 @@ isExtensivePropagation = highlightedLinks.length > 200;
       const delay = isExtensivePropagation ? 300 : 200;
       setTimeout(() => {
         if (fgRef.current) {
-          fgRef.current.zoomToFit(400, 100);
+          fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
         }
       }, delay);
     }
@@ -183,7 +181,7 @@ isExtensivePropagation = highlightedLinks.length > 200;
   useEffect(() => {
     if (!highlightId && fgRef.current && !isTransitioning.current) {
       isTransitioning.current = true;
-      fgRef.current.zoomToFit(400, 100);
+      fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
       setTimeout(() => {
         isTransitioning.current = false;
       }, 500);
@@ -413,6 +411,8 @@ isExtensivePropagation = highlightedLinks.length > 200;
 
         return group;
       }}
+      width={window.innerWidth - 250} // Ajustado para ocupar el espacio disponible
+      height={window.innerHeight - 120} // Ajustado según la altura del navbar
     />
   );
 }

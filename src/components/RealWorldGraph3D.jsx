@@ -1,4 +1,3 @@
-// src/components/RealWorldGraph3D.jsx
 import { useEffect, useRef, useState, memo } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
@@ -18,7 +17,7 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
     if (!isTransitioning.current && fgRef.current) {
       setTimeout(() => {
         if (fgRef.current) {
-          fgRef.current.zoomToFit(400, 100);
+          fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
         }
       }, 200);
     }
@@ -68,7 +67,7 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
   useEffect(() => {
     if (!highlightId && fgRef.current && !isTransitioning.current) {
       isTransitioning.current = true;
-      fgRef.current.zoomToFit(400, 100);
+      fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
       setTempHighlightId(''); // Limpiar resaltado al resetear
       setTimeout(() => {
         isTransitioning.current = false;
@@ -143,6 +142,8 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
 
         return group;
       }}
+      width={window.innerWidth - 250} // Ajustado para ocupar el espacio disponible
+      height={window.innerHeight - 120} // Ajustado según la altura del navbar
     />
   );
 }
