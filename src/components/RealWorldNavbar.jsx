@@ -1,42 +1,68 @@
 import PropTypes from 'prop-types';
-import './Navbar.css'; // Reutilizamos los estilos de Navbar.css
+import './Navbar.css';
 
 export default function RealWorldNavbar({ nodesCsvFile, setNodesCsvFile, linksCsvFile, setLinksCsvFile, networkList, selectedNet, setSelectedNet, viewMode }) {
+  // Determinar el título basado en viewMode
+  const getNavbarTitle = () => {
+    switch (viewMode) {
+      case 'real-world':
+        return 'Análisis de Redes del Mundo Real';
+      case 'rip-dsn':
+        return 'Modelo RIP-DSN';
+      case 'simulation':
+        return 'Simulación de Redes';
+      default:
+        return 'Análisis de Redes';
+    }
+  };
+
   return (
     <div className="navbar">
-      <h1 className="navbar-title">Análisis de Redes del Mundo Real</h1>
+      <h1 className="navbar-title">{getNavbarTitle()}</h1>
       <div className="navbar-controls">
         {viewMode !== 'rip-dsn' && (
           <>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={e => setNodesCsvFile(e.target.files?.[0])}
-              className="navbar-input"
-              placeholder="Subir CSV de nodos"
-            />
-            <input
-              type="file"
-              accept=".csv"
-              onChange={e => setLinksCsvFile(e.target.files?.[0])}
-              className="navbar-input"
-              placeholder="Subir CSV de relaciones"
-            />
+            <div className="navbar-input-container">
+              <label htmlFor="nodes-file" className="navbar-label">Suba el archivo de nodos</label>
+              <input
+                id="nodes-file"
+                type="file"
+                accept=".csv"
+                onChange={e => setNodesCsvFile(e.target.files?.[0])}
+                className="navbar-input"
+              />
+            </div>
+            <div className="navbar-input-container">
+              <label htmlFor="links-file" className="navbar-label">Suba el archivo de red</label>
+              <input
+                id="links-file"
+                type="file"
+                accept=".csv"
+                onChange={e => setLinksCsvFile(e.target.files?.[0])}
+                className="navbar-input"
+              />
+            </div>
           </>
         )}
-        {networkList.length > 0 && (
-          <select
-            value={selectedNet}
-            onChange={e => setSelectedNet(e.target.value)}
-            className="navbar-select"
-          >
-            <option value="">Selecciona red</option>
-            {networkList.map(id => (
-              <option key={id} value={id}>
-                Red: {id}
-              </option>
-            ))}
-          </select>
+        {networkList.length > 0 ? (
+          <div className="navbar-select-container">
+            <select
+              value={selectedNet}
+              onChange={e => setSelectedNet(e.target.value)}
+              className="navbar-select"
+            >
+              <option value="">Selecciona red</option>
+              {networkList.map(id => (
+                <option key={id} value={id}>
+                  Red: {id}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          viewMode === 'rip-dsn' && (
+            <p className="navbar-message">No hay redes disponibles. Suba archivos en "Redes del Mundo Real".</p>
+          )
         )}
       </div>
     </div>
@@ -51,5 +77,5 @@ RealWorldNavbar.propTypes = {
   networkList: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedNet: PropTypes.string.isRequired,
   setSelectedNet: PropTypes.func.isRequired,
-  viewMode: PropTypes.string.isRequired, // Add viewMode to propTypes
+  viewMode: PropTypes.string.isRequired,
 };
