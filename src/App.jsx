@@ -5,6 +5,7 @@ import RealWorldNavbar from './components/RealWorldNavbar';
 import SearchPanel from './components/SearchPanel';
 import PropagationModal from './components/PropagationModal';
 import NodeModal from './components/NodeModal';
+import NodeStatesModal from './components/NodeStatesModal';
 import PropagationResult from './components/PropagationResult';
 import RipDsnPropagationResult from './components/RipDsnPropagationResult';
 import Graph3D from './components/Graph3D';
@@ -16,7 +17,7 @@ import axios from 'axios';
 import './App.css';
 
 export default function App() {
-  // Existing states
+  // Existing states (unchanged)
   const [csvFile, setCsvFile] = useState(null);
   const [xlsxFile, setXlsxFile] = useState(null);
   const [linksAll, setLinksAll] = useState([]);
@@ -50,8 +51,15 @@ export default function App() {
   const [ripDsnHighlightedLinks, setRipDsnHighlightedLinks] = useState([]);
   const [ripDsnPropagationLog, setRipDsnPropagationLog] = useState([]);
   const [viewMode, setViewMode] = useState('welcome');
+  const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);
 
-  // Modified handleMenuSelect to preserve states for behavior-profiles
+  // Emotion keys to map node attributes to vector
+  const emotionKeys = [
+    'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
+    'trust', 'surprise', 'sadness', 'disgust', 'joy'
+  ];
+
+  // Modified handleMenuSelect (unchanged)
   const handleMenuSelect = (key) => {
     console.log(`Opción seleccionada: ${key}`);
     if (key === 'real-world') {
@@ -66,18 +74,14 @@ export default function App() {
       }
     } else if (key === 'behavior-profiles') {
       setViewMode('simulation');
-      // Synchronize csvFile with linksCsvFile
       setCsvFile(linksCsvFile);
       if (!linksCsvFile) {
         setStatus('Sube el archivo CSV de relaciones en "Redes del Mundo Real" primero…');
       } else if (linksAll.length > 0) {
-        // Use existing linksAll and networkList to avoid re-reading
         setStatus(`Red ${selectedNet}: ${graphData.nodes.length} nodos · ${graphData.links.length} enlaces`);
       } else {
         setStatus('CSV listo. Construyendo red básica…');
       }
-      // Do not reset Graph3D-related states
-      // Optionally reset propagation-related states
       setSearchText('');
       setHighlightId('');
       setMessage('');
@@ -88,11 +92,11 @@ export default function App() {
       setPropagationLog([]);
       setIsNodeModalOpen(false);
       setIsPropagationModalOpen(false);
+      setIsNodeStatesModalOpen(false);
       setModalNode(null);
     } else {
       setViewMode('simulation');
       setStatus('Sube el CSV y el XLSX…');
-      // Reset all states for other simulation options
       setCsvFile(null);
       setXlsxFile(null);
       setLinksAll([]);
@@ -110,9 +114,9 @@ export default function App() {
       setPropagationLog([]);
       setIsNodeModalOpen(false);
       setIsPropagationModalOpen(false);
+      setIsNodeStatesModalOpen(false);
       setModalNode(null);
     }
-    // Reset RIP-DSN propagation states
     setRipDsnPropagationStatus('');
     setRipDsnPropagationResult(null);
     setRipDsnHighlightedLinks([]);
@@ -120,7 +124,7 @@ export default function App() {
     setIsPropagationModalOpen(false);
   };
 
-  // Existing useEffect for csvFile
+  // Existing useEffect hooks (unchanged)
   useEffect(() => {
     async function loadCsv() {
       if (!csvFile) return;
@@ -137,7 +141,6 @@ export default function App() {
     loadCsv();
   }, [csvFile]);
 
-  // Existing useEffect for xlsxFile
   useEffect(() => {
     async function loadXlsx() {
       if (!xlsxFile) return;
@@ -149,7 +152,6 @@ export default function App() {
     loadXlsx();
   }, [xlsxFile]);
 
-  // Existing useEffect for building graph
   useEffect(() => {
     if (!selectedNet || linksAll.length === 0) {
       setGraphData({ nodes: [], links: [] });
@@ -168,7 +170,6 @@ export default function App() {
     setHighlightId('');
   }, [selectedNet, linksAll, attrsAll]);
 
-  // Existing useEffect for nodesCsvFile
   useEffect(() => {
     async function loadNodesCsv() {
       if (!nodesCsvFile) return;
@@ -183,7 +184,6 @@ export default function App() {
     loadNodesCsv();
   }, [nodesCsvFile]);
 
-  // Modified useEffect for linksCsvFile to sync with csvFile
   useEffect(() => {
     async function loadLinksCsv() {
       if (!linksCsvFile) return;
@@ -191,13 +191,11 @@ export default function App() {
       const links = await readCsv(linksCsvFile);
       setRealWorldLinksAll(links);
       setRealWorldStatus('CSV de relaciones listo.');
-      // Synchronize csvFile with linksCsvFile
       setCsvFile(linksCsvFile);
     }
     loadLinksCsv();
   }, [linksCsvFile]);
 
-  // Existing useEffect for building real-world graph
   useEffect(() => {
     if (!realWorldSelectedNet || realWorldNodesAll.length === 0 || realWorldLinksAll.length === 0) {
       return;
@@ -212,13 +210,13 @@ export default function App() {
     );
   }, [realWorldSelectedNet, realWorldNodesAll, realWorldLinksAll]);
 
-  // Maneja el clic en un nodo
+  // Handle node clicks (unchanged)
   const handleNodeClick = (node) => {
     if (viewMode === 'simulation') {
       const nodeHistory = propagationLog
         .filter(entry => entry.receiver === node.id)
-        .sort((a, b) => b.t - a.t);
-      const latestState = nodeHistory.length > 0 ? nodeHistory[0].state_in_after : null;
+        const sort = nodeHistory.sort((a, b) => b.t - b.t);
+      const latestState = nodeHistory.length > 0 ? sort[0].state_in_after : null;
       const emotional_vector_in = latestState
         ? {
             subjectivity: latestState[0] ?? 'N/A',
@@ -226,10 +224,10 @@ export default function App() {
             fear: latestState[2] ?? 'N/A',
             anger: latestState[3] ?? 'N/A',
             anticipation: latestState[4] ?? 'N/A',
-            trust: latestState[5] ?? 'N/A',
+            weight: latestState[5] ?? 'N/A',
             surprise: latestState[6] ?? 'N/A',
             sadness: latestState[7] ?? 'N/A',
-            disgust: latestState[8] ?? 'N/A',
+            height: latestState[8] ?? 'N/A',
             joy: latestState[9] ?? 'N/A',
           }
         : {
@@ -273,7 +271,7 @@ export default function App() {
     }
   };
 
-  // Maneja la propagación (simulación original)
+  // Handle propagation (unchanged)
   const handlePropagation = async () => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
@@ -313,6 +311,7 @@ export default function App() {
       setHighlightedLinks(linksToHighlight);
       setHighlightId(selectedUser);
       setIsPropagationModalOpen(false);
+      setIsNodeStatesModalOpen(false);
     } catch (error) {
       console.error('Propagation error:', error);
       setPropagationStatus(`Error: ${error.response?.data?.detail || error.message}`);
@@ -320,7 +319,7 @@ export default function App() {
     }
   };
 
-  // Maneja la propagación (RIP-DSN)
+  // Handle RIP-DSN propagation (unchanged)
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
       setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
@@ -365,7 +364,7 @@ export default function App() {
     }
   };
 
-  // Resetear la vista
+  // Reset view (unchanged)
   const handleResetView = () => {
     setHighlightId('');
     setSearchText('');
@@ -378,6 +377,7 @@ export default function App() {
       setPropagationLog([]);
       setIsNodeModalOpen(false);
       setIsPropagationModalOpen(false);
+      setIsNodeStatesModalOpen(false);
       setModalNode(null);
     } else if (viewMode === 'rip-dsn') {
       setMessage('');
@@ -390,8 +390,60 @@ export default function App() {
     }
   };
 
+  // Updated getInvolvedNodes to correctly fetch initial and final states
+  const getInvolvedNodes = () => {
+    const nodeIds = new Set();
+    propagationLog.forEach(entry => {
+      if (entry.sender) nodeIds.add(entry.sender);
+      if (entry.receiver) nodeIds.add(entry.receiver);
+    });
 
-return (
+    return Array.from(nodeIds).map(id => {
+      // Get node data from graphData
+      const node = graphData.nodes.find(node => node.id === id);
+      
+      // Get all log entries where this node is the receiver
+      const nodeHistory = propagationLog
+        .filter(entry => entry.receiver === id)
+        .sort((a, b) => a.t - b.t);
+
+      // Initial state: Use state_in_before from the first entry, or node attributes
+      let initialState = nodeHistory.length > 0 && nodeHistory[0].state_in_before
+        ? nodeHistory[0].state_in_before
+        : null;
+
+      if (!initialState && node) {
+        // Construct initial state from node attributes
+        initialState = emotionKeys.map(key => {
+          const attrKey = `in_${key}`;
+          return node[attrKey] != null ? Number(node[attrKey]) : 0;
+        });
+      }
+
+      // Ensure initialState is an array of 10 numbers
+      initialState = initialState && Array.isArray(initialState) && initialState.length === 10
+        ? initialState.map(Number)
+        : Array(10).fill(0);
+
+      // Final state: Use state_in_after from the last entry
+      const finalState = nodeHistory.length > 0
+        ? nodeHistory[nodeHistory.length - 1].state_in_after
+        : null;
+
+      // Ensure finalState is an array of 10 numbers
+      const validFinalState = finalState && Array.isArray(finalState) && finalState.length === 10
+        ? finalState.map(Number)
+        : Array(10).fill(0);
+
+      return {
+        id,
+        initialState,
+        finalState: validFinalState,
+      };
+    });
+  };
+
+  return (
     <div className="app-container">
       <Sidebar onMenuSelect={handleMenuSelect} />
       <div className="main-content">
@@ -412,7 +464,6 @@ return (
               selectedNet={realWorldSelectedNet}
               setSelectedNet={setRealWorldSelectedNet}
               viewMode={viewMode}
-              setCsvFile={setCsvFile} // Pass setCsvFile to synchronize
             />
             <SearchPanel
               searchText={searchText}
@@ -444,7 +495,6 @@ return (
               selectedNet={realWorldSelectedNet}
               setSelectedNet={setRealWorldSelectedNet}
               viewMode={viewMode}
-              setCsvFile={setCsvFile} // Pass setCsvFile to synchronize
             />
             <div className="propagation-button-container">
               <button
@@ -498,15 +548,7 @@ return (
               selectedNet={selectedNet}
               setSelectedNet={setSelectedNet}
             />
-            <SearchPanel
-              searchText={searchText}
-              setSearchText={setSearchText}
-              highlightId={highlightId}
-              setHighlightId={setHighlightId}
-              status={status}
-              selectedNode={selectedNode}
-              handleResetView={handleResetView}
-            />
+
             <div className="propagation-button-container">
               <button
                 onClick={() => setIsPropagationModalOpen(true)}
@@ -514,7 +556,19 @@ return (
               >
                 Iniciar Propagación
               </button>
+            
+
+           
             </div>
+               <div className="nodes-button-container">
+              <button
+                onClick={() => setIsNodeStatesModalOpen(true)}
+                className={propagationLog.length ? 'button' : 'button-disabled'}
+                disabled={!propagationLog.length}
+              >
+                Ver Estados de Nodos
+              </button>
+              </div>
             <div className="legend-container">
               <h4 className="legend-title">Leyenda de Colores</h4>
               <ul className="legend-list">
@@ -543,6 +597,12 @@ return (
               isOpen={isNodeModalOpen}
               setIsOpen={setIsNodeModalOpen}
               modalNode={modalNode}
+              propagationLog={propagationLog}
+            />
+            <NodeStatesModal
+              isOpen={isNodeStatesModalOpen}
+              setIsOpen={setIsNodeStatesModalOpen}
+              involvedNodes={getInvolvedNodes()}
               propagationLog={propagationLog}
             />
             <PropagationResult

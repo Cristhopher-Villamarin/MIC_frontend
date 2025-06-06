@@ -1,3 +1,4 @@
+/* src/components/App.css */
 * {
   margin: 0;
   padding: 0;
@@ -35,6 +36,7 @@ body {
   display: flex; /* Añadido para centrado */
   justify-content: center; /* Centrado horizontal */
   align-items: center; /* Centrado vertical */
+  overflow: visible; /* Changed from hidden to allow PropagationResult to extend */
 }
 
 .graph-container > div {
@@ -80,8 +82,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  top: 130px; /* Debajo de la navbar */
-  left: 260px; /* 250px (ancho del sidebar) + 20px (margen) */
+  margin-right: 10px; /* Espacio entre botones */
 }
 
 .button:hover {
@@ -102,15 +103,25 @@ body {
   font-size: 14px;
   font-weight: 500;
   cursor: not-allowed;
+  margin-right: 10px; /* Espacio entre botones */
 }
 
 .propagation-button-container {
   position: fixed;
-  top: 300px;
-  left: 320px;
+  top: 130px; /* Debajo de la navbar */
+  left: 260px; /* 250px (ancho del sidebar) + 10px (margen) */
   z-index: 9;
-    top: 150px; /* Debajo de la navbar */
-  left: 270px; /* 250px (ancho del sidebar) + 20px (margen) */
+  display: flex; /* Para alinear los botones horizontalmente */
+  gap: 10px; /* Espacio entre botones */
+}
+
+.nodes-button-container {
+  position: fixed;
+  top: 620px; /* Debajo de la navbar */
+  left: 30px; /* 250px (ancho del sidebar) + 10px (margen) */
+  z-index: 10000;
+  display: flex; /* Para alinear los botones horizontalmente */
+  gap: 10px; /* Espacio entre botones */
 }
 
 .legend-container {
@@ -118,13 +129,13 @@ body {
   bottom: 1rem;
   right: 1rem;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(40, 47, 78, 0.95);
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
-  color: #000000;
+  color: #ffffff;
   max-width: 250px;
 }
 

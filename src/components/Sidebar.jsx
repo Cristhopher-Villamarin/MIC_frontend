@@ -23,7 +23,7 @@ export default function Sidebar({ onMenuSelect }) {
       title: 'Comportamiento de Usuario',
       items: [
         { label: 'Simulación con Perfiles de Comportamiento', key: 'behavior-profiles' },
-        { label: 'Estados de los Nodos', key: 'node-states' },
+      
       ],
     },
   ];
