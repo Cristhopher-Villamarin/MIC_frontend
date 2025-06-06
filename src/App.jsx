@@ -16,7 +16,7 @@ import axios from 'axios';
 import './App.css';
 
 export default function App() {
-  // Estados para la funcionalidad original (propagación)
+  // Existing states
   const [csvFile, setCsvFile] = useState(null);
   const [xlsxFile, setXlsxFile] = useState(null);
   const [linksAll, setLinksAll] = useState([]);
@@ -37,8 +37,6 @@ export default function App() {
   const [propagationResult, setPropagationResult] = useState(null);
   const [highlightedLinks, setHighlightedLinks] = useState([]);
   const [propagationLog, setPropagationLog] = useState([]);
-
-  // Estados para Redes del Mundo Real y RIP-DSN
   const [nodesCsvFile, setNodesCsvFile] = useState(null);
   const [linksCsvFile, setLinksCsvFile] = useState(null);
   const [realWorldNodesAll, setRealWorldNodesAll] = useState([]);
@@ -51,11 +49,9 @@ export default function App() {
   const [ripDsnPropagationResult, setRipDsnPropagationResult] = useState(null);
   const [ripDsnHighlightedLinks, setRipDsnHighlightedLinks] = useState([]);
   const [ripDsnPropagationLog, setRipDsnPropagationLog] = useState([]);
-
-  // Estado para controlar la vista
   const [viewMode, setViewMode] = useState('welcome');
 
-  // Maneja la selección de opciones del menú
+  // Modified handleMenuSelect to preserve states for behavior-profiles
   const handleMenuSelect = (key) => {
     console.log(`Opción seleccionada: ${key}`);
     if (key === 'real-world') {
@@ -68,10 +64,35 @@ export default function App() {
       if (!nodesCsvFile || !linksCsvFile) {
         setRealWorldStatus('Sube los archivos CSV…');
       }
+    } else if (key === 'behavior-profiles') {
+      setViewMode('simulation');
+      // Synchronize csvFile with linksCsvFile
+      setCsvFile(linksCsvFile);
+      if (!linksCsvFile) {
+        setStatus('Sube el archivo CSV de relaciones en "Redes del Mundo Real" primero…');
+      } else if (linksAll.length > 0) {
+        // Use existing linksAll and networkList to avoid re-reading
+        setStatus(`Red ${selectedNet}: ${graphData.nodes.length} nodos · ${graphData.links.length} enlaces`);
+      } else {
+        setStatus('CSV listo. Construyendo red básica…');
+      }
+      // Do not reset Graph3D-related states
+      // Optionally reset propagation-related states
+      setSearchText('');
+      setHighlightId('');
+      setMessage('');
+      setSelectedUser('');
+      setPropagationStatus('');
+      setPropagationResult(null);
+      setHighlightedLinks([]);
+      setPropagationLog([]);
+      setIsNodeModalOpen(false);
+      setIsPropagationModalOpen(false);
+      setModalNode(null);
     } else {
       setViewMode('simulation');
       setStatus('Sube el CSV y el XLSX…');
-      // Limpiar estados solo para simulación
+      // Reset all states for other simulation options
       setCsvFile(null);
       setXlsxFile(null);
       setLinksAll([]);
@@ -91,7 +112,7 @@ export default function App() {
       setIsPropagationModalOpen(false);
       setModalNode(null);
     }
-    // Limpiar estados de propagación al cambiar de vista
+    // Reset RIP-DSN propagation states
     setRipDsnPropagationStatus('');
     setRipDsnPropagationResult(null);
     setRipDsnHighlightedLinks([]);
@@ -99,7 +120,7 @@ export default function App() {
     setIsPropagationModalOpen(false);
   };
 
-  // Lee archivos CSV (original)
+  // Existing useEffect for csvFile
   useEffect(() => {
     async function loadCsv() {
       if (!csvFile) return;
@@ -111,12 +132,12 @@ export default function App() {
       )].filter(id => id);
       setNetworkList(ids);
       setSelectedNet(ids[0] ?? '');
-      setStatus('CSV listo. Ahora el XLSX…');
+      setStatus('CSV listo. Construyendo red básica…');
     }
     loadCsv();
   }, [csvFile]);
 
-  // Lee archivos XLSX (original)
+  // Existing useEffect for xlsxFile
   useEffect(() => {
     async function loadXlsx() {
       if (!xlsxFile) return;
@@ -128,17 +149,17 @@ export default function App() {
     loadXlsx();
   }, [xlsxFile]);
 
-  // Construye el grafo (original)
+  // Existing useEffect for building graph
   useEffect(() => {
-    if (!selectedNet || linksAll.length === 0 || attrsAll.length === 0) {
+    if (!selectedNet || linksAll.length === 0) {
+      setGraphData({ nodes: [], links: [] });
       return;
     }
     setStatus('Filtrando y construyendo la red…');
     const linksFiltered = linksAll.filter(
       l => String(l.network_id ?? l.networkId) === selectedNet
     );
-    const data = buildGraph(linksFiltered, attrsAll);
-    console.log('graphData.links generados:', data.links);
+    const data = buildGraph(linksFiltered, attrsAll.length > 0 ? attrsAll : []);
     setGraphData(data);
     setStatus(
       `Red ${selectedNet}: ${data.nodes.length} nodos · ${data.links.length} enlaces`
@@ -147,7 +168,7 @@ export default function App() {
     setHighlightId('');
   }, [selectedNet, linksAll, attrsAll]);
 
-  // Lee el CSV de nodos (Real World y RIP-DSN)
+  // Existing useEffect for nodesCsvFile
   useEffect(() => {
     async function loadNodesCsv() {
       if (!nodesCsvFile) return;
@@ -162,7 +183,7 @@ export default function App() {
     loadNodesCsv();
   }, [nodesCsvFile]);
 
-  // Lee el CSV de relaciones (Real World y RIP-DSN)
+  // Modified useEffect for linksCsvFile to sync with csvFile
   useEffect(() => {
     async function loadLinksCsv() {
       if (!linksCsvFile) return;
@@ -170,11 +191,13 @@ export default function App() {
       const links = await readCsv(linksCsvFile);
       setRealWorldLinksAll(links);
       setRealWorldStatus('CSV de relaciones listo.');
+      // Synchronize csvFile with linksCsvFile
+      setCsvFile(linksCsvFile);
     }
     loadLinksCsv();
   }, [linksCsvFile]);
 
-  // Construye el grafo (Real World y RIP-DSN)
+  // Existing useEffect for building real-world graph
   useEffect(() => {
     if (!realWorldSelectedNet || realWorldNodesAll.length === 0 || realWorldLinksAll.length === 0) {
       return;
@@ -367,179 +390,182 @@ export default function App() {
     }
   };
 
-  return (
+
+return (
     <div className="app-container">
-     <Sidebar onMenuSelect={handleMenuSelect} />
-    <div className="main-content">
-      {viewMode === 'welcome' && (
-        <div className="welcome-message">
-          <h1>Bienvenido al Simulador de Redes Sociales</h1>
-          <p>Selecciona una opción en el menú lateral para comenzar.</p>
-        </div>
-      )}
-      {viewMode === 'real-world' && (
-        <>
-          <RealWorldNavbar
-            nodesCsvFile={nodesCsvFile}
-            setNodesCsvFile={setNodesCsvFile}
-            linksCsvFile={linksCsvFile}
-            setLinksCsvFile={setLinksCsvFile}
-            networkList={realWorldNetworkList}
-            selectedNet={realWorldSelectedNet}
-            setSelectedNet={setRealWorldSelectedNet}
-            viewMode={viewMode} // Pasar viewMode
-          />
-          <SearchPanel
-            searchText={searchText}
-            setSearchText={setSearchText}
-            highlightId={highlightId}
-            setHighlightId={setHighlightId}
-            status={realWorldStatus}
-            selectedNode={realWorldGraphData.nodes.find(n => n.id === highlightId)}
-            handleResetView={handleResetView}
-          />
-          <div className="graph-container">
-            <RealWorldGraph3D
-              data={realWorldGraphData}
-              onNodeInfo={handleNodeClick}
-              highlightId={highlightId}
-              onResetView={handleResetView}
+      <Sidebar onMenuSelect={handleMenuSelect} />
+      <div className="main-content">
+        {viewMode === 'welcome' && (
+          <div className="welcome-message">
+            <h1>Bienvenido al Simulador de Redes Sociales</h1>
+            <p>Selecciona una opción en el menú lateral para comenzar.</p>
+          </div>
+        )}
+        {viewMode === 'real-world' && (
+          <>
+            <RealWorldNavbar
+              nodesCsvFile={nodesCsvFile}
+              setNodesCsvFile={setNodesCsvFile}
+              linksCsvFile={linksCsvFile}
+              setLinksCsvFile={setLinksCsvFile}
+              networkList={realWorldNetworkList}
+              selectedNet={realWorldSelectedNet}
+              setSelectedNet={setRealWorldSelectedNet}
+              viewMode={viewMode}
+              setCsvFile={setCsvFile} // Pass setCsvFile to synchronize
             />
-          </div>
-        </>
-      )}
-{viewMode === 'rip-dsn' && (
-  <>
-    <RealWorldNavbar
-      nodesCsvFile={nodesCsvFile}
-      setNodesCsvFile={setNodesCsvFile}
-      linksCsvFile={linksCsvFile}
-      setLinksCsvFile={setLinksCsvFile}
-      networkList={realWorldNetworkList}
-      selectedNet={realWorldSelectedNet}
-      setSelectedNet={setRealWorldSelectedNet}
-      viewMode={viewMode}
-    />
-    <div className="propagation-button-container">
-      <button
-        onClick={() => setIsPropagationModalOpen(true)}
-        className="button"
-      >
-        Iniciar Propagación
-      </button>
-    </div>
-    <PropagationModal
-      isOpen={isPropagationModalOpen}
-      setIsOpen={setIsPropagationModalOpen}
-      selectedUser={selectedUser}
-      setSelectedUser={setSelectedUser}
-      message={message}
-      setMessage={setMessage}
-      nodes={realWorldGraphData.nodes}
-      handlePropagation={handleRipDsnPropagation}
-      propagationStatus={ripDsnPropagationStatus}
-    />
-    {ripDsnPropagationResult && (
-      <RipDsnPropagationResult
-        propagationLog={ripDsnPropagationLog}
-        selectedUser={selectedUser}
-        onClose={() => {
-          setRipDsnPropagationResult(null);
-          setRipDsnPropagationLog([]);
-          setRipDsnHighlightedLinks([]);
-        }}
-      />
-    )}
-    <div className="graph-container">
-      <RipDsnGraph3D
-        data={realWorldGraphData}
-        onNodeInfo={handleNodeClick}
-        highlightId={highlightId}
-        highlightedLinks={ripDsnHighlightedLinks}
-        onResetView={handleResetView}
-      />
-    </div>
-  </>
-)}
-      {viewMode === 'simulation' && (
-        <>
-          <Navbar
-            csvFile={csvFile}
-            setCsvFile={setCsvFile}
-            xlsxFile={xlsxFile}
-            setXlsxFile={setXlsxFile}
-            networkList={networkList}
-            selectedNet={selectedNet}
-            setSelectedNet={setSelectedNet}
-          />
-          <SearchPanel
-            searchText={searchText}
-            setSearchText={setSearchText}
-            highlightId={highlightId}
-            setHighlightId={setHighlightId}
-            status={status}
-            selectedNode={selectedNode}
-            handleResetView={handleResetView}
-          />
-          <div className="propagation-button-container">
-            <button
-              onClick={() => setIsPropagationModalOpen(true)}
-              className="button"
-            >
-              Iniciar Propagación
-            </button>
-          </div>
-          <div className="legend-container">
-            <h4 className="legend-title">Leyenda de Colores</h4>
-            <ul className="legend-list">
-              <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
-              <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
-              <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
-              <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
-              <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
-              <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
-              <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
-              <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
-            </ul>
-          </div>
-          <PropagationModal
-            isOpen={isPropagationModalOpen}
-            setIsOpen={setIsPropagationModalOpen}
-            selectedUser={selectedUser}
-            setSelectedUser={setSelectedUser}
-            message={message}
-            setMessage={setMessage}
-            nodes={graphData.nodes}
-            handlePropagation={handlePropagation}
-            propagationStatus={propagationStatus}
-          />
-          <NodeModal
-            isOpen={isNodeModalOpen}
-            setIsOpen={setIsNodeModalOpen}
-            modalNode={modalNode}
-            propagationLog={propagationLog}
-          />
-          <PropagationResult
-            propagationLog={propagationLog}
-            selectedUser={selectedUser}
-            onClose={() => {
-              setPropagationResult(null);
-              setPropagationLog([]);
-              setHighlightedLinks([]);
-            }}
-          />
-          <div className="graph-container">
-            <Graph3D
-              data={graphData}
-              onNodeInfo={handleNodeClick}
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
               highlightId={highlightId}
-              highlightedLinks={highlightedLinks}
-              onResetView={handleResetView}
+              setHighlightId={setHighlightId}
+              status={realWorldStatus}
+              selectedNode={realWorldGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
             />
-          </div>
-        </>
-      )}
-    </div>
+            <div className="graph-container">
+              <RealWorldGraph3D
+                data={realWorldGraphData}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'rip-dsn' && (
+          <>
+            <RealWorldNavbar
+              nodesCsvFile={nodesCsvFile}
+              setNodesCsvFile={setNodesCsvFile}
+              linksCsvFile={linksCsvFile}
+              setLinksCsvFile={setLinksCsvFile}
+              networkList={realWorldNetworkList}
+              selectedNet={realWorldSelectedNet}
+              setSelectedNet={setRealWorldSelectedNet}
+              viewMode={viewMode}
+              setCsvFile={setCsvFile} // Pass setCsvFile to synchronize
+            />
+            <div className="propagation-button-container">
+              <button
+                onClick={() => setIsPropagationModalOpen(true)}
+                className="button"
+              >
+                Iniciar Propagación
+              </button>
+            </div>
+            <PropagationModal
+              isOpen={isPropagationModalOpen}
+              setIsOpen={setIsPropagationModalOpen}
+              selectedUser={selectedUser}
+              setSelectedUser={setSelectedUser}
+              message={message}
+              setMessage={setMessage}
+              nodes={realWorldGraphData.nodes}
+              handlePropagation={handleRipDsnPropagation}
+              propagationStatus={ripDsnPropagationStatus}
+            />
+            {ripDsnPropagationResult && (
+              <RipDsnPropagationResult
+                propagationLog={ripDsnPropagationLog}
+                selectedUser={selectedUser}
+                onClose={() => {
+                  setRipDsnPropagationResult(null);
+                  setRipDsnPropagationLog([]);
+                  setRipDsnHighlightedLinks([]);
+                }}
+              />
+            )}
+            <div className="graph-container">
+              <RipDsnGraph3D
+                data={realWorldGraphData}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={ripDsnHighlightedLinks}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'simulation' && (
+          <>
+            <Navbar
+              csvFile={csvFile}
+              setCsvFile={setCsvFile}
+              xlsxFile={xlsxFile}
+              setXlsxFile={setXlsxFile}
+              networkList={networkList}
+              selectedNet={selectedNet}
+              setSelectedNet={setSelectedNet}
+            />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={status}
+              selectedNode={selectedNode}
+              handleResetView={handleResetView}
+            />
+            <div className="propagation-button-container">
+              <button
+                onClick={() => setIsPropagationModalOpen(true)}
+                className="button"
+              >
+                Iniciar Propagación
+              </button>
+            </div>
+            <div className="legend-container">
+              <h4 className="legend-title">Leyenda de Colores</h4>
+              <ul className="legend-list">
+                <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
+                <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
+                <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
+                <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
+                <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
+                <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
+                <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
+                <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
+              </ul>
+            </div>
+            <PropagationModal
+              isOpen={isPropagationModalOpen}
+              setIsOpen={setIsPropagationModalOpen}
+              selectedUser={selectedUser}
+              setSelectedUser={setSelectedUser}
+              message={message}
+              setMessage={setMessage}
+              nodes={graphData.nodes}
+              handlePropagation={handlePropagation}
+              propagationStatus={propagationStatus}
+            />
+            <NodeModal
+              isOpen={isNodeModalOpen}
+              setIsOpen={setIsNodeModalOpen}
+              modalNode={modalNode}
+              propagationLog={propagationLog}
+            />
+            <PropagationResult
+              propagationLog={propagationLog}
+              selectedUser={selectedUser}
+              onClose={() => {
+                setPropagationResult(null);
+                setPropagationLog([]);
+                setHighlightedLinks([]);
+              }}
+            />
+            <div className="graph-container">
+              <Graph3D
+                data={graphData}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={highlightedLinks}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

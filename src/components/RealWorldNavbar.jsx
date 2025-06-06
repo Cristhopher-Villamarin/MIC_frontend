@@ -1,8 +1,8 @@
+// src/components/RealWorldNavbar.jsx
 import PropTypes from 'prop-types';
 import './Navbar.css';
 
-export default function RealWorldNavbar({ nodesCsvFile, setNodesCsvFile, linksCsvFile, setLinksCsvFile, networkList, selectedNet, setSelectedNet, viewMode }) {
-  // Determinar el título basado en viewMode
+export default function RealWorldNavbar({ nodesCsvFile, setNodesCsvFile, linksCsvFile, setLinksCsvFile, networkList, selectedNet, setSelectedNet, viewMode, setCsvFile }) {
   const getNavbarTitle = () => {
     switch (viewMode) {
       case 'real-world':
@@ -14,6 +14,13 @@ export default function RealWorldNavbar({ nodesCsvFile, setNodesCsvFile, linksCs
       default:
         return 'Análisis de Redes';
     }
+  };
+
+  // Handle file changes and synchronize with csvFile
+  const handleLinksCsvChange = (e) => {
+    const file = e.target.files?.[0];
+    setLinksCsvFile(file);
+    setCsvFile(file); // Update csvFile in App.jsx
   };
 
   return (
@@ -38,7 +45,7 @@ export default function RealWorldNavbar({ nodesCsvFile, setNodesCsvFile, linksCs
                 id="links-file"
                 type="file"
                 accept=".csv"
-                onChange={e => setLinksCsvFile(e.target.files?.[0])}
+                onChange={handleLinksCsvChange}
                 className="navbar-input"
               />
             </div>
@@ -78,4 +85,5 @@ RealWorldNavbar.propTypes = {
   selectedNet: PropTypes.string.isRequired,
   setSelectedNet: PropTypes.func.isRequired,
   viewMode: PropTypes.string.isRequired,
+  setCsvFile: PropTypes.func.isRequired, // Added to sync csvFile
 };
