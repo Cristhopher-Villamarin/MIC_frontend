@@ -121,7 +121,7 @@
 }
 
 .step-message.action-modify {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #2563eb 100%);
   color: white;
   padding: 16px;
   border-radius: 12px;
@@ -129,7 +129,7 @@
 }
 
 .step-message.action-forward {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #2563eb 100%);
   color: white;
   padding: 16px;
   border-radius: 12px;
@@ -245,11 +245,11 @@
 }
 
 .modify-badge {
-  color: #d97706;
+  color: #2563eb;
 }
 
 .forward-badge {
-  color: #059669;
+  color: #2563eb;
 }
 
 .send-badge {

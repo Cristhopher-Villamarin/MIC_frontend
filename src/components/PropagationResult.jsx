@@ -241,10 +241,10 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
                 </div>
                 <p className="step-description">
                   {entry.action === 'modificar'
-                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje <span className="action-badge modify-badge">MODIFICADO</span> al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
+                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
                     : entry.action === 'reenviar'
-                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> <span className="action-badge forward-badge">REENVÍA</span> el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
-                    : <>El nodo <span className="node-badge sender-node">{entry.sender}</span> <span className="action-badge send-badge">ENVÍA</span> el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>}
+                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
+                    : <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>}
                 </p>
                 {formatVector(entry.vector_sent)}
               </div>
@@ -255,7 +255,7 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
       }, baseDelay + subStepDelay);
       timeouts.push(sentTimeout);
 
-      // Paso 3: Actualización (cambio ascend
+      // Paso 3: Actualización (cambio ascendente)
       const updateTimeout = setTimeout(() => {
         setDisplayedSteps(prev => [
           ...prev,
@@ -272,7 +272,18 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
                 <div className="color-change-notice">
                   <p>🎨 El color del nodo cambia para reflejar su nuevo estado emocional</p>
                 </div>
+                <h5 className="vector-title">Estado emocional de entrada (antes)</h5>
+                {formatVector(entry.state_in_before)}
+                 <h5 className="vector-title">Estado emocional de entrada (después)</h5>
                 {formatVector(entry.state_in_after)}
+                {entry.state_out_before && entry.state_out_after && (
+                  <>
+                    <h5 className="vector-title">Estado emocional de salida (antes)</h5>
+                    {formatVector(entry.state_out_before)}
+                    <h5 className="vector-title">Estado emocional de salida (después)</h5>
+                    {formatVector(entry.state_out_after)}
+                  </>
+                )}
               </div>
             ),
           }
