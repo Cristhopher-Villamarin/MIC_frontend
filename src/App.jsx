@@ -224,10 +224,10 @@ export default function App() {
             fear: latestState[2] ?? 'N/A',
             anger: latestState[3] ?? 'N/A',
             anticipation: latestState[4] ?? 'N/A',
-            weight: latestState[5] ?? 'N/A',
+            trust: latestState[5] ?? 'N/A',
             surprise: latestState[6] ?? 'N/A',
             sadness: latestState[7] ?? 'N/A',
-            height: latestState[8] ?? 'N/A',
+            disgust: latestState[8] ?? 'N/A',
             joy: latestState[9] ?? 'N/A',
           }
         : {
