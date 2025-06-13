@@ -21,14 +21,14 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
 
   // Colores inspirados en Intensamente e Intensamente 2
   const emotionColors = {
-    in_fear: '#A100A1',
-    in_anger: '#FF0000',
-    in_anticip: '#FF6200',
-    in_trust: '#00CED1',
-    in_surprise: '#FF69B4',
-    in_sadness: '#4682B4',
-    in_disgust: '#00FF00',
-    in_joy: '#FFFF00',
+    fear: '#A100A1',
+    anger: '#FF0000',
+    anticip: '#FF6200',
+    trust: '#00CED1',
+    surprise: '#FF69B4',
+    sadness: '#4682B4',
+    disgust: '#00FF00',
+    joy: '#FFFF00',
   };
 
   // Color gris por defecto para nodos sin atributos emocionales
@@ -179,24 +179,24 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   // Obtener color del nodo (memoizado por performance)
   const getNodeColor = useCallback((node) => {
     const emotions = [
-      node.in_fear || 0,
-      node.in_anger || 0,
-      node.in_anticip || 0,
-      node.in_trust || 0,
-      node.in_surprise || 0,
-      node.in_sadness || 0,
-      node.in_disgust || 0,
-      node.in_joy || 0,
+      ((node.in_fear || 0) + (node.out_fear || 0)) / 2,
+      ((node.in_anger || 0) + (node.out_anger || 0)) / 2,
+      ((node.in_anticip || 0) + (node.out_anticip || 0)) / 2,
+      ((node.in_trust || 0) + (node.out_trust || 0)) / 2,
+      ((node.in_surprise || 0) + (node.out_surprise || 0)) / 2,
+      ((node.in_sadness || 0) + (node.out_sadness || 0)) / 2,
+      ((node.in_disgust || 0) + (node.out_disgust || 0)) / 2,
+      ((node.in_joy || 0) + (node.out_joy || 0)) / 2,
     ];
     const emotionKeys = [
-      'in_fear',
-      'in_anger',
-      'in_anticip',
-      'in_trust',
-      'in_surprise',
-      'in_sadness',
-      'in_disgust',
-      'in_joy',
+      'fear',
+      'anger',
+      'anticip',
+      'trust',
+      'surprise',
+      'sadness',
+      'disgust',
+      'joy',
     ];
 
     // Si todas las emociones son 0 o no definidas, usar color gris
@@ -404,6 +404,14 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
         in_sadness: node.in_sadness,
         in_disgust: node.in_disgust,
         in_joy: node.in_joy,
+        out_fear: node.out_fear,
+        out_anger: node.out_anger,
+        out_anticip: node.out_anticip,
+        out_trust: node.out_trust,
+        out_surprise: node.out_surprise,
+        out_sadness: node.out_sadness,
+        out_disgust: node.out_disgust,
+        out_joy: node.out_joy,
       };
     });
 
@@ -465,6 +473,14 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
               'in_sadness',
               'in_disgust',
               'in_joy',
+              'out_fear',
+              'out_anger',
+              'out_anticip',
+              'out_trust',
+              'out_surprise',
+              'out_sadness',
+              'out_disgust',
+              'out_joy',
             ];
             emotionKeys.forEach((key, idx) => {
               if (highlight.vector[idx] !== undefined) {
