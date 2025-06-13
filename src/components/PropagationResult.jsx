@@ -228,7 +228,7 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
       }, baseDelay);
       timeouts.push(relationshipTimeout);
 
-      // Paso 2: Envío (línea verde)
+      // Paso 2: Envío (línea verded)
       const sentTimeout = setTimeout(() => {
         setDisplayedSteps(prev => [
           ...prev,
