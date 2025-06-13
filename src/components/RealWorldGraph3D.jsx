@@ -2,11 +2,14 @@ import { useEffect, useRef, useState, memo } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
 import SpriteText from 'three-spritetext';
+import CentralityModal from './CentralityModal';
 
-function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
+function RealWorldGraph3D({ data, nodesWithCentrality, onNodeInfo, highlightId, onResetView }) {
   const fgRef = useRef();
   const isTransitioning = useRef(false);
-  const [tempHighlightId, setTempHighlightId] = useState(''); // Estado para resaltado temporal
+  const [tempHighlightId, setTempHighlightId] = useState('');
+  const [isCentralityModalOpen, setIsCentralityModalOpen] = useState(false);
+  const [modalNode, setModalNode] = useState(null);
 
   // Colores
   const defaultNodeColor = '#7b8a84'; // Gris predeterminado
@@ -17,7 +20,7 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
     if (!isTransitioning.current && fgRef.current) {
       setTimeout(() => {
         if (fgRef.current) {
-          fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
+          fgRef.current.zoomToFit(400, 0);
         }
       }, 200);
     }
@@ -59,7 +62,6 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
 
     setTimeout(focusNode, 100);
 
-    // Limpieza del temporizador al desmontar o cambiar highlightId
     return () => clearTimeout(timer);
   }, [highlightId, data.nodes]);
 
@@ -67,8 +69,8 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
   useEffect(() => {
     if (!highlightId && fgRef.current && !isTransitioning.current) {
       isTransitioning.current = true;
-      fgRef.current.zoomToFit(400, 0); // Ajustado padding a 0 para centrar mejor
-      setTempHighlightId(''); // Limpiar resaltado al resetear
+      fgRef.current.zoomToFit(400, 0);
+      setTempHighlightId('');
       setTimeout(() => {
         isTransitioning.current = false;
       }, 500);
@@ -102,51 +104,64 @@ function RealWorldGraph3D({ data, onNodeInfo, highlightId, onResetView }) {
     };
   };
 
+  // Manejar clic en nodo
+  const handleNodeClick = (node) => {
+    const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
+    setModalNode(nodeWithCentrality);
+    setIsCentralityModalOpen(true);
+    onNodeInfo(node);
+  };
+
   return (
-    <ForceGraph3D
-      ref={fgRef}
-      graphData={data}
-      backgroundColor="#111"
-      linkOpacity={0.4}
-      linkWidth={0.8}
-      linkColor="#828282"
-      linkDirectionalArrowLength={5}
-      linkDirectionalArrowRelPos={1}
-      linkDirectionalArrowColor="#FFFFFF"
-      linkDirectionalArrowResolution={8}
-      d3VelocityDecay={0.3}
-      warmupTicks={100}
-      cooldownTicks={100}
-      onNodeClick={onNodeInfo}
-      nodeThreeObject={node => {
-        const group = new THREE.Group();
+    <>
+      <ForceGraph3D
+        ref={fgRef}
+        graphData={data}
+        backgroundColor="#111"
+        linkOpacity={0.4}
+        linkWidth={0.8}
+        linkColor="#828282"
+        linkDirectionalArrowLength={5}
+        linkDirectionalArrowRelPos={1}
+        linkDirectionalArrowColor="#FFFFFF"
+        linkDirectionalArrowResolution={8}
+        d3VelocityDecay={0.3}
+        warmupTicks={100}
+        cooldownTicks={100}
+        onNodeClick={handleNodeClick}
+        nodeThreeObject={node => {
+          const group = new THREE.Group();
 
-        const material = new THREE.MeshBasicMaterial({
-          color: node.id === tempHighlightId ? highlightNodeColor : defaultNodeColor,
-          transparent: true,
-          opacity: 1,
-         
+          const material = new THREE.MeshBasicMaterial({
+            color: node.id === tempHighlightId ? highlightNodeColor : defaultNodeColor,
+            transparent: true,
+            opacity: 1,
+          });
 
-        });
+          const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(6, 16, 16),
+            material
+          );
+          group.add(sphere);
 
-        const sphere = new THREE.Mesh(
-          new THREE.SphereGeometry(6, 16, 16),
-          material
-        );
-        group.add(sphere);
+          const label = new SpriteText(String(node.id));
+          label.color = 'white';
+          label.textHeight = 3;
+          label.material.depthWrite = false;
+          label.material.depthTest = false;
+          group.add(label);
 
-        const label = new SpriteText(String(node.id));
-        label.color = 'white';
-        label.textHeight = 3;
-        label.material.depthWrite = false;
-        label.material.depthTest = false;
-        group.add(label);
-
-        return group;
-      }}
-      width={window.innerWidth - 250} // Ajustado para ocupar el espacio disponible
-      height={window.innerHeight - 120} // Ajustado según la altura del navbar
-    />
+          return group;
+        }}
+        width={window.innerWidth - 250}
+        height={window.innerHeight - 120}
+      />
+      <CentralityModal
+        isOpen={isCentralityModalOpen}
+        setIsOpen={setIsCentralityModalOpen}
+        modalNode={modalNode}
+      />
+    </>
   );
 }
 

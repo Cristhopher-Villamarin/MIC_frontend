@@ -16,8 +16,9 @@ import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/load
 import axios from 'axios';
 import './App.css';
 import { calculateCentralityMetrics } from './utils/centrality';
+
 export default function App() {
-  // Existing states (unchanged)
+  // Existing states
   const [csvFile, setCsvFile] = useState(null);
   const [xlsxFile, setXlsxFile] = useState(null);
   const [linksAll, setLinksAll] = useState([]);
@@ -51,15 +52,17 @@ export default function App() {
   const [ripDsnHighlightedLinks, setRipDsnHighlightedLinks] = useState([]);
   const [ripDsnPropagationLog, setRipDsnPropagationLog] = useState([]);
   const [viewMode, setViewMode] = useState('welcome');
-  const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);    
+  const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);
   const [nodesWithCentrality, setNodesWithCentrality] = useState([]);
+  const [realWorldNodesWithCentrality, setRealWorldNodesWithCentrality] = useState([]);
+
   // Emotion keys to map node attributes to vector
   const emotionKeys = [
     'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
   ];
 
-  // Modified handleMenuSelect (unchanged)
+  // Modified handleMenuSelect
   const handleMenuSelect = (key) => {
     console.log(`Opción seleccionada: ${key}`);
     if (key === 'real-world') {
@@ -124,7 +127,7 @@ export default function App() {
     setIsPropagationModalOpen(false);
   };
 
-  // Existing useEffect hooks (unchanged)
+  // Existing useEffect hooks
   useEffect(() => {
     async function loadCsv() {
       if (!csvFile) return;
@@ -152,27 +155,27 @@ export default function App() {
     loadXlsx();
   }, [xlsxFile]);
 
-useEffect(() => {
-  if (!selectedNet || linksAll.length === 0) {
-    setGraphData({ nodes: [], links: [] });
-    setNodesWithCentrality([]);
-    return;
-  }
-  setStatus('Filtrando y construyendo la red…');
-  const linksFiltered = linksAll.filter(
-    l => String(l.network_id ?? l.networkId) === selectedNet
-  );
-  const data = buildGraph(linksFiltered, attrsAll.length > 0 ? attrsAll : []);
-  setGraphData(data);
-  // Calcular métricas de centralidad
-  const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
-  setNodesWithCentrality(nodesWithMetrics);
-  setStatus(
-    `Red ${selectedNet}: ${data.nodes.length} nodos · ${data.links.length} enlaces`
-  );
-  setSelectedUser('');
-  setHighlightId('');
-}, [selectedNet, linksAll, attrsAll]);
+  useEffect(() => {
+    if (!selectedNet || linksAll.length === 0) {
+      setGraphData({ nodes: [], links: [] });
+      setNodesWithCentrality([]);
+      return;
+    }
+    setStatus('Filtrando y construyendo la red…');
+    const linksFiltered = linksAll.filter(
+      l => String(l.network_id ?? l.networkId) === selectedNet
+    );
+    const data = buildGraph(linksFiltered, attrsAll.length > 0 ? attrsAll : []);
+    setGraphData(data);
+    // Calcular métricas de centralidad
+    const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+    setNodesWithCentrality(nodesWithMetrics);
+    setStatus(
+      `Red ${selectedNet}: ${data.nodes.length} nodos · ${data.links.length} enlaces`
+    );
+    setSelectedUser('');
+    setHighlightId('');
+  }, [selectedNet, linksAll, attrsAll]);
 
   useEffect(() => {
     async function loadNodesCsv() {
@@ -202,6 +205,8 @@ useEffect(() => {
 
   useEffect(() => {
     if (!realWorldSelectedNet || realWorldNodesAll.length === 0 || realWorldLinksAll.length === 0) {
+      setRealWorldGraphData({ nodes: [], links: [] });
+      setRealWorldNodesWithCentrality([]);
       return;
     }
     setRealWorldStatus('Filtrando y construyendo la red…');
@@ -209,72 +214,77 @@ useEffect(() => {
     const nodesFiltered = realWorldNodesAll.filter(n => String(n.network_id) === realWorldSelectedNet);
     const data = buildRealWorldGraph(linksFiltered, nodesFiltered);
     setRealWorldGraphData(data);
+    // Calcular métricas de centralidad
+    const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+    setRealWorldNodesWithCentrality(nodesWithMetrics);
     setRealWorldStatus(
       `Red ${realWorldSelectedNet}: ${data.nodes.length} nodos · ${data.links.length} enlaces`
     );
   }, [realWorldSelectedNet, realWorldNodesAll, realWorldLinksAll]);
 
-  // Handle node clicks (unchanged)
-const handleNodeClick = (node) => {
-  if (viewMode === 'simulation') {
-    const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
-    const nodeHistory = propagationLog
-      .filter(entry => entry.receiver === node.id);
-    const sort = nodeHistory.sort((a, b) => b.t - a.t);
-    const latestState = nodeHistory.length > 0 ? sort[0].state_in_after : null;
-    const emotional_vector_in = latestState
-      ? {
-          subjectivity: latestState[0] ?? 'N/A',
-          polarity: latestState[1] ?? 'N/A',
-          fear: latestState[2] ?? 'N/A',
-          anger: latestState[3] ?? 'N/A',
-          anticipation: latestState[4] ?? 'N/A',
-          trust: latestState[5] ?? 'N/A',
-          surprise: latestState[6] ?? 'N/A',
-          sadness: latestState[7] ?? 'N/A',
-          disgust: latestState[8] ?? 'N/A',
-          joy: latestState[9] ?? 'N/A',
-        }
-      : {
-          subjectivity: node.in_subjectivity ?? 'N/A',
-          polarity: node.in_polarity ?? 'N/A',
-          fear: node.in_fear ?? 'N/A',
-          anger: node.in_anger ?? 'N/A',
-          anticipation: node.in_anticip ?? 'N/A',
-          trust: node.in_trust ?? 'N/A',
-          surprise: node.in_surprise ?? 'N/A',
-          sadness: node.in_sadness ?? 'N/A',
-          disgust: node.in_disgust ?? 'N/A',
-          joy: node.in_joy ?? 'N/A',
-        };
-    const emotional_vector_out = {
-      subjectivity: node.out_subjectivity ?? 'N/A',
-      polarity: node.out_polarity ?? 'N/A',
-      fear: node.out_fear ?? 'N/A',
-      anger: node.out_anger ?? 'N/A',
-      anticipation: node.out_anticip ?? 'N/A',
-      trust: node.out_trust ?? 'N/A',
-      surprise: node.out_surprise ?? 'N/A',
-      sadness: node.out_sadness ?? 'N/A',
-      disgust: node.out_disgust ?? 'N/A',
-      joy: node.out_joy ?? 'N/A',
-    };
-    const nodeWithVectors = {
-      ...nodeWithCentrality,
-      emotional_vector_in,
-      emotional_vector_out,
-    };
-    setModalNode(nodeWithVectors);
-    setIsNodeModalOpen(true);
-    setSelectedNode(node);
-  } else if (viewMode === 'real-world') {
-    setSelectedNode(node);
-  } else if (viewMode === 'rip-dsn') {
-    setSelectedUser(node.id);
-  }
-};
+  // Handle node clicks
+  const handleNodeClick = (node) => {
+    if (viewMode === 'simulation') {
+      const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
+      const nodeHistory = propagationLog
+        .filter(entry => entry.receiver === node.id);
+      const sort = nodeHistory.sort((a, b) => b.t - a.t);
+      const latestState = nodeHistory.length > 0 ? sort[0].state_in_after : null;
+      const emotional_vector_in = latestState
+        ? {
+            subjectivity: latestState[0] ?? 'N/A',
+            polarity: latestState[1] ?? 'N/A',
+            fear: latestState[2] ?? 'N/A',
+            anger: latestState[3] ?? 'N/A',
+            anticipation: latestState[4] ?? 'N/A',
+            trust: latestState[5] ?? 'N/A',
+            surprise: latestState[6] ?? 'N/A',
+            sadness: latestState[7] ?? 'N/A',
+            disgust: latestState[8] ?? 'N/A',
+            joy: latestState[9] ?? 'N/A',
+          }
+        : {
+            subjectivity: node.in_subjectivity ?? 'N/A',
+            polarity: node.in_polarity ?? 'N/A',
+            fear: node.in_fear ?? 'N/A',
+            anger: node.in_anger ?? 'N/A',
+            anticipation: node.in_anticip ?? 'N/A',
+            trust: node.in_trust ?? 'N/A',
+            surprise: node.in_surprise ?? 'N/A',
+            sadness: node.in_sadness ?? 'N/A',
+            disgust: node.in_disgust ?? 'N/A',
+            joy: node.in_joy ?? 'N/A',
+          };
+      const emotional_vector_out = {
+        subjectivity: node.out_subjectivity ?? 'N/A',
+        polarity: node.out_polarity ?? 'N/A',
+        fear: node.out_fear ?? 'N/A',
+        anger: node.out_anger ?? 'N/A',
+        anticipation: node.out_anticip ?? 'N/A',
+        trust: node.out_trust ?? 'N/A',
+        surprise: node.out_surprise ?? 'N/A',
+        sadness: node.out_sadness ?? 'N/A',
+        disgust: node.out_disgust ?? 'N/A',
+        joy: node.out_joy ?? 'N/A',
+      };
+      const nodeWithVectors = {
+        ...nodeWithCentrality,
+        emotional_vector_in,
+        emotional_vector_out,
+      };
+      setModalNode(nodeWithVectors);
+      setIsNodeModalOpen(true);
+      setSelectedNode(node);
+    } else if (viewMode === 'real-world') {
+      const nodeWithCentrality = realWorldNodesWithCentrality.find(n => n.id === node.id) || node;
+      setModalNode(nodeWithCentrality);
+      setSelectedNode(nodeWithCentrality);
+    } else if (viewMode === 'rip-dsn') {
+      setSelectedUser(node.id);
+    }
+  };
 
-  // Handle propagation (unchanged)
+  // Handle propagation
   const handlePropagation = async () => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
@@ -322,7 +332,7 @@ const handleNodeClick = (node) => {
     }
   };
 
-  // Handle RIP-DSN propagation (unchanged)
+  // Handle RIP-DSN propagation
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
       setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
@@ -367,7 +377,7 @@ const handleNodeClick = (node) => {
     }
   };
 
-  // Reset view (unchanged)
+  // Reset view
   const handleResetView = () => {
     setHighlightId('');
     setSearchText('');
@@ -480,6 +490,7 @@ const handleNodeClick = (node) => {
             <div className="graph-container">
               <RealWorldGraph3D
                 data={realWorldGraphData}
+                nodesWithCentrality={realWorldNodesWithCentrality}
                 onNodeInfo={handleNodeClick}
                 highlightId={highlightId}
                 onResetView={handleResetView}
@@ -551,7 +562,6 @@ const handleNodeClick = (node) => {
               selectedNet={selectedNet}
               setSelectedNet={setSelectedNet}
             />
-
             <div className="propagation-button-container">
               <button
                 onClick={() => setIsPropagationModalOpen(true)}
@@ -559,11 +569,8 @@ const handleNodeClick = (node) => {
               >
                 Iniciar Propagación
               </button>
-            
-
-           
             </div>
-               <div className="nodes-button-container">
+            <div className="nodes-button-container">
               <button
                 onClick={() => setIsNodeStatesModalOpen(true)}
                 className={propagationLog.length ? 'button' : 'button-disabled'}
@@ -571,7 +578,7 @@ const handleNodeClick = (node) => {
               >
                 Ver Estados de Nodos
               </button>
-              </div>
+            </div>
             <div className="legend-container">
               <h4 className="legend-title">Leyenda de Colores</h4>
               <ul className="legend-list">
