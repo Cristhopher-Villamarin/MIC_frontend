@@ -268,11 +268,9 @@ const handleNodeClick = (node) => {
     setIsNodeModalOpen(true);
     setSelectedNode(node);
   } else if (viewMode === 'real-world') {
-    setHighlightId(node.id);
-    setSearchText(node.id);
+    setSelectedNode(node);
   } else if (viewMode === 'rip-dsn') {
     setSelectedUser(node.id);
-    setHighlightId(node.id);
   }
 };
 
