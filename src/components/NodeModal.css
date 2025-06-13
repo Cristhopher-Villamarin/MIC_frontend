@@ -180,3 +180,35 @@
 .modal-close-button:active {
   transform: translateY(0);
 }
+
+.modal-centrality-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 0.95rem;
+  color: #ffffff;
+  background: #2d3748; /* Dark gray for tables */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.modal-centrality-table th,
+.modal-centrality-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #4b5563;
+}
+
+.modal-centrality-table th {
+  background: #1e293b; /* Slightly darker header */
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.modal-centrality-table tr:last-child td {
+  border-bottom: none;
+}
+
+.modal-centrality-table tr:hover {
+  background: #374151; /* Subtle hover effect */
+}

@@ -15,7 +15,7 @@ import Sidebar from './components/Sidebar';
 import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/loadFiles';
 import axios from 'axios';
 import './App.css';
-
+import { calculateCentralityMetrics } from './utils/centrality';
 export default function App() {
   // Existing states (unchanged)
   const [csvFile, setCsvFile] = useState(null);
@@ -51,8 +51,8 @@ export default function App() {
   const [ripDsnHighlightedLinks, setRipDsnHighlightedLinks] = useState([]);
   const [ripDsnPropagationLog, setRipDsnPropagationLog] = useState([]);
   const [viewMode, setViewMode] = useState('welcome');
-  const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);
-
+  const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);    
+  const [nodesWithCentrality, setNodesWithCentrality] = useState([]);
   // Emotion keys to map node attributes to vector
   const emotionKeys = [
     'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
@@ -152,23 +152,27 @@ export default function App() {
     loadXlsx();
   }, [xlsxFile]);
 
-  useEffect(() => {
-    if (!selectedNet || linksAll.length === 0) {
-      setGraphData({ nodes: [], links: [] });
-      return;
-    }
-    setStatus('Filtrando y construyendo la red…');
-    const linksFiltered = linksAll.filter(
-      l => String(l.network_id ?? l.networkId) === selectedNet
-    );
-    const data = buildGraph(linksFiltered, attrsAll.length > 0 ? attrsAll : []);
-    setGraphData(data);
-    setStatus(
-      `Red ${selectedNet}: ${data.nodes.length} nodos · ${data.links.length} enlaces`
-    );
-    setSelectedUser('');
-    setHighlightId('');
-  }, [selectedNet, linksAll, attrsAll]);
+useEffect(() => {
+  if (!selectedNet || linksAll.length === 0) {
+    setGraphData({ nodes: [], links: [] });
+    setNodesWithCentrality([]);
+    return;
+  }
+  setStatus('Filtrando y construyendo la red…');
+  const linksFiltered = linksAll.filter(
+    l => String(l.network_id ?? l.networkId) === selectedNet
+  );
+  const data = buildGraph(linksFiltered, attrsAll.length > 0 ? attrsAll : []);
+  setGraphData(data);
+  // Calcular métricas de centralidad
+  const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+  setNodesWithCentrality(nodesWithMetrics);
+  setStatus(
+    `Red ${selectedNet}: ${data.nodes.length} nodos · ${data.links.length} enlaces`
+  );
+  setSelectedUser('');
+  setHighlightId('');
+}, [selectedNet, linksAll, attrsAll]);
 
   useEffect(() => {
     async function loadNodesCsv() {
@@ -211,65 +215,66 @@ export default function App() {
   }, [realWorldSelectedNet, realWorldNodesAll, realWorldLinksAll]);
 
   // Handle node clicks (unchanged)
-  const handleNodeClick = (node) => {
-    if (viewMode === 'simulation') {
-      const nodeHistory = propagationLog
-        .filter(entry => entry.receiver === node.id)
-        const sort = nodeHistory.sort((a, b) => b.t - b.t);
-      const latestState = nodeHistory.length > 0 ? sort[0].state_in_after : null;
-      const emotional_vector_in = latestState
-        ? {
-            subjectivity: latestState[0] ?? 'N/A',
-            polarity: latestState[1] ?? 'N/A',
-            fear: latestState[2] ?? 'N/A',
-            anger: latestState[3] ?? 'N/A',
-            anticipation: latestState[4] ?? 'N/A',
-            trust: latestState[5] ?? 'N/A',
-            surprise: latestState[6] ?? 'N/A',
-            sadness: latestState[7] ?? 'N/A',
-            disgust: latestState[8] ?? 'N/A',
-            joy: latestState[9] ?? 'N/A',
-          }
-        : {
-            subjectivity: node.in_subjectivity ?? 'N/A',
-            polarity: node.in_polarity ?? 'N/A',
-            fear: node.in_fear ?? 'N/A',
-            anger: node.in_anger ?? 'N/A',
-            anticipation: node.in_anticip ?? 'N/A',
-            trust: node.in_trust ?? 'N/A',
-            surprise: node.in_surprise ?? 'N/A',
-            sadness: node.in_sadness ?? 'N/A',
-            disgust: node.in_disgust ?? 'N/A',
-            joy: node.in_joy ?? 'N/A',
-          };
-      const emotional_vector_out = {
-        subjectivity: node.out_subjectivity ?? 'N/A',
-        polarity: node.out_polarity ?? 'N/A',
-        fear: node.out_fear ?? 'N/A',
-        anger: node.out_anger ?? 'N/A',
-        anticipation: node.out_anticip ?? 'N/A',
-        trust: node.out_trust ?? 'N/A',
-        surprise: node.out_surprise ?? 'N/A',
-        sadness: node.out_sadness ?? 'N/A',
-        disgust: node.out_disgust ?? 'N/A',
-        joy: node.out_joy ?? 'N/A',
-      };
-      const nodeWithVectors = {
-        ...node,
-        emotional_vector_in,
-        emotional_vector_out,
-      };
-      setModalNode(nodeWithVectors);
-      setIsNodeModalOpen(true);
-      setSelectedNode(node);
-    } else if (viewMode === 'real-world') {
-      setHighlightId(node.id);
-      setSearchText(node.id);
-    } else if (viewMode === 'rip-dsn') {
-      setSelectedUser(node.id);
-      setHighlightId(node.id);
-    }
-  };
+const handleNodeClick = (node) => {
+  if (viewMode === 'simulation') {
+    const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
+    const nodeHistory = propagationLog
+      .filter(entry => entry.receiver === node.id);
+    const sort = nodeHistory.sort((a, b) => b.t - a.t);
+    const latestState = nodeHistory.length > 0 ? sort[0].state_in_after : null;
+    const emotional_vector_in = latestState
+      ? {
+          subjectivity: latestState[0] ?? 'N/A',
+          polarity: latestState[1] ?? 'N/A',
+          fear: latestState[2] ?? 'N/A',
+          anger: latestState[3] ?? 'N/A',
+          anticipation: latestState[4] ?? 'N/A',
+          trust: latestState[5] ?? 'N/A',
+          surprise: latestState[6] ?? 'N/A',
+          sadness: latestState[7] ?? 'N/A',
+          disgust: latestState[8] ?? 'N/A',
+          joy: latestState[9] ?? 'N/A',
+        }
+      : {
+          subjectivity: node.in_subjectivity ?? 'N/A',
+          polarity: node.in_polarity ?? 'N/A',
+          fear: node.in_fear ?? 'N/A',
+          anger: node.in_anger ?? 'N/A',
+          anticipation: node.in_anticip ?? 'N/A',
+          trust: node.in_trust ?? 'N/A',
+          surprise: node.in_surprise ?? 'N/A',
+          sadness: node.in_sadness ?? 'N/A',
+          disgust: node.in_disgust ?? 'N/A',
+          joy: node.in_joy ?? 'N/A',
+        };
+    const emotional_vector_out = {
+      subjectivity: node.out_subjectivity ?? 'N/A',
+      polarity: node.out_polarity ?? 'N/A',
+      fear: node.out_fear ?? 'N/A',
+      anger: node.out_anger ?? 'N/A',
+      anticipation: node.out_anticip ?? 'N/A',
+      trust: node.out_trust ?? 'N/A',
+      surprise: node.out_surprise ?? 'N/A',
+      sadness: node.out_sadness ?? 'N/A',
+      disgust: node.out_disgust ?? 'N/A',
+      joy: node.out_joy ?? 'N/A',
+    };
+    const nodeWithVectors = {
+      ...nodeWithCentrality,
+      emotional_vector_in,
+      emotional_vector_out,
+    };
+    setModalNode(nodeWithVectors);
+    setIsNodeModalOpen(true);
+    setSelectedNode(node);
+  } else if (viewMode === 'real-world') {
+    setHighlightId(node.id);
+    setSearchText(node.id);
+  } else if (viewMode === 'rip-dsn') {
+    setSelectedUser(node.id);
+    setHighlightId(node.id);
+  }
+};
 
   // Handle propagation (unchanged)
   const handlePropagation = async () => {
