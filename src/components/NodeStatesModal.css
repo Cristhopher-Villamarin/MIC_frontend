@@ -14,7 +14,7 @@
   overflow-y: auto;
   color: #ffffff;
   font-family: 'Inter', sans-serif;
-   z-index: 10000;
+  z-index: 10000;
 }
 
 .modal-overlay {
@@ -76,12 +76,28 @@
   background-color: #3b6db0;
 }
 
+.charts-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .modal-radar-chart {
   background-color: #2d3748;
   padding: 1rem;
   border-radius: 8px;
-  max-width: 500px;
-  margin: 0 auto;
+  max-width: 350px;
+  width: 100%;
+  margin: 0;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #d1d5db;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 .modal-footer {

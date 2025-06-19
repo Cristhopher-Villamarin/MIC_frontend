@@ -1,4 +1,3 @@
-// src/components/NodeModal.jsx
 import PropTypes from 'prop-types';
 import { Radar } from 'react-chartjs-2';
 import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js';
@@ -10,16 +9,28 @@ ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, 
 export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog }) {
   if (!isOpen || !modalNode) return null;
 
-  // Filter propagation log for this node (as receiver)
+  // Filter propagation log for this node (as receiver or publisher)
   const nodeHistory = propagationLog
-    .filter(entry => entry.receiver === modalNode.id)
+    .filter(entry => entry.receiver === modalNode.id || entry.publisher === modalNode.id)
     .map(entry => ({
       timeStep: entry.t,
       action: entry.action,
       sender: entry.sender,
       state_in_before: entry.state_in_before,
       state_in_after: entry.state_in_after,
+      state_out_before: entry.state_out_before,
+      state_out_after: entry.state_out_after,
     }));
+
+  // Determine if node is publisher and get the latest state_out_after for publisher
+  const isPublisher = propagationLog.some(entry => entry.publisher === modalNode.id && entry.action === 'publish');
+  let latestStateOutAfter = null;
+  if (isPublisher) {
+    const publisherEntries = propagationLog
+      .filter(entry => entry.publisher === modalNode.id)
+      .sort((a, b) => b.t - a.t); // Sort descending by time to get latest
+    latestStateOutAfter = publisherEntries.length > 0 ? publisherEntries[0].state_out_after : null;
+  }
 
   // Emotion keys for radar chart labels (English for backend compatibility)
   const emotionKeys = [
@@ -175,8 +186,8 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
           <div className="modal-section">
             <h4 className="modal-section-title">Historial de Propagación</h4>
             {nodeHistory.map((entry, index) => {
-              const chartData = {
-                labels: emotionKeys,
+              const chartDataIn = {
+                labels: emotionKeys.map(key => emotionLabels[key]),
                 datasets: [
                   {
                     label: 'Estado Antes',
@@ -201,13 +212,58 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
                 ],
               };
 
+              // Use latestStateOutAfter for the publisher's last interaction
+              const isLastPublisherEntry = isPublisher && entry.timeStep === Math.max(...nodeHistory.filter(e => e.action === 'publish').map(e => e.timeStep));
+              const stateOutAfterToUse = isLastPublisherEntry && latestStateOutAfter ? latestStateOutAfter : entry.state_out_after;
+
+              const chartDataOut = {
+                labels: emotionKeys.map(key => emotionLabels[key]),
+                datasets: [
+                  {
+                    label: 'Estado Antes',
+                    data: entry.state_out_before,
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderColor: '#EF4444',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#EF4444',
+                    pointBorderColor: '#ffffff',
+                    fill: true,
+                  },
+                  {
+                    label: 'Estado Después',
+                    data: stateOutAfterToUse,
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#3B82F6',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3B82F6',
+                    pointBorderColor: '#ffffff',
+                    fill: true,
+                  },
+                ],
+              };
+
               return (
                 <div key={index} className="modal-history-entry">
                   <h5 className="modal-history-header">
-                    Paso {entry.timeStep} (Interacción con {entry.sender})
+                     {entry.action === 'publish' ? 'Publicación' : `Interacción con ${entry.sender}`}
                   </h5>
-                  <div className="modal-history-chart">
-                    <Radar data={chartData} options={chartOptions} />
+                  <div className="modal-vectors-container">
+                    <div className="modal-history-chart">
+                      <h6 className="chart-title">Vector de Entrada</h6>
+                      {entry.state_in_before && entry.state_in_after && entry.state_in_before.some(v => v !== 0) && entry.state_in_after.some(v => v !== 0) ? (
+                        <Radar data={chartDataIn} options={chartOptions} />
+                      ) : (
+                        <p className="no-data">No hay datos suficientes para mostrar el gráfico de entrada.</p>
+                      )}
+                    </div>
+                    <div className="modal-history-chart">
+                      <h6 className="chart-title">Vector de Salida</h6>
+                      {entry.state_out_before && stateOutAfterToUse && entry.state_out_before.some(v => v !== 0) && stateOutAfterToUse.some(v => v !== 0) ? (
+                        <Radar data={chartDataOut} options={chartOptions} />
+                      ) : (
+                        <p className="no-data">No hay datos suficientes para mostrar el gráfico de salida.</p>
+                      )}
+                    </div>
                   </div>
                   <h5 className="modal-history-header">
                     Acción: {entry.action} el mensaje

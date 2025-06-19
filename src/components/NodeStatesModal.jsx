@@ -1,4 +1,3 @@
-// src/components/NodeStatesModal.jsx
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Radar } from 'react-chartjs-2';
@@ -33,7 +32,7 @@ export default function NodeStatesModal({ isOpen, setIsOpen, involvedNodes, prop
     joy: 'Alegría'
   };
 
-  // Radar chart options (same as NodeModal.jsx)
+  // Radar chart options
   const chartOptions = {
     scales: {
       r: {
@@ -109,8 +108,45 @@ export default function NodeStatesModal({ isOpen, setIsOpen, involvedNodes, prop
   // Get selected node
   const selectedNode = involvedNodes.find(node => node.id === selectedNodeId);
 
-  // Prepare radar chart data
-  const chartData = selectedNode
+  // Get state_out_before and state_out_after from propagationLog
+  const getOutStates = (nodeId) => {
+    // Obtener todas las entradas donde el nodo es receptor o publicador
+    const nodeHistory = propagationLog
+      .filter(entry => entry.receiver === nodeId || (entry.publisher === nodeId))
+      .sort((a, b) => a.t - b.t);
+
+    let stateOutBefore = null;
+    let stateOutAfter = null;
+
+    if (nodeHistory.length > 0) {
+      // Si el nodo es el publicador
+      const publishEntry = nodeHistory.find(entry => entry.action === 'publish' && entry.t === 0);
+      if (publishEntry) {
+        stateOutBefore = publishEntry.state_out_before;
+        // Tomar el state_out_after de la última interacción (como publicador o receptor)
+        stateOutAfter = nodeHistory[nodeHistory.length - 1].state_out_after;
+      } else {
+        // Para nodos no publicadores, tomar el primer state_out_before y el último state_out_after
+        stateOutBefore = nodeHistory[0].state_out_before;
+        stateOutAfter = nodeHistory[nodeHistory.length - 1].state_out_after;
+      }
+    }
+
+    // Ensure stateOutBefore is an array of 10 numbers
+    stateOutBefore = stateOutBefore && Array.isArray(stateOutBefore) && stateOutBefore.length === 10
+      ? stateOutBefore.map(Number)
+      : Array(10).fill(0);
+
+    // Ensure stateOutAfter is an array of 10 numbers
+    stateOutAfter = stateOutAfter && Array.isArray(stateOutAfter) && stateOutAfter.length === 10
+      ? stateOutAfter.map(Number)
+      : Array(10).fill(0);
+
+    return { stateOutBefore, stateOutAfter };
+  };
+
+  // Prepare radar chart data for state_in
+  const chartDataIn = selectedNode
     ? {
         labels: emotionKeys.map(key => emotionLabels[key]),
         datasets: [
@@ -136,6 +172,38 @@ export default function NodeStatesModal({ isOpen, setIsOpen, involvedNodes, prop
           },
         ],
       }
+    : null;
+
+  // Prepare radar chart data for state_out
+  const chartDataOut = selectedNode
+    ? (() => {
+        const { stateOutBefore, stateOutAfter } = getOutStates(selectedNode.id);
+        return {
+          labels: emotionKeys.map(key => emotionLabels[key]),
+          datasets: [
+            {
+              label: 'Estado Inicial',
+              data: stateOutBefore,
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              borderColor: '#EF4444',
+              borderWidth: 2,
+              pointBackgroundColor: '#EF4444',
+              pointBorderColor: '#ffffff',
+              fill: true,
+            },
+            {
+              label: 'Estado Final',
+              data: stateOutAfter,
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              borderColor: '#3B82F6',
+              borderWidth: 2,
+              pointBackgroundColor: '#3B82F6',
+              pointBorderColor: '#ffffff',
+              fill: true,
+            },
+          ],
+        };
+      })()
     : null;
 
   return (
@@ -164,13 +232,24 @@ export default function NodeStatesModal({ isOpen, setIsOpen, involvedNodes, prop
         {selectedNode ? (
           <div className="modal-section">
             <h4 className="modal-section-title">Comparación de Estados: {selectedNode.id}</h4>
-            {chartData && selectedNode.initialState.some(v => v !== 0) && selectedNode.finalState.some(v => v !== 0) ? (
+            <div className="charts-container">
               <div className="modal-radar-chart">
-                <Radar data={chartData} options={chartOptions} />
+                <h5 className="chart-title">Vector de Entrada</h5>
+                {chartDataIn && selectedNode.initialState.some(v => v !== 0) && selectedNode.finalState.some(v => v !== 0) ? (
+                  <Radar data={chartDataIn} options={chartOptions} />
+                ) : (
+                  <p className="no-data">No hay datos suficientes para mostrar el gráfico de entrada.</p>
+                )}
               </div>
-            ) : (
-              <p className="no-data">No hay datos suficientes para mostrar el gráfico de estados.</p>
-            )}
+              <div className="modal-radar-chart">
+                <h5 className="chart-title">Vector de Salida</h5>
+                {chartDataOut && chartDataOut.datasets[0].data.some(v => v !== 0) && chartDataOut.datasets[1].data.some(v => v !== 0) ? (
+                  <Radar data={chartDataOut} options={chartOptions} />
+                ) : (
+                  <p className="no-data">No hay datos suficientes para mostrar el gráfico de salida.</p>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
           <p className="no-selection">Selecciona un nodo para ver su comparación de estados.</p>
