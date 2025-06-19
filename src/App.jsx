@@ -542,6 +542,7 @@ export default function App() {
               status={baStatus}
               selectedNode={baGraphData.nodes.find(n => n.id === highlightId)}
               handleResetView={handleResetView}
+
             />
             <div className="graph-container">
               <BarabasiAlbertGraph3D

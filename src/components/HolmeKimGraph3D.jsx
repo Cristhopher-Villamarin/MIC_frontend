@@ -15,6 +15,14 @@ function HolmeKimGraph3D({ data, nodesWithCentrality, onNodeInfo, highlightId, o
   const defaultNodeColor = '#7b8a84'; // Gris predeterminado
   const highlightNodeColor = '#FFFF00'; // Amarillo fosforescente para resaltado
 
+  // Función para normalizar el highlightId
+  const normalizeNodeId = (id) => {
+    if (typeof id === 'string' && id.startsWith('user_')) {
+      return id.replace('user_', '');
+    }
+    return id;
+  };
+
   // Centra la red al cargar o cambiar datos
   useEffect(() => {
     if (!isTransitioning.current && fgRef.current) {
@@ -30,17 +38,20 @@ function HolmeKimGraph3D({ data, nodesWithCentrality, onNodeInfo, highlightId, o
   useEffect(() => {
     if (!highlightId || !fgRef.current || !data.nodes.length || isTransitioning.current) return;
 
+    // Normalizar el highlightId
+    const normalizedHighlightId = normalizeNodeId(highlightId);
+
     // Activar resaltado temporal
-    setTempHighlightId(highlightId);
+    setTempHighlightId(normalizedHighlightId);
 
     // Limpiar resaltado después de 5 segundos
     const timer = setTimeout(() => {
       setTempHighlightId('');
     }, 5000);
 
-    const node = data.nodes.find(n => n.id === highlightId);
+    const node = data.nodes.find(n => n.id === normalizedHighlightId);
     if (!node) {
-      console.warn('Nodo no encontrado:', highlightId);
+      console.warn('Nodo no encontrado:', normalizedHighlightId);
       return;
     }
 
@@ -129,7 +140,7 @@ function HolmeKimGraph3D({ data, nodesWithCentrality, onNodeInfo, highlightId, o
           const group = new THREE.Group();
 
           const material = new THREE.MeshBasicMaterial({
-            color: node.id === tempHighlightId ? highlightNodeColor : defaultNodeColor,
+            color: node.id === normalizeNodeId(tempHighlightId) ? highlightNodeColor : defaultNodeColor,
             transparent: true,
             opacity: 1,
           });
@@ -140,7 +151,7 @@ function HolmeKimGraph3D({ data, nodesWithCentrality, onNodeInfo, highlightId, o
           );
           group.add(sphere);
 
-          const label = new SpriteText(String(node.id));
+          const label = new SpriteText(`user_${node.id}`);
           label.color = 'white';
           label.textHeight = 3;
           label.material.depthWrite = false;
