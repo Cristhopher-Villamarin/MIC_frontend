@@ -7,7 +7,7 @@ export default function Sidebar({ onMenuSelect }) {
       title: 'Visualización de Redes',
       items: [
         { label: 'Redes Barabási-Albert', key: 'barabasi-albert'},
-        { label: 'Redes Holme-Kim Dirigidas', key: 'holme-kim', disabled: true },
+        { label: 'Redes Holme-Kim Dirigidas', key: 'holme-kim'},
         { label: 'Redes del Mundo Real', key: 'real-world' },
       ],
     },

@@ -29,19 +29,25 @@ export function generateBarabasiAlbert(n, m) {
     const newNode = String(i + 1);
     const connected = new Set();
 
-    // Calculate total degree for probability
-    const totalDegree = degrees.reduce((sum, deg) => sum + deg, 0);
-
     // Connect to m existing nodes
     while (connected.size < m && connected.size < i) {
+      // Calculate total degree excluding already connected nodes
+      const totalDegree = degrees.slice(0, i).reduce((sum, deg, idx) => 
+        sum + (connected.has(String(idx + 1)) ? 0 : deg), 0
+      );
+      
       let targetIdx = -1;
       const rand = Math.random() * totalDegree;
       let sum = 0;
+      
+      // CORRECCIÓN: Solo sumar grados de nodos disponibles
       for (let j = 0; j < i; j++) {
-        sum += degrees[j];
-        if (rand <= sum && !connected.has(String(j + 1))) {
-          targetIdx = j;
-          break;
+        if (!connected.has(String(j + 1))) {  // ← CLAVE: Solo nodos disponibles
+          sum += degrees[j];
+          if (rand <= sum) {
+            targetIdx = j;
+            break;
+          }
         }
       }
 

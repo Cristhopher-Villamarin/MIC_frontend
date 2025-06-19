@@ -12,9 +12,12 @@ import RealWorldGraph3D from './components/RealWorldGraph3D';
 import RipDsnGraph3D from './components/RipDsnGraph3D';
 import BarabasiAlbertInput from './components/BarabasiAlbertInput';
 import BarabasiAlbertGraph3D from './components/BarabasiAlbertGraph3D';
+import HolmeKimInput from './components/HolmeKimInput';
+import HolmeKimGraph3D from './components/HolmeKimGraph3D';
 import Sidebar from './components/Sidebar';
 import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/loadFiles';
 import { generateBarabasiAlbert } from './utils/BarabasiAlbert';
+import { generateHolmeKim } from './utils/HolmeKim';
 import axios from 'axios';
 import './App.css';
 import { calculateCentralityMetrics } from './utils/centrality';
@@ -61,6 +64,10 @@ export default function App() {
   const [baGraphData, setBaGraphData] = useState({ nodes: [], links: [] });
   const [baStatus, setBaStatus] = useState('Ingrese el número de nodos y enlaces…');
   const [baNodesWithCentrality, setBaNodesWithCentrality] = useState([]);
+  // Estados para Holme-Kim
+  const [hkGraphData, setHkGraphData] = useState({ nodes: [], links: [] });
+  const [hkStatus, setHkStatus] = useState('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
+  const [hkNodesWithCentrality, setHkNodesWithCentrality] = useState([]);
 
   // Claves de emociones
   const emotionKeys = [
@@ -93,12 +100,19 @@ export default function App() {
       }
     } else if (key === 'barabasi-albert') {
       setViewMode('barabasi-albert');
-      // Mantener baGraphData y baNodesWithCentrality, actualizar solo baStatus
       if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
         setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
       } else {
         setBaStatus('Ingrese el número de nodos y enlaces…');
-        setBaNodesWithCentrality([]); // Asegurar consistencia si no hay datos
+        setBaNodesWithCentrality([]);
+      }
+    } else if (key === 'holme-kim') {
+      setViewMode('holme-kim');
+      if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
+        setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+      } else {
+        setHkStatus('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
+        setHkNodesWithCentrality([]);
       }
     } else {
       setViewMode('simulation');
@@ -237,6 +251,16 @@ export default function App() {
     setBaStatus(`Red Barabási-Albert: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
   };
 
+  // Generar red Holme-Kim
+  const handleGenerateHkNetwork = (numNodes, numEdges, triadProb) => {
+    setHkStatus('Generando red Holme-Kim…');
+    const data = generateHolmeKim(numNodes, numEdges, triadProb);
+    setHkGraphData(data);
+    const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+    setHkNodesWithCentrality(nodesWithMetrics);
+    setHkStatus(`Red Holme-Kim: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
+  };
+
   // Manejar clics en nodos
   const handleNodeClick = (node) => {
     if (viewMode === 'simulation') {
@@ -298,6 +322,10 @@ export default function App() {
       const nodeWithCentrality = baNodesWithCentrality.find(n => n.id === node.id) || node;
       setModalNode(nodeWithCentrality);
       setSelectedNode(nodeWithCentrality);
+    } else if (viewMode === 'holme-kim') {
+      const nodeWithCentrality = hkNodesWithCentrality.find(n => n.id === node.id) || node;
+      setModalNode(nodeWithCentrality);
+      setSelectedNode(nodeWithCentrality);
     } else if (viewMode === 'rip-dsn') {
       setSelectedUser(node.id);
     }
@@ -352,9 +380,6 @@ export default function App() {
   };
 
   // Manejar propagación RIP-DSN
-
-
-  // Manejar propagación RIP-DSN
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
       setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
@@ -377,7 +402,6 @@ export default function App() {
       console.log('RIP-DSN Propagation log from backend:', propagationLog);
       setRipDsnPropagationLog(propagationLog);
 
-      // Generar highlightedLinks iniciales desde propagationLog
       let linksToHighlight = propagationLog
         .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
         .sort((a, b) => a.t - b.t)
@@ -388,7 +412,6 @@ export default function App() {
           animationDelay: index * 4000,
         }));
 
-      // Agregar propagaciones secundarias basadas en las conexiones existentes
       const involvedNodeIds = new Set(linksToHighlight.flatMap(link => [link.source, link.target]));
       const allLinks = realWorldLinksAll.filter(link => {
         const sourceId = link.source.id ? String(link.source.id) : String(link.source);
@@ -396,7 +419,6 @@ export default function App() {
         return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
       });
 
-      // Verificar propagaciones secundarias
       linksToHighlight.forEach(link => {
         const sourceId = link.source;
         const targetId = link.target;
@@ -525,6 +547,29 @@ export default function App() {
               <BarabasiAlbertGraph3D
                 data={baGraphData}
                 nodesWithCentrality={baNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'holme-kim' && (
+          <>
+            <HolmeKimInput onGenerateNetwork={handleGenerateHkNetwork} />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={hkStatus}
+              selectedNode={hkGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="graph-container">
+              <HolmeKimGraph3D
+                data={hkGraphData}
+                nodesWithCentrality={hkNodesWithCentrality}
                 onNodeInfo={handleNodeClick}
                 highlightId={highlightId}
                 onResetView={handleResetView}
