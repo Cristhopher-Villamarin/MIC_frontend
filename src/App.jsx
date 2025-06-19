@@ -1,4 +1,3 @@
-// src/components/App.jsx
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import RealWorldNavbar from './components/RealWorldNavbar';
@@ -11,14 +10,17 @@ import RipDsnPropagationResult from './components/RipDsnPropagationResult';
 import Graph3D from './components/Graph3D';
 import RealWorldGraph3D from './components/RealWorldGraph3D';
 import RipDsnGraph3D from './components/RipDsnGraph3D';
+import BarabasiAlbertInput from './components/BarabasiAlbertInput';
+import BarabasiAlbertGraph3D from './components/BarabasiAlbertGraph3D';
 import Sidebar from './components/Sidebar';
 import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/loadFiles';
+import { generateBarabasiAlbert } from './utils/BarabasiAlbert';
 import axios from 'axios';
 import './App.css';
 import { calculateCentralityMetrics } from './utils/centrality';
 
 export default function App() {
-  // Existing states
+  // Estados existentes
   const [csvFile, setCsvFile] = useState(null);
   const [xlsxFile, setXlsxFile] = useState(null);
   const [linksAll, setLinksAll] = useState([]);
@@ -55,14 +57,18 @@ export default function App() {
   const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);
   const [nodesWithCentrality, setNodesWithCentrality] = useState([]);
   const [realWorldNodesWithCentrality, setRealWorldNodesWithCentrality] = useState([]);
+  // Estados para Barabási-Albert
+  const [baGraphData, setBaGraphData] = useState({ nodes: [], links: [] });
+  const [baStatus, setBaStatus] = useState('Ingrese el número de nodos y enlaces…');
+  const [baNodesWithCentrality, setBaNodesWithCentrality] = useState([]);
 
-  // Emotion keys to map node attributes to vector
+  // Claves de emociones
   const emotionKeys = [
     'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
   ];
 
-  // Modified handleMenuSelect
+  // Manejador de selección de menú
   const handleMenuSelect = (key) => {
     console.log(`Opción seleccionada: ${key}`);
     if (key === 'real-world') {
@@ -85,18 +91,15 @@ export default function App() {
       } else {
         setStatus('CSV listo. Construyendo red básica…');
       }
-      setSearchText('');
-      setHighlightId('');
-      setMessage('');
-      setSelectedUser('');
-      setPropagationStatus('');
-      setPropagationResult(null);
-      setHighlightedLinks([]);
-      setPropagationLog([]);
-      setIsNodeModalOpen(false);
-      setIsPropagationModalOpen(false);
-      setIsNodeStatesModalOpen(false);
-      setModalNode(null);
+    } else if (key === 'barabasi-albert') {
+      setViewMode('barabasi-albert');
+      // Mantener baGraphData y baNodesWithCentrality, actualizar solo baStatus
+      if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
+        setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+      } else {
+        setBaStatus('Ingrese el número de nodos y enlaces…');
+        setBaNodesWithCentrality([]); // Asegurar consistencia si no hay datos
+      }
     } else {
       setViewMode('simulation');
       setStatus('Sube el CSV y el XLSX…');
@@ -107,27 +110,26 @@ export default function App() {
       setNetworkList([]);
       setSelectedNet('');
       setGraphData({ nodes: [], links: [] });
-      setSearchText('');
-      setHighlightId('');
-      setMessage('');
-      setSelectedUser('');
-      setPropagationStatus('');
-      setPropagationResult(null);
-      setHighlightedLinks([]);
-      setPropagationLog([]);
-      setIsNodeModalOpen(false);
-      setIsPropagationModalOpen(false);
-      setIsNodeStatesModalOpen(false);
-      setModalNode(null);
     }
+    setSearchText('');
+    setHighlightId('');
+    setMessage('');
+    setSelectedUser('');
+    setPropagationStatus('');
+    setPropagationResult(null);
+    setHighlightedLinks([]);
+    setPropagationLog([]);
     setRipDsnPropagationStatus('');
     setRipDsnPropagationResult(null);
     setRipDsnHighlightedLinks([]);
     setRipDsnPropagationLog([]);
+    setIsNodeModalOpen(false);
     setIsPropagationModalOpen(false);
+    setIsNodeStatesModalOpen(false);
+    setModalNode(null);
   };
 
-  // Existing useEffect hooks
+  // Cargar CSV
   useEffect(() => {
     async function loadCsv() {
       if (!csvFile) return;
@@ -144,6 +146,7 @@ export default function App() {
     loadCsv();
   }, [csvFile]);
 
+  // Cargar XLSX
   useEffect(() => {
     async function loadXlsx() {
       if (!xlsxFile) return;
@@ -155,6 +158,7 @@ export default function App() {
     loadXlsx();
   }, [xlsxFile]);
 
+  // Construir grafo para simulación
   useEffect(() => {
     if (!selectedNet || linksAll.length === 0) {
       setGraphData({ nodes: [], links: [] });
@@ -167,7 +171,6 @@ export default function App() {
     );
     const data = buildGraph(linksFiltered, attrsAll.length > 0 ? attrsAll : []);
     setGraphData(data);
-    // Calcular métricas de centralidad
     const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
     setNodesWithCentrality(nodesWithMetrics);
     setStatus(
@@ -177,6 +180,7 @@ export default function App() {
     setHighlightId('');
   }, [selectedNet, linksAll, attrsAll]);
 
+  // Cargar CSV de nodos para mundo real
   useEffect(() => {
     async function loadNodesCsv() {
       if (!nodesCsvFile) return;
@@ -191,6 +195,7 @@ export default function App() {
     loadNodesCsv();
   }, [nodesCsvFile]);
 
+  // Cargar CSV de enlaces para mundo real
   useEffect(() => {
     async function loadLinksCsv() {
       if (!linksCsvFile) return;
@@ -203,6 +208,7 @@ export default function App() {
     loadLinksCsv();
   }, [linksCsvFile]);
 
+  // Construir grafo para mundo real
   useEffect(() => {
     if (!realWorldSelectedNet || realWorldNodesAll.length === 0 || realWorldLinksAll.length === 0) {
       setRealWorldGraphData({ nodes: [], links: [] });
@@ -214,7 +220,6 @@ export default function App() {
     const nodesFiltered = realWorldNodesAll.filter(n => String(n.network_id) === realWorldSelectedNet);
     const data = buildRealWorldGraph(linksFiltered, nodesFiltered);
     setRealWorldGraphData(data);
-    // Calcular métricas de centralidad
     const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
     setRealWorldNodesWithCentrality(nodesWithMetrics);
     setRealWorldStatus(
@@ -222,14 +227,24 @@ export default function App() {
     );
   }, [realWorldSelectedNet, realWorldNodesAll, realWorldLinksAll]);
 
-  // Handle node clicks
+  // Generar red Barabási-Albert
+  const handleGenerateBaNetwork = (numNodes, numEdges) => {
+    setBaStatus('Generando red Barabási-Albert…');
+    const data = generateBarabasiAlbert(numNodes, numEdges);
+    setBaGraphData(data);
+    const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+    setBaNodesWithCentrality(nodesWithMetrics);
+    setBaStatus(`Red Barabási-Albert: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
+  };
+
+  // Manejar clics en nodos
   const handleNodeClick = (node) => {
     if (viewMode === 'simulation') {
       const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
       const nodeHistory = propagationLog
         .filter(entry => entry.receiver === node.id);
-      const sort = nodeHistory.sort((a, b) => b.t - a.t);
-      const latestState = nodeHistory.length > 0 ? sort[0].state_in_after : null;
+      const sortedHistory = nodeHistory.sort((a, b) => b.t - a.t);
+      const latestState = sortedHistory.length > 0 ? sortedHistory[0].state_in_after : null;
       const emotional_vector_in = latestState
         ? {
             subjectivity: latestState[0] ?? 'N/A',
@@ -279,12 +294,16 @@ export default function App() {
       const nodeWithCentrality = realWorldNodesWithCentrality.find(n => n.id === node.id) || node;
       setModalNode(nodeWithCentrality);
       setSelectedNode(nodeWithCentrality);
+    } else if (viewMode === 'barabasi-albert') {
+      const nodeWithCentrality = baNodesWithCentrality.find(n => n.id === node.id) || node;
+      setModalNode(nodeWithCentrality);
+      setSelectedNode(nodeWithCentrality);
     } else if (viewMode === 'rip-dsn') {
       setSelectedUser(node.id);
     }
   };
 
-  // Handle propagation
+  // Manejar propagación
   const handlePropagation = async () => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
@@ -332,7 +351,7 @@ export default function App() {
     }
   };
 
-  // Handle RIP-DSN propagation
+  // Manejar propagación RIP-DSN
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
       setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
@@ -377,7 +396,7 @@ export default function App() {
     }
   };
 
-  // Reset view
+  // Resetear vista
   const handleResetView = () => {
     setHighlightId('');
     setSearchText('');
@@ -403,7 +422,7 @@ export default function App() {
     }
   };
 
-  // Updated getInvolvedNodes to correctly fetch initial and final states
+  // Obtener nodos involucrados
   const getInvolvedNodes = () => {
     const nodeIds = new Set();
     propagationLog.forEach(entry => {
@@ -412,42 +431,28 @@ export default function App() {
     });
 
     return Array.from(nodeIds).map(id => {
-      // Get node data from graphData
       const node = graphData.nodes.find(node => node.id === id);
-      
-      // Get all log entries where this node is the receiver
       const nodeHistory = propagationLog
         .filter(entry => entry.receiver === id)
         .sort((a, b) => a.t - b.t);
-
-      // Initial state: Use state_in_before from the first entry, or node attributes
       let initialState = nodeHistory.length > 0 && nodeHistory[0].state_in_before
         ? nodeHistory[0].state_in_before
         : null;
-
       if (!initialState && node) {
-        // Construct initial state from node attributes
         initialState = emotionKeys.map(key => {
           const attrKey = `in_${key}`;
           return node[attrKey] != null ? Number(node[attrKey]) : 0;
         });
       }
-
-      // Ensure initialState is an array of 10 numbers
       initialState = initialState && Array.isArray(initialState) && initialState.length === 10
         ? initialState.map(Number)
         : Array(10).fill(0);
-
-      // Final state: Use state_in_after from the last entry
       const finalState = nodeHistory.length > 0
         ? nodeHistory[nodeHistory.length - 1].state_in_after
         : null;
-
-      // Ensure finalState is an array of 10 numbers
       const validFinalState = finalState && Array.isArray(finalState) && finalState.length === 10
         ? finalState.map(Number)
         : Array(10).fill(0);
-
       return {
         id,
         initialState,
@@ -466,6 +471,29 @@ export default function App() {
             <p>Selecciona una opción en el menú lateral para comenzar.</p>
           </div>
         )}
+        {viewMode === 'barabasi-albert' && (
+          <>
+            <BarabasiAlbertInput onGenerateNetwork={handleGenerateBaNetwork} />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={baStatus}
+              selectedNode={baGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="graph-container">
+              <BarabasiAlbertGraph3D
+                data={baGraphData}
+                nodesWithCentrality={baNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
         {viewMode === 'real-world' && (
           <>
             <RealWorldNavbar
@@ -477,6 +505,7 @@ export default function App() {
               selectedNet={realWorldSelectedNet}
               setSelectedNet={setRealWorldSelectedNet}
               viewMode={viewMode}
+              setCsvFile={setCsvFile}
             />
             <SearchPanel
               searchText={searchText}
@@ -509,6 +538,7 @@ export default function App() {
               selectedNet={realWorldSelectedNet}
               setSelectedNet={setRealWorldSelectedNet}
               viewMode={viewMode}
+              setCsvFile={setCsvFile}
             />
             <div className="propagation-button-container">
               <button
