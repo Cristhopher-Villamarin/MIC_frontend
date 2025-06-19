@@ -352,6 +352,9 @@ export default function App() {
   };
 
   // Manejar propagación RIP-DSN
+
+
+  // Manejar propagación RIP-DSN
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
       setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
@@ -373,7 +376,9 @@ export default function App() {
       const propagationLog = response.data.log || [];
       console.log('RIP-DSN Propagation log from backend:', propagationLog);
       setRipDsnPropagationLog(propagationLog);
-      const linksToHighlight = propagationLog
+
+      // Generar highlightedLinks iniciales desde propagationLog
+      let linksToHighlight = propagationLog
         .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
         .sort((a, b) => a.t - b.t)
         .map((entry, index) => ({
@@ -382,7 +387,40 @@ export default function App() {
           timeStep: entry.t,
           animationDelay: index * 4000,
         }));
-      console.log('Total RIP-DSN highlightedLinks:', linksToHighlight);
+
+      // Agregar propagaciones secundarias basadas en las conexiones existentes
+      const involvedNodeIds = new Set(linksToHighlight.flatMap(link => [link.source, link.target]));
+      const allLinks = realWorldLinksAll.filter(link => {
+        const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+        const targetId = link.target.id ? String(link.target.id) : String(link.target);
+        return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
+      });
+
+      // Verificar propagaciones secundarias
+      linksToHighlight.forEach(link => {
+        const sourceId = link.source;
+        const targetId = link.target;
+        const nextLinks = allLinks.filter(l => {
+          const lSourceId = l.source.id ? String(l.source.id) : String(l.source);
+          const lTargetId = l.target.id ? String(l.target.id) : String(l.target);
+          return lSourceId === targetId && involvedNodeIds.has(lTargetId) && !linksToHighlight.some(l => l.source === lSourceId && l.target === lTargetId);
+        });
+        nextLinks.forEach(nextLink => {
+          const nextTargetId = nextLink.target.id ? String(nextLink.target.id) : String(nextLink.target);
+          const maxTimeStep = Math.max(...linksToHighlight.map(l => l.timeStep)) + 1;
+          if (!linksToHighlight.some(l => l.source === targetId && l.target === nextTargetId)) {
+            linksToHighlight.push({
+              source: targetId,
+              target: nextTargetId,
+              timeStep: maxTimeStep,
+              animationDelay: linksToHighlight.length * 4000,
+            });
+            involvedNodeIds.add(nextTargetId);
+          }
+        });
+      });
+
+      console.log('Total RIP-DSN highlightedLinks (incluyendo secundarias):', linksToHighlight);
       setRipDsnHighlightedLinks(linksToHighlight);
       setHighlightId(selectedUser);
       setIsPropagationModalOpen(false);

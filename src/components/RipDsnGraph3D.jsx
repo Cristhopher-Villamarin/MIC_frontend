@@ -53,49 +53,47 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     }
   }, [isExtensivePropagation, isLargePropagation]);
 
-  // Filtrar datos para mostrar solo nodos y enlaces involucrados en la propagación
+  // Filtrar datos para mostrar nodos involucrados y TODOS sus enlaces
   const filteredData = useMemo(() => {
     if (!isInPropagationMode) {
       return data;
     }
 
+    // Identificar todos los nodos involucrados en la propagación
     const involvedNodeIds = new Set();
-    const linkMap = new Map();
+    highlightedLinks.forEach(highlight => {
+      involvedNodeIds.add(String(highlight.source));
+      involvedNodeIds.add(String(highlight.target));
+    });
 
-    data.links.forEach(link => {
+    // Filtrar nodos
+    const filteredNodes = data.nodes.filter(node =>
+      involvedNodeIds.has(String(node.id))
+    );
+
+    // Incluir TODOS los enlaces entre nodos involucrados
+    const filteredLinks = data.links.filter(link => {
       const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-      const targetId = link.target.id ? String(link.target.id) : String(link.target);
+      const targetId = link.target.id ? String(link.target.id) : String(targetId);
+      return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
+    });
+
+    // Crear un mapa de enlaces para búsqueda rápida
+    const linkMap = new Map();
+    filteredLinks.forEach(link => {
+      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+      const targetId = link.target.id ? String(link.target.id) : String(targetId);
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
       linkMap.set(key1, link);
       linkMap.set(key2, link);
     });
 
-    const involvedLinks = new Set();
-
-    highlightedLinks.forEach(highlight => {
-      const sourceId = String(highlight.source);
-      const targetId = String(highlight.target);
-      involvedNodeIds.add(sourceId);
-      involvedNodeIds.add(targetId);
-
-      const key1 = `${sourceId}-${targetId}`;
-      const key2 = `${targetId}-${sourceId}`;
-      const originalLink = linkMap.get(key1) || linkMap.get(key2);
-      if (originalLink) {
-        involvedLinks.add(originalLink);
-      }
-    });
-
-    const filteredNodes = data.nodes.filter(node =>
-      involvedNodeIds.has(String(node.id))
-    );
-
     console.log(`Modo propagación activado:`, {
       totalNodes: data.nodes.length,
       filteredNodes: filteredNodes.length,
       totalLinks: data.links.length,
-      filteredLinks: Array.from(involvedLinks).length,
+      filteredLinks: filteredLinks.length,
       highlightedLinks: highlightedLinks.length,
       isLarge: isLargePropagation,
       isExtensive: isExtensivePropagation,
@@ -103,7 +101,8 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
 
     return {
       nodes: filteredNodes,
-      links: Array.from(involvedLinks),
+      links: filteredLinks,
+      linkMap // Exportar linkMap para usarlo en la animación
     };
   }, [data, highlightedLinks, isInPropagationMode, isLargePropagation, isExtensivePropagation]);
 
@@ -246,6 +245,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
       link.__isHighlighted = false;
       link.__isPermanentlyHighlighted = false;
       link.__isCurrentlyAnimating = false;
+      link.__animationCount = 0;
     }
 
     throttledRefresh();
@@ -262,27 +262,23 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     const config = getAnimationConfig();
     console.log('Iniciando animación secuencial:', {
       highlightedLinks: highlightedLinks.length,
+      filteredLinks: filteredData.links.length,
       config,
       isExtensive: isExtensivePropagation,
     });
 
+    // Resetear todos los enlaces
     const links = filteredData.links;
     for (let i = 0; i < links.length; i++) {
       const link = links[i];
       link.__isHighlighted = false;
       link.__isPermanentlyHighlighted = false;
       link.__isCurrentlyAnimating = false;
+      link.__animationCount = 0;
     }
 
-    const linkMap = new Map();
-    links.forEach(link => {
-      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-      const targetId = link.target.id ? String(link.target.id) : String(link.target);
-      const key1 = `${sourceId}-${targetId}`;
-      const key2 = `${targetId}-${sourceId}`;
-      linkMap.set(key1, link);
-      linkMap.set(key2, link);
-    });
+    // Usar el linkMap de filteredData
+    const linkMap = filteredData.linkMap;
 
     const sortedHighlightedLinks = [...highlightedLinks].sort((a, b) => a.timeStep - b.timeStep);
 
@@ -290,19 +286,40 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
       const sourceId = String(highlight.source);
       const targetId = String(highlight.target);
 
+      // Intentar encontrar el enlace en ambas direcciones
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
-      const linkObj = linkMap.get(key1) || linkMap.get(key2);
+      let linkObj = linkMap.get(key1);
+
+      // Si no se encuentra en la dirección source→target, intentar target→source
+      if (!linkObj) {
+        linkObj = linkMap.get(key2);
+      }
 
       if (!linkObj) {
-        console.warn(`Enlace no encontrado: ${sourceId} -> ${targetId}`);
+        console.warn(`Enlace no encontrado en linkMap: ${sourceId} -> ${targetId} (keys: ${key1}, ${key2})`);
+        // Log adicional para depurar
+        console.log('Contenido de linkMap:', Array.from(linkMap.keys()));
+        console.log('Highlighted link:', highlight);
         return;
       }
+
+      // Verificar la dirección correcta del enlace
+      const linkSourceId = linkObj.source.id ? String(linkObj.source.id) : String(linkObj.source);
+      const linkTargetId = linkObj.target.id ? String(linkObj.target.id) : String(linkObj.target);
+      const isCorrectDirection = linkSourceId === sourceId && linkTargetId === targetId;
+
+      if (!isCorrectDirection) {
+        console.log(`Dirección invertida para ${sourceId} -> ${targetId}, usando ${linkSourceId} -> ${linkTargetId}`);
+      }
+
+      // Incrementar contador de animaciones
+      linkObj.__animationCount = (linkObj.__animationCount || 0) + 1;
 
       linkObj.__isCurrentlyAnimating = true;
       linkObj.__isHighlighted = true;
 
-      console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${sourceId} -> ${targetId}`);
+      console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${sourceId} -> ${targetId} (Animación #${linkObj.__animationCount}, Dirección correcta: ${isCorrectDirection})`);
 
       // Emitir evento cuando la línea se pinta de cian
       const propagationEvent = new CustomEvent('propagationUpdate', {
@@ -316,6 +333,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
         if (linkObj) {
           linkObj.__isCurrentlyAnimating = false;
           linkObj.__isPermanentlyHighlighted = true;
+          console.log(`Finalizada animación para ${sourceId} -> ${targetId}, ahora permanentemente destacado`);
           throttledRefresh();
         }
         animationTimeoutRefs.current.delete(animationEndTimeout);
@@ -336,7 +354,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
 
     const totalDuration = sortedHighlightedLinks.length * config.ANIMATION_DELAY + config.ANIMATION_DURATION;
     const finalTimeout = setTimeout(() => {
-      console.log('Animation sequential completed');
+      console.log('Animación secuencial completada');
       animationTimeoutRefs.current.delete(finalTimeout);
     }, totalDuration);
 
@@ -345,7 +363,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     return () => {
       cleanupAnimation();
     };
-  }, [highlightedLinks, filteredData.links, isExtensivePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh]);
+  }, [highlightedLinks, filteredData.links, filteredData.linkMap, isExtensivePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh]);
 
   // Cleanup al desmontar
   useEffect(() => {
@@ -365,7 +383,7 @@ function RipDsnGraph3D({ data, onNodeInfo, highlightedLinks = [], highlightId, o
     <PropagationEventContext.Provider value={{}}>
       <ForceGraph3D
         ref={fgRef}
-        graphData={filteredData}
+        graphData={{ nodes: filteredData.nodes, links: filteredData.links }}
         backgroundColor="#111"
         linkOpacity={0.85}
         linkWidth={link => {
