@@ -12,6 +12,8 @@ import RealWorldGraph3D from './components/RealWorldGraph3D';
 import RipDsnGraph3D from './components/RipDsnGraph3D';
 import BarabasiAlbertInput from './components/BarabasiAlbertInput';
 import BarabasiAlbertGraph3D from './components/BarabasiAlbertGraph3D';
+import BarabasiSIRInput from './components/BarabasiSIRInput';
+import BarabasiSIRGraph3D from './components/BarabasiSIRGraph3D';
 import HolmeKimInput from './components/HolmeKimInput';
 import HolmeKimGraph3D from './components/HolmeKimGraph3D';
 import Sidebar from './components/Sidebar';
@@ -64,12 +66,18 @@ export default function App() {
   const [baGraphData, setBaGraphData] = useState({ nodes: [], links: [] });
   const [baStatus, setBaStatus] = useState('Ingrese el número de nodos y enlaces…');
   const [baNodesWithCentrality, setBaNodesWithCentrality] = useState([]);
+  // Estados para Barabási-SIR
+  const [baSIRBeta, setBaSIRBeta] = useState(0.3);
+  const [baSIRGamma, setBaSIRGamma] = useState(0.1);
+  const [baSIRHighlightedLinks, setBaSIRHighlightedLinks] = useState([]);
+  const [baSIRPropagationLog, setBaSIRPropagationLog] = useState([]);
+  const [baSIRPropagationStatus, setBaSIRPropagationStatus] = useState('');
   // Estados para Holme-Kim
   const [hkGraphData, setHkGraphData] = useState({ nodes: [], links: [] });
   const [hkStatus, setHkStatus] = useState('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
   const [hkNodesWithCentrality, setHkNodesWithCentrality] = useState([]);
 
-  // Claves de emociones
+  // Claves de emociones (no usadas en SIR, pero mantenidas por compatibilidad)
   const emotionKeys = [
     'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
@@ -106,6 +114,13 @@ export default function App() {
         setBaStatus('Ingrese el número de nodos y enlaces…');
         setBaNodesWithCentrality([]);
       }
+    } else if (key === 'barabasi-si') {
+      setViewMode('barabasi-si');
+      if (baGraphData.nodes.length > 0) {
+        setBaStatus(`Red Barabási-Albert (SIR): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+      } else {
+        setBaStatus('Genere una red Barabási-Albert primero…');
+      }
     } else if (key === 'holme-kim') {
       setViewMode('holme-kim');
       if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
@@ -137,6 +152,9 @@ export default function App() {
     setRipDsnPropagationResult(null);
     setRipDsnHighlightedLinks([]);
     setRipDsnPropagationLog([]);
+    setBaSIRPropagationStatus('');
+    setBaSIRHighlightedLinks([]);
+    setBaSIRPropagationLog([]);
     setIsNodeModalOpen(false);
     setIsPropagationModalOpen(false);
     setIsNodeStatesModalOpen(false);
@@ -261,6 +279,80 @@ export default function App() {
     setHkStatus(`Red Holme-Kim: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
   };
 
+  // Manejar propagación SIR en Barabási-Albert
+  const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
+    if (!baGraphData.nodes.length) {
+      setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
+      return;
+    }
+    if (!selectedUser || !message.trim()) {
+      setBaSIRPropagationStatus('Por favor, seleccione un nodo inicial y escriba un mensaje.');
+      return;
+    }
+    setBaSIRPropagationStatus('Iniciando propagación SIR…');
+    setBaSIRBeta(beta);
+    setBaSIRGamma(gamma);
+    setSelectedUser(selectedUser);
+    setMessage(message);
+
+    // Simulación de propagación SIR
+    const nodes = [...baGraphData.nodes];
+    const links = [...baGraphData.links];
+    const nodeStates = {};
+    nodes.forEach(node => {
+      nodeStates[node.id] = node.id === selectedUser ? 'infected' : 'susceptible';
+    });
+
+    const propagationLog = [];
+    const highlightedLinks = [];
+    let currentInfected = [selectedUser];
+    let timeStep = 0;
+    const maxSteps = 10; // Límite de pasos para evitar bucles infinitos
+
+    while (currentInfected.length > 0 && timeStep < maxSteps) {
+      const newInfected = [];
+      currentInfected.forEach(infectedId => {
+        const outgoingLinks = links.filter(link => {
+          const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+          return sourceId === infectedId && nodeStates[link.target.id || link.target] === 'susceptible';
+        });
+
+        outgoingLinks.forEach(link => {
+          const targetId = link.target.id ? String(link.target.id) : String(link.target);
+          if (Math.random() < beta) {
+            nodeStates[targetId] = 'infected';
+            newInfected.push(targetId);
+            propagationLog.push({
+              sender: infectedId,
+              receiver: targetId,
+              t: timeStep,
+              state: 'infected',
+            });
+            highlightedLinks.push({
+              source: infectedId,
+              target: targetId,
+              timeStep,
+              animationDelay: highlightedLinks.length * 4000,
+            });
+          }
+        });
+
+        // Simular recuperación
+        if (Math.random() < gamma) {
+          nodeStates[infectedId] = 'recovered';
+        }
+      });
+
+      currentInfected = newInfected;
+      timeStep++;
+    }
+
+    setBaSIRPropagationLog(propagationLog);
+    setBaSIRHighlightedLinks(highlightedLinks);
+    setHighlightId(selectedUser);
+    setBaSIRPropagationStatus('Propagación SIR completada.');
+  };
+
   // Manejar clics en nodos
   const handleNodeClick = (node) => {
     if (viewMode === 'simulation') {
@@ -318,7 +410,7 @@ export default function App() {
       const nodeWithCentrality = realWorldNodesWithCentrality.find(n => n.id === node.id) || node;
       setModalNode(nodeWithCentrality);
       setSelectedNode(nodeWithCentrality);
-    } else if (viewMode === 'barabasi-albert') {
+    } else if (viewMode === 'barabasi-albert' || viewMode === 'barabasi-si') {
       const nodeWithCentrality = baNodesWithCentrality.find(n => n.id === node.id) || node;
       setModalNode(nodeWithCentrality);
       setSelectedNode(nodeWithCentrality);
@@ -479,6 +571,12 @@ export default function App() {
       setRipDsnHighlightedLinks([]);
       setRipDsnPropagationLog([]);
       setIsPropagationModalOpen(false);
+    } else if (viewMode === 'barabasi-si') {
+      setMessage('');
+      setSelectedUser('');
+      setBaSIRPropagationStatus('');
+      setBaSIRHighlightedLinks([]);
+      setBaSIRPropagationLog([]);
     }
   };
 
@@ -542,7 +640,6 @@ export default function App() {
               status={baStatus}
               selectedNode={baGraphData.nodes.find(n => n.id === highlightId)}
               handleResetView={handleResetView}
-
             />
             <div className="graph-container">
               <BarabasiAlbertGraph3D
@@ -551,6 +648,38 @@ export default function App() {
                 onNodeInfo={handleNodeClick}
                 highlightId={highlightId}
                 onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'barabasi-si' && (
+          <>
+            <BarabasiSIRInput
+              onGenerateNetwork={handleGenerateBaNetwork}
+              nodes={baGraphData.nodes}
+              onStartPropagation={handleBaSIRPropagation}
+            />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={baStatus}
+              selectedNode={baGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="graph-container">
+              <BarabasiSIRGraph3D
+                data={baGraphData}
+                nodesWithCentrality={baNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={baSIRHighlightedLinks}
+                onResetView={handleResetView}
+                beta={baSIRBeta}
+                gamma={baSIRGamma}
+                selectedUser={selectedUser}
+                message={message}
               />
             </div>
           </>

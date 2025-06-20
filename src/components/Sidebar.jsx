@@ -14,7 +14,7 @@ export default function Sidebar({ onMenuSelect }) {
     {
       title: 'Propagación de Información',
       items: [
-        { label: 'Barabási - Modelo SI Clásico', key: 'barabasi-si', disabled: true },
+        { label: 'Barabási - SIR', key: 'barabasi-si', disabled: false },
         { label: 'Holme-Kim SI Adaptado', key: 'holme-kim-si', disabled: true },
         { label: 'Mundo Real - Modelo RIP-DSN', key: 'real-world-rip' },
       ],
@@ -23,7 +23,6 @@ export default function Sidebar({ onMenuSelect }) {
       title: 'Comportamiento de Usuario',
       items: [
         { label: 'Simulación con Perfiles de Comportamiento', key: 'behavior-profiles' },
-      
       ],
     },
   ];
