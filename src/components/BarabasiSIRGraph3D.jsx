@@ -207,75 +207,75 @@ function BarabasiSIRGraph3D({ data, nodesWithCentrality, onNodeInfo, highlighted
   }, [filteredData.links, clearAllTimeouts, throttledRefresh]);
 
   // Animación secuencial de enlaces
-  useEffect(() => {
-    cleanupAnimation();
+  // Animación secuencial de enlaces (propagación inversa)
+useEffect(() => {
+  cleanupAnimation();
 
-    if (!fgRef.current || !highlightedLinks.length || !filteredData.links.length) return;
+  if (!fgRef.current || !highlightedLinks.length || !filteredData.links.length) return;
 
-    const config = getAnimationConfig();
-    const linkMap = filteredData.linkMap;
+  const config = getAnimationConfig();
+  const linkMap = filteredData.linkMap;
 
-    const sortedHighlightedLinks = [...highlightedLinks].sort((a, b) => a.timeStep - b.timeStep);
+  const sortedHighlightedLinks = [...highlightedLinks].sort((a, b) => a.timeStep - b.timeStep);
 
-    const animateLink = (highlight, index) => {
-      const sourceId = String(highlight.source);
-      const targetId = String(highlight.target);
-      const key1 = `${sourceId}-${targetId}`;
-      const key2 = `${targetId}-${sourceId}`;
-      let linkObj = linkMap.get(key1) || linkMap.get(key2);
+  const animateLink = (highlight, index) => {
+    const sourceId = String(highlight.source);
+    const targetId = String(highlight.target);
+    const key1 = `${sourceId}-${targetId}`;
+    const key2 = `${targetId}-${sourceId}`;
+    let linkObj = linkMap.get(key1) || linkMap.get(key2);
 
-      if (!linkObj) {
-        console.warn(`Enlace no encontrado: ${sourceId} -> ${targetId}`);
-        return;
-      }
+    if (!linkObj) {
+      console.warn(`Enlace no encontrado: ${sourceId} -> ${targetId}`);
+      return;
+    }
 
-      linkObj.__animationCount = (linkObj.__animationCount || 0) + 1;
-      linkObj.__isCurrentlyAnimating = true;
-      linkObj.__isHighlighted = true;
+    linkObj.__animationCount = (linkObj.__animationCount || 0) + 1;
+    linkObj.__isCurrentlyAnimating = true;
+    linkObj.__isHighlighted = true;
 
-      // Actualizar estado del nodo objetivo a infectado
-      nodeStates[targetId] = 'infected';
+    // Actualizar estado del nodo fuente (seguidor) a infectado
+    nodeStates[sourceId] = 'infected';
 
-      console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${sourceId} -> ${targetId}`);
+    console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${targetId} -> ${sourceId} (inverso)`);
 
-      throttledRefresh();
+    throttledRefresh();
 
-      const animationEndTimeout = setTimeout(() => {
-        if (linkObj) {
-          linkObj.__isCurrentlyAnimating = false;
-          linkObj.__isPermanentlyHighlighted = true;
-          // Simular recuperación con probabilidad gamma
-          if (Math.random() < gamma) {
-            nodeStates[targetId] = 'recovered';
-          }
-          throttledRefresh();
+    const animationEndTimeout = setTimeout(() => {
+      if (linkObj) {
+        linkObj.__isCurrentlyAnimating = false;
+        linkObj.__isPermanentlyHighlighted = true;
+        // Simular recuperación con probabilidad gamma
+        if (Math.random() < gamma) {
+          nodeStates[sourceId] = 'recovered';
         }
-        animationTimeoutRefs.current.delete(animationEndTimeout);
-      }, config.ANIMATION_DURATION);
+        throttledRefresh();
+      }
+      animationTimeoutRefs.current.delete(animationEndTimeout);
+    }, config.ANIMATION_DURATION);
 
-      animationTimeoutRefs.current.add(animationEndTimeout);
-    };
+    animationTimeoutRefs.current.add(animationEndTimeout);
+  };
 
-    sortedHighlightedLinks.forEach((highlight, index) => {
-      const delay = index * config.ANIMATION_DELAY;
-      const animationTimeout = setTimeout(() => {
-        animateLink(highlight, index);
-        animationTimeoutRefs.current.delete(animationTimeout);
-      }, delay);
-      animationTimeoutRefs.current.add(animationTimeout);
-    });
+  sortedHighlightedLinks.forEach((highlight, index) => {
+    const delay = index * config.ANIMATION_DELAY;
+    const animationTimeout = setTimeout(() => {
+      animateLink(highlight, index);
+      animationTimeoutRefs.current.delete(animationTimeout);
+    }, delay);
+    animationTimeoutRefs.current.add(animationTimeout);
+  });
 
-    const totalDuration = sortedHighlightedLinks.length * config.ANIMATION_DELAY + config.ANIMATION_DURATION;
-    const finalTimeout = setTimeout(() => {
-      console.log('Animación secuencial completada');
-      animationTimeoutRefs.current.delete(finalTimeout);
-    }, totalDuration);
+  const totalDuration = sortedHighlightedLinks.length * config.ANIMATION_DELAY + config.ANIMATION_DURATION;
+  const finalTimeout = setTimeout(() => {
+    console.log('Animación secuencial completada');
+    animationTimeoutRefs.current.delete(finalTimeout);
+  }, totalDuration);
 
-    animationTimeoutRefs.current.add(finalTimeout);
+  animationTimeoutRefs.current.add(finalTimeout);
 
-    return () => cleanupAnimation();
-  }, [highlightedLinks, filteredData.links, filteredData.linkMap, isExtensivePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh, gamma, nodeStates]);
-
+  return () => cleanupAnimation();
+}, [highlightedLinks, filteredData.links, filteredData.linkMap, isExtensivePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh, gamma, nodeStates]);
   // Cleanup al desmontar
   useEffect(() => {
     return () => clearAllTimeouts();

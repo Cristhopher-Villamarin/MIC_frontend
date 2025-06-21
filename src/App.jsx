@@ -281,77 +281,78 @@ export default function App() {
 
   // Manejar propagación SIR en Barabási-Albert
   const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
-    if (!baGraphData.nodes.length) {
-      setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
-      return;
-    }
-    if (!selectedUser || !message.trim()) {
-      setBaSIRPropagationStatus('Por favor, seleccione un nodo inicial y escriba un mensaje.');
-      return;
-    }
-    setBaSIRPropagationStatus('Iniciando propagación SIR…');
-    setBaSIRBeta(beta);
-    setBaSIRGamma(gamma);
-    setSelectedUser(selectedUser);
-    setMessage(message);
+  if (!baGraphData.nodes.length) {
+    setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
+    return;
+  }
+  if (!selectedUser || !message.trim()) {
+    setBaSIRPropagationStatus('Por favor, seleccione un nodo inicial y escriba un mensaje.');
+    return;
+  }
+  setBaSIRPropagationStatus('Iniciando propagación SIR inversa…');
+  setBaSIRBeta(beta);
+  setBaSIRGamma(gamma);
+  setSelectedUser(selectedUser);
+  setMessage(message);
 
-    // Simulación de propagación SIR
-    const nodes = [...baGraphData.nodes];
-    const links = [...baGraphData.links];
-    const nodeStates = {};
-    nodes.forEach(node => {
-      nodeStates[node.id] = node.id === selectedUser ? 'infected' : 'susceptible';
-    });
+  // Simulación de propagación SIR inversa
+  const nodes = [...baGraphData.nodes];
+  const links = [...baGraphData.links];
+  const nodeStates = {};
+  nodes.forEach(node => {
+    nodeStates[node.id] = node.id === selectedUser ? 'infected' : 'susceptible';
+  });
 
-    const propagationLog = [];
-    const highlightedLinks = [];
-    let currentInfected = [selectedUser];
-    let timeStep = 0;
-    const maxSteps = 10; // Límite de pasos para evitar bucles infinitos
+  const propagationLog = [];
+  const highlightedLinks = [];
+  let currentInfected = [selectedUser];
+  let timeStep = 0;
+  const maxSteps = 10; // Límite de pasos para evitar bucles infinitos
 
-    while (currentInfected.length > 0 && timeStep < maxSteps) {
-      const newInfected = [];
-      currentInfected.forEach(infectedId => {
-        const outgoingLinks = links.filter(link => {
-          const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-          return sourceId === infectedId && nodeStates[link.target.id || link.target] === 'susceptible';
-        });
+  while (currentInfected.length > 0 && timeStep < maxSteps) {
+    const newInfected = [];
+    currentInfected.forEach(infectedId => {
+      // Buscar enlaces entrantes (donde infectedId es el target)
+      const incomingLinks = links.filter(link => {
+        const targetId = link.target.id ? String(link.target.id) : String(link.target);
+        return targetId === infectedId && nodeStates[link.source.id || link.source] === 'susceptible';
+      });
 
-        outgoingLinks.forEach(link => {
-          const targetId = link.target.id ? String(link.target.id) : String(link.target);
-          if (Math.random() < beta) {
-            nodeStates[targetId] = 'infected';
-            newInfected.push(targetId);
-            propagationLog.push({
-              sender: infectedId,
-              receiver: targetId,
-              t: timeStep,
-              state: 'infected',
-            });
-            highlightedLinks.push({
-              source: infectedId,
-              target: targetId,
-              timeStep,
-              animationDelay: highlightedLinks.length * 4000,
-            });
-          }
-        });
-
-        // Simular recuperación
-        if (Math.random() < gamma) {
-          nodeStates[infectedId] = 'recovered';
+      incomingLinks.forEach(link => {
+        const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+        if (Math.random() < beta) {
+          nodeStates[sourceId] = 'infected';
+          newInfected.push(sourceId);
+          propagationLog.push({
+            sender: infectedId,
+            receiver: sourceId,
+            t: timeStep,
+            state: 'infected',
+          });
+          highlightedLinks.push({
+            source: sourceId,
+            target: infectedId,
+            timeStep,
+            animationDelay: highlightedLinks.length * 4000,
+          });
         }
       });
 
-      currentInfected = newInfected;
-      timeStep++;
-    }
+      // Simular recuperación
+      if (Math.random() < gamma) {
+        nodeStates[infectedId] = 'recovered';
+      }
+    });
 
-    setBaSIRPropagationLog(propagationLog);
-    setBaSIRHighlightedLinks(highlightedLinks);
-    setHighlightId(selectedUser);
-    setBaSIRPropagationStatus('Propagación SIR completada.');
-  };
+    currentInfected = newInfected;
+    timeStep++;
+  }
+
+  setBaSIRPropagationLog(propagationLog);
+  setBaSIRHighlightedLinks(highlightedLinks);
+  setHighlightId(selectedUser);
+  setBaSIRPropagationStatus('Propagación SIR inversa completada.');
+};
 
   // Manejar clics en nodos
   const handleNodeClick = (node) => {
