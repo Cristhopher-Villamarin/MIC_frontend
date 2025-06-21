@@ -279,8 +279,10 @@ export default function App() {
     setHkStatus(`Red Holme-Kim: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
   };
 
-  // Manejar propagación SIR en Barabási-Albert
-  const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
+  // Manejar propagación SIR en Barabási-Albert (propagación inversa con recuperación retardada)
+// ... (resto del código de App.jsx sin cambios)
+
+const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
   if (!baGraphData.nodes.length) {
     setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
     return;
@@ -295,7 +297,6 @@ export default function App() {
   setSelectedUser(selectedUser);
   setMessage(message);
 
-  // Simulación de propagación SIR inversa
   const nodes = [...baGraphData.nodes];
   const links = [...baGraphData.links];
   const nodeStates = {};
@@ -307,12 +308,12 @@ export default function App() {
   const highlightedLinks = [];
   let currentInfected = [selectedUser];
   let timeStep = 0;
-  const maxSteps = 10; // Límite de pasos para evitar bucles infinitos
+  const maxSteps = 10;
 
   while (currentInfected.length > 0 && timeStep < maxSteps) {
     const newInfected = [];
+
     currentInfected.forEach(infectedId => {
-      // Buscar enlaces entrantes (donde infectedId es el target)
       const incomingLinks = links.filter(link => {
         const targetId = link.target.id ? String(link.target.id) : String(link.target);
         return targetId === infectedId && nodeStates[link.source.id || link.source] === 'susceptible';
@@ -337,11 +338,6 @@ export default function App() {
           });
         }
       });
-
-      // Simular recuperación
-      if (Math.random() < gamma) {
-        nodeStates[infectedId] = 'recovered';
-      }
     });
 
     currentInfected = newInfected;

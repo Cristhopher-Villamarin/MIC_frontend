@@ -206,8 +206,9 @@ function BarabasiSIRGraph3D({ data, nodesWithCentrality, onNodeInfo, highlighted
     throttledRefresh();
   }, [filteredData.links, clearAllTimeouts, throttledRefresh]);
 
-  // Animación secuencial de enlaces
-  // Animación secuencial de enlaces (propagación inversa)
+
+  // Animación secuencial de enlaces (propagación inversa con recuperación retardada)
+// Animación secuencial de enlaces (propagación inversa con sincronización de colores)
 useEffect(() => {
   cleanupAnimation();
 
@@ -234,9 +235,6 @@ useEffect(() => {
     linkObj.__isCurrentlyAnimating = true;
     linkObj.__isHighlighted = true;
 
-    // Actualizar estado del nodo fuente (seguidor) a infectado
-    nodeStates[sourceId] = 'infected';
-
     console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${targetId} -> ${sourceId} (inverso)`);
 
     throttledRefresh();
@@ -245,9 +243,20 @@ useEffect(() => {
       if (linkObj) {
         linkObj.__isCurrentlyAnimating = false;
         linkObj.__isPermanentlyHighlighted = true;
-        // Simular recuperación con probabilidad gamma
-        if (Math.random() < gamma) {
-          nodeStates[sourceId] = 'recovered';
+        // Actualizar estado del nodo fuente (seguidor) a infectado cuando el enlace se vuelve naranja
+        nodeStates[sourceId] = 'infected';
+
+        // Verificar si el nodo target ha propagado a todos sus seguidores
+        const incomingLinks = filteredData.links.filter(link => {
+          const linkTargetId = link.target.id ? String(link.target.id) : String(link.target);
+          return linkTargetId === targetId;
+        });
+        const allPropagated = incomingLinks.every(link => {
+          const linkSourceId = link.source.id ? String(link.source.id) : String(link.source);
+          return nodeStates[linkSourceId] !== 'susceptible' || link.__isPermanentlyHighlighted;
+        });
+        if (allPropagated && Math.random() < gamma) {
+          nodeStates[targetId] = 'recovered';
         }
         throttledRefresh();
       }
@@ -276,7 +285,7 @@ useEffect(() => {
 
   return () => cleanupAnimation();
 }, [highlightedLinks, filteredData.links, filteredData.linkMap, isExtensivePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh, gamma, nodeStates]);
-  // Cleanup al desmontar
+
   useEffect(() => {
     return () => clearAllTimeouts();
   }, [clearAllTimeouts]);
