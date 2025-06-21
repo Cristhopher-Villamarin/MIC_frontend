@@ -13,7 +13,12 @@ export default function BaSIRPropagationResult({ selectedUser, onClose }) {
     const handleScroll = () => {
       if (logTableRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = logTableRef.current;
+        // Consider user scrolling if not within 10px of the bottom
         isUserScrolling.current = scrollTop + clientHeight < scrollHeight - 10;
+        // Re-enable auto-scroll if user scrolls to within 10px of the bottom
+        if (scrollTop + clientHeight >= scrollHeight - 10) {
+          isUserScrolling.current = false;
+        }
       }
     };
 
@@ -29,7 +34,7 @@ export default function BaSIRPropagationResult({ selectedUser, onClose }) {
     };
   }, []);
 
-  // Handle propagation events
+  // Handle propagation events and auto-scroll
   useEffect(() => {
     const handlePropagationUpdate = (event) => {
       const { t, sender, receiver, state } = event.detail;
@@ -37,12 +42,18 @@ export default function BaSIRPropagationResult({ selectedUser, onClose }) {
       setLogEntries((prev) => [...prev, newEntry]);
       setCurrentIndex((prev) => prev + 1);
 
-      // Auto-scroll to bottom if user isn't scrolling
-      setTimeout(() => {
-        if (logTableRef.current && !isUserScrolling.current) {
-          logTableRef.current.scrollTop = logTableRef.current.scrollHeight;
-        }
-      }, 0);
+      // Auto-scroll to bottom if user isn't scrolling manually
+      if (logTableRef.current && !isUserScrolling.current) {
+        // Use requestAnimationFrame for smoother scroll
+        requestAnimationFrame(() => {
+          if (logTableRef.current) {
+            logTableRef.current.scrollTo({
+              top: logTableRef.current.scrollHeight,
+              behavior: 'smooth',
+            });
+          }
+        });
+      }
     };
 
     window.addEventListener('baSIRPropagationUpdate', handlePropagationUpdate);

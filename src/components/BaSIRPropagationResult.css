@@ -16,7 +16,7 @@
 .propagation-result-content {
   padding: 1rem;
   overflow-y: auto;
-  max-height: calc(50vh - 2rem);
+  max-height: calc(60vh - 2rem);
 }
 
 .header {
