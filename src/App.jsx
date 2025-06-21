@@ -17,6 +17,7 @@ import BarabasiSIRGraph3D from './components/BarabasiSIRGraph3D';
 import HolmeKimInput from './components/HolmeKimInput';
 import HolmeKimGraph3D from './components/HolmeKimGraph3D';
 import Sidebar from './components/Sidebar';
+import BaSIRPropagationResult from './components/BaSIRPropagationResult';
 import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/loadFiles';
 import { generateBarabasiAlbert } from './utils/BarabasiAlbert';
 import { generateHolmeKim } from './utils/HolmeKim';
@@ -72,6 +73,7 @@ export default function App() {
   const [baSIRHighlightedLinks, setBaSIRHighlightedLinks] = useState([]);
   const [baSIRPropagationLog, setBaSIRPropagationLog] = useState([]);
   const [baSIRPropagationStatus, setBaSIRPropagationStatus] = useState('');
+  const [showBaSIRPropagationResult, setShowBaSIRPropagationResult] = useState(false);
   // Estados para Holme-Kim
   const [hkGraphData, setHkGraphData] = useState({ nodes: [], links: [] });
   const [hkStatus, setHkStatus] = useState('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
@@ -296,6 +298,7 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
   setBaSIRGamma(gamma);
   setSelectedUser(selectedUser);
   setMessage(message);
+  setShowBaSIRPropagationResult(true);
 
   const nodes = [...baGraphData.nodes];
   const links = [...baGraphData.links];
@@ -348,6 +351,16 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
   setBaSIRHighlightedLinks(highlightedLinks);
   setHighlightId(selectedUser);
   setBaSIRPropagationStatus('Propagación SIR inversa completada.');
+};
+
+  const handleCloseBaSIRPropagationResult = () => {
+  setShowBaSIRPropagationResult(false);
+  setBaSIRPropagationStatus('');
+  setBaSIRHighlightedLinks([]);
+  setBaSIRPropagationLog([]);
+  setHighlightId('');
+  setSelectedUser('');
+  setMessage('');
 };
 
   // Manejar clics en nodos
@@ -574,6 +587,7 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
       setBaSIRPropagationStatus('');
       setBaSIRHighlightedLinks([]);
       setBaSIRPropagationLog([]);
+      setShowBaSIRPropagationResult(false);
     }
   };
 
@@ -678,6 +692,12 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
                 selectedUser={selectedUser}
                 message={message}
               />
+              {showBaSIRPropagationResult && (
+              <BaSIRPropagationResult
+                selectedUser={selectedUser}
+                onClose={handleCloseBaSIRPropagationResult}
+              />
+            )}
             </div>
           </>
         )}

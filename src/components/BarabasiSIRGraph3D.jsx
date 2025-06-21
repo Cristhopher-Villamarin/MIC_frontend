@@ -207,8 +207,7 @@ function BarabasiSIRGraph3D({ data, nodesWithCentrality, onNodeInfo, highlighted
   }, [filteredData.links, clearAllTimeouts, throttledRefresh]);
 
 
-  // Animación secuencial de enlaces (propagación inversa con recuperación retardada)
-// Animación secuencial de enlaces (propagación inversa con sincronización de colores)
+// Animación secuencial de enlaces (propagación inversa con sincronización de colores y eventos)
 useEffect(() => {
   cleanupAnimation();
 
@@ -243,8 +242,18 @@ useEffect(() => {
       if (linkObj) {
         linkObj.__isCurrentlyAnimating = false;
         linkObj.__isPermanentlyHighlighted = true;
-        // Actualizar estado del nodo fuente (seguidor) a infectado cuando el enlace se vuelve naranja
         nodeStates[sourceId] = 'infected';
+
+        // Disparar evento de propagación
+        const propagationEvent = new CustomEvent('baSIRPropagationUpdate', {
+          detail: {
+            t: highlight.timeStep,
+            sender: targetId,
+            receiver: sourceId,
+            state: nodeStates[sourceId],
+          },
+        });
+        window.dispatchEvent(propagationEvent);
 
         // Verificar si el nodo target ha propagado a todos sus seguidores
         const incomingLinks = filteredData.links.filter(link => {
@@ -257,6 +266,16 @@ useEffect(() => {
         });
         if (allPropagated && Math.random() < gamma) {
           nodeStates[targetId] = 'recovered';
+          // Disparar evento para la recuperación del nodo target
+          const recoveryEvent = new CustomEvent('baSIRPropagationUpdate', {
+            detail: {
+              t: highlight.timeStep,
+              sender: targetId,
+              receiver: targetId, // El mismo nodo se recupera
+              state: nodeStates[targetId],
+            },
+          });
+          window.dispatchEvent(recoveryEvent);
         }
         throttledRefresh();
       }
