@@ -15,7 +15,7 @@ export default function Sidebar({ onMenuSelect }) {
       title: 'Propagación de Información',
       items: [
         { label: 'Barabási - SIR', key: 'barabasi-si', disabled: false },
-        { label: 'Holme-Kim SI Adaptado', key: 'holme-kim-si', disabled: true },
+        { label: 'Holme-Kim SI Adaptado', key: 'holme-kim-si' },
         { label: 'Mundo Real - Modelo RIP-DSN', key: 'real-world-rip' },
       ],
     },

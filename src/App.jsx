@@ -16,6 +16,8 @@ import BarabasiSIRInput from './components/BarabasiSIRInput';
 import BarabasiSIRGraph3D from './components/BarabasiSIRGraph3D';
 import HolmeKimInput from './components/HolmeKimInput';
 import HolmeKimGraph3D from './components/HolmeKimGraph3D';
+import HolmeKimSIRInput from './components/HolmeKimSIRInput';
+import HolmeKimSIRGraph3D from './components/HolmeKimSIRGraph3D';
 import Sidebar from './components/Sidebar';
 import BaSIRPropagationResult from './components/BaSIRPropagationResult';
 import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/loadFiles';
@@ -78,6 +80,13 @@ export default function App() {
   const [hkGraphData, setHkGraphData] = useState({ nodes: [], links: [] });
   const [hkStatus, setHkStatus] = useState('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
   const [hkNodesWithCentrality, setHkNodesWithCentrality] = useState([]);
+  // Estados para Holme-Kim SIR
+  const [hkSIRBeta, setHkSIRBeta] = useState(0.3);
+  const [hkSIRGamma, setHkSIRGamma] = useState(0.1);
+  const [hkSIRHighlightedLinks, setHkSIRHighlightedLinks] = useState([]);
+  const [hkSIRPropagationLog, setHkSIRPropagationLog] = useState([]);
+  const [hkSIRPropagationStatus, setHkSIRPropagationStatus] = useState('');
+  const [showHkSIRPropagationResult, setShowHkSIRPropagationResult] = useState(false);
 
   // Claves de emociones (no usadas en SIR, pero mantenidas por compatibilidad)
   const emotionKeys = [
@@ -131,6 +140,13 @@ export default function App() {
         setHkStatus('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
         setHkNodesWithCentrality([]);
       }
+    } else if (key === 'holme-kim-si') {
+      setViewMode('holme-kim-si');
+      if (hkGraphData.nodes.length > 0) {
+        setHkStatus(`Red Holme-Kim (SIR): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+      } else {
+        setHkStatus('Genere una red Holme-Kim primero…');
+      }
     } else {
       setViewMode('simulation');
       setStatus('Sube el CSV y el XLSX…');
@@ -157,6 +173,9 @@ export default function App() {
     setBaSIRPropagationStatus('');
     setBaSIRHighlightedLinks([]);
     setBaSIRPropagationLog([]);
+    setHkSIRPropagationStatus('');
+    setHkSIRHighlightedLinks([]);
+    setHkSIRPropagationLog([]);
     setIsNodeModalOpen(false);
     setIsPropagationModalOpen(false);
     setIsNodeStatesModalOpen(false);
@@ -281,87 +300,165 @@ export default function App() {
     setHkStatus(`Red Holme-Kim: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
   };
 
-  // Manejar propagación SIR en Barabási-Albert (propagación inversa con recuperación retardada)
-// ... (resto del código de App.jsx sin cambios)
+  // Manejar propagación SIR en Barabási-Albert
+  const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
+    if (!baGraphData.nodes.length) {
+      setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
+      return;
+    }
+    if (!selectedUser || !message.trim()) {
+      setBaSIRPropagationStatus('Por favor, seleccione un nodo inicial y escriba un mensaje.');
+      return;
+    }
+    setBaSIRPropagationStatus('Iniciando propagación SIR inversa…');
+    setBaSIRBeta(beta);
+    setBaSIRGamma(gamma);
+    setSelectedUser(selectedUser);
+    setMessage(message);
+    setShowBaSIRPropagationResult(true);
 
-const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
-  if (!baGraphData.nodes.length) {
-    setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
-    return;
-  }
-  if (!selectedUser || !message.trim()) {
-    setBaSIRPropagationStatus('Por favor, seleccione un nodo inicial y escriba un mensaje.');
-    return;
-  }
-  setBaSIRPropagationStatus('Iniciando propagación SIR inversa…');
-  setBaSIRBeta(beta);
-  setBaSIRGamma(gamma);
-  setSelectedUser(selectedUser);
-  setMessage(message);
-  setShowBaSIRPropagationResult(true);
-
-  const nodes = [...baGraphData.nodes];
-  const links = [...baGraphData.links];
-  const nodeStates = {};
-  nodes.forEach(node => {
-    nodeStates[node.id] = node.id === selectedUser ? 'infected' : 'susceptible';
-  });
-
-  const propagationLog = [];
-  const highlightedLinks = [];
-  let currentInfected = [selectedUser];
-  let timeStep = 0;
-  const maxSteps = 10;
-
-  while (currentInfected.length > 0 && timeStep < maxSteps) {
-    const newInfected = [];
-
-    currentInfected.forEach(infectedId => {
-      const incomingLinks = links.filter(link => {
-        const targetId = link.target.id ? String(link.target.id) : String(link.target);
-        return targetId === infectedId && nodeStates[link.source.id || link.source] === 'susceptible';
-      });
-
-      incomingLinks.forEach(link => {
-        const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-        if (Math.random() < beta) {
-          nodeStates[sourceId] = 'infected';
-          newInfected.push(sourceId);
-          propagationLog.push({
-            sender: infectedId,
-            receiver: sourceId,
-            t: timeStep,
-            state: 'infected',
-          });
-          highlightedLinks.push({
-            source: sourceId,
-            target: infectedId,
-            timeStep,
-            animationDelay: highlightedLinks.length * 4000,
-          });
-        }
-      });
+    const nodes = [...baGraphData.nodes];
+    const links = [...baGraphData.links];
+    const nodeStates = {};
+    nodes.forEach(node => {
+      nodeStates[node.id] = node.id === selectedUser ? 'infected' : 'susceptible';
     });
 
-    currentInfected = newInfected;
-    timeStep++;
-  }
+    const propagationLog = [];
+    const highlightedLinks = [];
+    let currentInfected = [selectedUser];
+    let timeStep = 0;
+    const maxSteps = 10;
 
-  setBaSIRPropagationLog(propagationLog);
-  setBaSIRHighlightedLinks(highlightedLinks);
-  setHighlightId(selectedUser);
-  setBaSIRPropagationStatus('Propagación SIR inversa completada.');
-};
+    while (currentInfected.length > 0 && timeStep < maxSteps) {
+      const newInfected = [];
+
+      currentInfected.forEach(infectedId => {
+        const incomingLinks = links.filter(link => {
+          const targetId = link.target.id ? String(link.target.id) : String(link.target);
+          return targetId === infectedId && nodeStates[link.source.id || link.source] === 'susceptible';
+        });
+
+        incomingLinks.forEach(link => {
+          const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+          if (Math.random() < beta) {
+            nodeStates[sourceId] = 'infected';
+            newInfected.push(sourceId);
+            propagationLog.push({
+              sender: infectedId,
+              receiver: sourceId,
+              t: timeStep,
+              state: 'infected',
+            });
+            highlightedLinks.push({
+              source: sourceId,
+              target: infectedId,
+              timeStep,
+              animationDelay: highlightedLinks.length * 4000,
+            });
+          }
+        });
+      });
+
+      currentInfected = newInfected;
+      timeStep++;
+    }
+
+    setBaSIRPropagationLog(propagationLog);
+    setBaSIRHighlightedLinks(highlightedLinks);
+    setHighlightId(selectedUser);
+    setBaSIRPropagationStatus('Propagación SIR inversa completada.');
+  };
+
+  // Manejar propagación SIR en Holme-Kim
+  const handleHkSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
+    if (!hkGraphData.nodes.length) {
+      setHkSIRPropagationStatus('Por favor, genere una red Holme-Kim primero.');
+      return;
+    }
+    if (!selectedUser || !message.trim()) {
+      setHkSIRPropagationStatus('Por favor, seleccione un nodo inicial y escriba un mensaje.');
+      return;
+    }
+    setHkSIRPropagationStatus('Iniciando propagación SIR inversa…');
+    setHkSIRBeta(beta);
+    setHkSIRGamma(gamma);
+    setSelectedUser(selectedUser);
+    setMessage(message);
+    setShowHkSIRPropagationResult(true);
+
+    const nodes = [...hkGraphData.nodes];
+    const links = [...hkGraphData.links];
+    const nodeStates = {};
+    nodes.forEach(node => {
+      nodeStates[node.id] = node.id === selectedUser ? 'infected' : 'susceptible';
+    });
+
+    const propagationLog = [];
+    const highlightedLinks = [];
+    let currentInfected = [selectedUser];
+    let timeStep = 0;
+    const maxSteps = 10;
+
+    while (currentInfected.length > 0 && timeStep < maxSteps) {
+      const newInfected = [];
+
+      currentInfected.forEach(infectedId => {
+        const incomingLinks = links.filter(link => {
+          const targetId = link.target.id ? String(link.target.id) : String(link.target);
+          return targetId === infectedId && nodeStates[link.source.id || link.source] === 'susceptible';
+        });
+
+        incomingLinks.forEach(link => {
+          const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+          if (Math.random() < beta) {
+            nodeStates[sourceId] = 'infected';
+            newInfected.push(sourceId);
+            propagationLog.push({
+              sender: infectedId,
+              receiver: sourceId,
+              t: timeStep,
+              state: 'infected',
+            });
+            highlightedLinks.push({
+              source: sourceId,
+              target: infectedId,
+              timeStep,
+              animationDelay: highlightedLinks.length * 4000,
+            });
+          }
+        });
+      });
+
+      currentInfected = newInfected;
+      timeStep++;
+    }
+
+    setHkSIRPropagationLog(propagationLog);
+    setHkSIRHighlightedLinks(highlightedLinks);
+    setHighlightId(selectedUser);
+    setHkSIRPropagationStatus('Propagación SIR inversa completada.');
+  };
 
   const handleCloseBaSIRPropagationResult = () => {
-  setShowBaSIRPropagationResult(false);
-  setBaSIRPropagationStatus('');
-  setBaSIRHighlightedLinks([]);
-  setBaSIRPropagationLog([]);
-  setHighlightId('');
-  setSelectedUser('');
-  setMessage('');
-};
+    setShowBaSIRPropagationResult(false);
+    setBaSIRPropagationStatus('');
+    setBaSIRHighlightedLinks([]);
+    setBaSIRPropagationLog([]);
+    setHighlightId('');
+    setSelectedUser('');
+    setMessage('');
+  };
+
+  const handleCloseHkSIRPropagationResult = () => {
+    setShowHkSIRPropagationResult(false);
+    setHkSIRPropagationStatus('');
+    setHkSIRHighlightedLinks([]);
+    setHkSIRPropagationLog([]);
+    setHighlightId('');
+    setSelectedUser('');
+    setMessage('');
+  };
 
   // Manejar clics en nodos
   const handleNodeClick = (node) => {
@@ -424,7 +521,7 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
       const nodeWithCentrality = baNodesWithCentrality.find(n => n.id === node.id) || node;
       setModalNode(nodeWithCentrality);
       setSelectedNode(nodeWithCentrality);
-    } else if (viewMode === 'holme-kim') {
+    } else if (viewMode === 'holme-kim' || viewMode === 'holme-kim-si') {
       const nodeWithCentrality = hkNodesWithCentrality.find(n => n.id === node.id) || node;
       setModalNode(nodeWithCentrality);
       setSelectedNode(nodeWithCentrality);
@@ -481,6 +578,7 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
     }
   };
 
+  // Manejar propagación RIP-DSN
   // Manejar propagación RIP-DSN
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
@@ -588,6 +686,13 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
       setBaSIRHighlightedLinks([]);
       setBaSIRPropagationLog([]);
       setShowBaSIRPropagationResult(false);
+    } else if (viewMode === 'holme-kim-si') {
+      setMessage('');
+      setSelectedUser('');
+      setHkSIRPropagationStatus('');
+      setHkSIRHighlightedLinks([]);
+      setHkSIRPropagationLog([]);
+      setShowHkSIRPropagationResult(false);
     }
   };
 
@@ -693,11 +798,11 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
                 message={message}
               />
               {showBaSIRPropagationResult && (
-              <BaSIRPropagationResult
-                selectedUser={selectedUser}
-                onClose={handleCloseBaSIRPropagationResult}
-              />
-            )}
+                <BaSIRPropagationResult
+                  selectedUser={selectedUser}
+                  onClose={handleCloseBaSIRPropagationResult}
+                />
+              )}
             </div>
           </>
         )}
@@ -721,6 +826,43 @@ const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
                 highlightId={highlightId}
                 onResetView={handleResetView}
               />
+            </div>
+          </>
+        )}
+        {viewMode === 'holme-kim-si' && (
+          <>
+            <HolmeKimSIRInput
+              nodes={hkGraphData.nodes}
+              onStartPropagation={handleHkSIRPropagation}
+            />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={hkStatus}
+              selectedNode={hkGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="graph-container">
+              <HolmeKimSIRGraph3D
+                data={hkGraphData}
+                nodesWithCentrality={hkNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={hkSIRHighlightedLinks}
+                onResetView={handleResetView}
+                beta={hkSIRBeta}
+                gamma={hkSIRGamma}
+                selectedUser={selectedUser}
+                message={message}
+              />
+              {showHkSIRPropagationResult && (
+                <BaSIRPropagationResult
+                  selectedUser={selectedUser}
+                  onClose={handleCloseHkSIRPropagationResult}
+                />
+              )}
             </div>
           </>
         )}
