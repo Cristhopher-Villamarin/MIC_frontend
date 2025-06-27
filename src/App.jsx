@@ -87,8 +87,10 @@ export default function App() {
   const [hkSIRPropagationLog, setHkSIRPropagationLog] = useState([]);
   const [hkSIRPropagationStatus, setHkSIRPropagationStatus] = useState('');
   const [showHkSIRPropagationResult, setShowHkSIRPropagationResult] = useState(false);
+  // Estado para el método de propagación
+  const [method, setMethod] = useState('sma'); // Por defecto EMA
 
-  // Claves de emociones (no usadas en SIR, pero mantenidas por compatibilidad)
+  // Claves de emociones
   const emotionKeys = [
     'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
@@ -180,6 +182,7 @@ export default function App() {
     setIsPropagationModalOpen(false);
     setIsNodeStatesModalOpen(false);
     setModalNode(null);
+    setMethod('ema'); // Resetear método a EMA por defecto
   };
 
   // Cargar CSV
@@ -531,7 +534,7 @@ export default function App() {
   };
 
   // Manejar propagación
-  const handlePropagation = async () => {
+  const handlePropagation = async ({ selectedUser, message, method }) => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
       return;
@@ -544,11 +547,12 @@ export default function App() {
       formData.append('csv_file', csvFile);
       formData.append('xlsx_file', xlsxFile);
       formData.append('max_steps', 4);
+      formData.append('method', method);
       const response = await axios.post('http://localhost:8000/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setPropagationResult(response.data);
-      setPropagationStatus('Propagación completada.');
+      setPropagationStatus(`Propagación completada con método ${method.toUpperCase()}.`);
       const propagationLog = response.data.log || [];
       console.log('Propagation log from backend:', propagationLog);
       setPropagationLog(propagationLog);
@@ -578,7 +582,6 @@ export default function App() {
     }
   };
 
-  // Manejar propagación RIP-DSN
   // Manejar propagación RIP-DSN
   const handleRipDsnPropagation = async () => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
@@ -671,6 +674,7 @@ export default function App() {
       setIsPropagationModalOpen(false);
       setIsNodeStatesModalOpen(false);
       setModalNode(null);
+      setMethod('ema');
     } else if (viewMode === 'rip-dsn') {
       setMessage('');
       setSelectedUser('');
@@ -1004,6 +1008,8 @@ export default function App() {
               nodes={graphData.nodes}
               handlePropagation={handlePropagation}
               propagationStatus={propagationStatus}
+              method={method}
+              setMethod={setMethod}
             />
             <NodeModal
               isOpen={isNodeModalOpen}

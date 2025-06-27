@@ -1,4 +1,3 @@
-// src/components/PropagationModal.jsx
 import PropTypes from 'prop-types';
 import './PropagationModal.css';
 
@@ -12,6 +11,8 @@ export default function PropagationModal({
   nodes,
   handlePropagation,
   propagationStatus,
+  method,
+  setMethod
 }) {
   if (!isOpen) return null;
 
@@ -38,8 +39,16 @@ export default function PropagationModal({
           onChange={e => setMessage(e.target.value)}
           className="modal-textarea"
         />
+        <select
+          value={method}
+          onChange={e => setMethod(e.target.value)}
+          className="modal-select"
+        >
+          <option value="ema">Media Móvil Exponencial (EMA)</option>
+          <option value="sma">Media Móvil Simple (SMA)</option>
+        </select>
         <button
-          onClick={handlePropagation}
+          onClick={() => handlePropagation({ selectedUser, message, method })}
           disabled={!selectedUser || !message.trim()}
           className={selectedUser && message.trim() ? 'button' : 'button-disabled'}
         >
@@ -71,4 +80,6 @@ PropagationModal.propTypes = {
   nodes: PropTypes.arrayOf(PropTypes.object).isRequired,
   handlePropagation: PropTypes.func.isRequired,
   propagationStatus: PropTypes.string.isRequired,
+  method: PropTypes.string.isRequired,
+  setMethod: PropTypes.func.isRequired
 };
