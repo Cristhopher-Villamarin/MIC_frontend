@@ -26,7 +26,7 @@ import { generateHolmeKim } from './utils/HolmeKim';
 import axios from 'axios';
 import './App.css';
 import { calculateCentralityMetrics } from './utils/centrality';
-
+import RipPropagationModal from './components/RipPropagationModal';
 export default function App() {
   // Estados existentes
   const [csvFile, setCsvFile] = useState(null);
@@ -583,82 +583,81 @@ export default function App() {
   };
 
   // Manejar propagación RIP-DSN
-  const handleRipDsnPropagation = async () => {
-    if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
-      setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
-      return;
-    }
-    setRipDsnPropagationStatus('Iniciando propagación…');
-    try {
-      const formData = new FormData();
-      formData.append('seed_user', selectedUser);
-      formData.append('message', message);
-      formData.append('nodes_csv_file', nodesCsvFile);
-      formData.append('links_csv_file', linksCsvFile);
-      formData.append('max_steps', 4);
-      const response = await axios.post('http://localhost:8000/propagate', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+const handleRipDsnPropagation = async ({ selectedUser, message }) => {
+  if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
+    setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
+    return;
+  }
+  setRipDsnPropagationStatus('Iniciando propagación…');
+  try {
+    const formData = new FormData();
+    formData.append('seed_user', selectedUser);
+    formData.append('message', message);
+    formData.append('nodes_csv_file', nodesCsvFile);
+    formData.append('links_csv_file', linksCsvFile);
+    formData.append('max_steps', 4);
+    const response = await axios.post('http://localhost:8000/propagate', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    setRipDsnPropagationResult(response.data);
+    setRipDsnPropagationStatus('Propagación completada.');
+    const propagationLog = response.data.log || [];
+    console.log('RIP-DSN Propagation log from backend:', propagationLog);
+    setRipDsnPropagationLog(propagationLog);
+
+    let linksToHighlight = propagationLog
+      .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
+      .sort((a, b) => a.t - b.t)
+      .map((entry, index) => ({
+        source: String(entry.sender),
+        target: String(entry.receiver),
+        timeStep: entry.t,
+        animationDelay: index * 4000,
+      }));
+
+    const involvedNodeIds = new Set(linksToHighlight.flatMap(link => [link.source, link.target]));
+    const allLinks = realWorldLinksAll.filter(link => {
+      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+      const targetId = link.target.id ? String(link.target.id) : String(link.target);
+      return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
+    });
+
+    linksToHighlight.forEach(link => {
+      const sourceId = link.source;
+      const targetId = link.target;
+      const nextLinks = allLinks.filter(l => {
+        const lSourceId = l.source.id ? String(l.source.id) : String(l.source);
+        const lTargetId = l.target.id ? String(l.target.id) : String(l.target);
+        return lSourceId === targetId && involvedNodeIds.has(lTargetId) && !linksToHighlight.some(l => l.source === lSourceId && l.target === lTargetId);
       });
-      setRipDsnPropagationResult(response.data);
-      setRipDsnPropagationStatus('Propagación completada.');
-      const propagationLog = response.data.log || [];
-      console.log('RIP-DSN Propagation log from backend:', propagationLog);
-      setRipDsnPropagationLog(propagationLog);
-
-      let linksToHighlight = propagationLog
-        .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
-        .sort((a, b) => a.t - b.t)
-        .map((entry, index) => ({
-          source: String(entry.sender),
-          target: String(entry.receiver),
-          timeStep: entry.t,
-          animationDelay: index * 4000,
-        }));
-
-      const involvedNodeIds = new Set(linksToHighlight.flatMap(link => [link.source, link.target]));
-      const allLinks = realWorldLinksAll.filter(link => {
-        const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-        const targetId = link.target.id ? String(link.target.id) : String(link.target);
-        return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
+      nextLinks.forEach(nextLink => {
+        const nextTargetId = nextLink.target.id ? String(nextLink.target.id) : String(nextLink.target);
+        const maxTimeStep = Math.max(...linksToHighlight.map(l => l.timeStep)) + 1;
+        if (!linksToHighlight.some(l => l.source === targetId && l.target === nextTargetId)) {
+          linksToHighlight.push({
+            source: targetId,
+            target: nextTargetId,
+            timeStep: maxTimeStep,
+            animationDelay: linksToHighlight.length * 4000,
+          });
+          involvedNodeIds.add(nextTargetId);
+        }
       });
+    });
 
-      linksToHighlight.forEach(link => {
-        const sourceId = link.source;
-        const targetId = link.target;
-        const nextLinks = allLinks.filter(l => {
-          const lSourceId = l.source.id ? String(l.source.id) : String(l.source);
-          const lTargetId = l.target.id ? String(l.target.id) : String(l.target);
-          return lSourceId === targetId && involvedNodeIds.has(lTargetId) && !linksToHighlight.some(l => l.source === lSourceId && l.target === lTargetId);
-        });
-        nextLinks.forEach(nextLink => {
-          const nextTargetId = nextLink.target.id ? String(nextLink.target.id) : String(nextLink.target);
-          const maxTimeStep = Math.max(...linksToHighlight.map(l => l.timeStep)) + 1;
-          if (!linksToHighlight.some(l => l.source === targetId && l.target === nextTargetId)) {
-            linksToHighlight.push({
-              source: targetId,
-              target: nextTargetId,
-              timeStep: maxTimeStep,
-              animationDelay: linksToHighlight.length * 4000,
-            });
-            involvedNodeIds.add(nextTargetId);
-          }
-        });
-      });
-
-      console.log('Total RIP-DSN highlightedLinks (incluyendo secundarias):', linksToHighlight);
-      setRipDsnHighlightedLinks(linksToHighlight);
-      setHighlightId(selectedUser);
-      setIsPropagationModalOpen(false);
-    } catch (error) {
-      console.error('RIP-DSN Propagation error:', error);
-      const errorMessage = error.response?.data?.detail
-        ? error.response.data.detail
-        : error.message || 'Error desconocido';
-      setRipDsnPropagationStatus(`Error: ${errorMessage}`);
-      setRipDsnPropagationResult(null);
-    }
-  };
-
+    console.log('Total RIP-DSN highlightedLinks (incluyendo secundarias):', linksToHighlight);
+    setRipDsnHighlightedLinks(linksToHighlight);
+    setHighlightId(selectedUser);
+    setIsPropagationModalOpen(false);
+  } catch (error) {
+    console.error('RIP-DSN Propagation error:', error);
+    const errorMessage = error.response?.data?.detail
+      ? error.response.data.detail
+      : error.message || 'Error desconocido';
+    setRipDsnPropagationStatus(`Error: ${errorMessage}`);
+    setRipDsnPropagationResult(null);
+  }
+};
   // Resetear vista
   const handleResetView = () => {
     setHighlightId('');
@@ -924,7 +923,7 @@ export default function App() {
                 Iniciar Propagación
               </button>
             </div>
-            <PropagationModal
+          <RipPropagationModal
               isOpen={isPropagationModalOpen}
               setIsOpen={setIsPropagationModalOpen}
               selectedUser={selectedUser}
