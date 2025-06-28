@@ -1,0 +1,104 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.thresholds-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: #fff;
+}
+
+.modal-title {
+  margin: 0 0 20px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.profile-section {
+  margin-bottom: 20px;
+}
+
+.profile-section h4 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  color: #00ced1;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.input-group label {
+  width: 100px;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.modal-input {
+  flex: 1;
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #00ced1;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #00ced1;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.button:hover {
+  background: #00a0a1;
+}
+
+.modal-close-button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #ff4444;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.modal-close-button:hover {
+  background: #cc3333;
+}

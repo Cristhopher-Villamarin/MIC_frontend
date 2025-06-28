@@ -1,4 +1,6 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
+import ThresholdsModal from './ThresholdsModal';
 import './PropagationModal.css';
 
 export default function PropagationModal({
@@ -12,8 +14,12 @@ export default function PropagationModal({
   handlePropagation,
   propagationStatus,
   method,
-  setMethod
+  setMethod,
+  thresholds,
+  setThresholds
 }) {
+  const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
+
   if (!isOpen) return null;
 
   return (
@@ -48,7 +54,13 @@ export default function PropagationModal({
           <option value="sma">Media Móvil Simple (SMA)</option>
         </select>
         <button
-          onClick={() => handlePropagation({ selectedUser, message, method })}
+          onClick={() => setIsThresholdsModalOpen(true)}
+          className="button"
+        >
+          Configurar Umbrales
+        </button>
+        <button
+          onClick={() => handlePropagation({ selectedUser, message, method, thresholds })}
           disabled={!selectedUser || !message.trim()}
           className={selectedUser && message.trim() ? 'button' : 'button-disabled'}
         >
@@ -65,6 +77,12 @@ export default function PropagationModal({
         >
           Cerrar
         </button>
+        <ThresholdsModal
+          isOpen={isThresholdsModalOpen}
+          setIsOpen={setIsThresholdsModalOpen}
+          thresholds={thresholds}
+          setThresholds={setThresholds}
+        />
       </div>
     </>
   );
@@ -81,5 +99,7 @@ PropagationModal.propTypes = {
   handlePropagation: PropTypes.func.isRequired,
   propagationStatus: PropTypes.string.isRequired,
   method: PropTypes.string.isRequired,
-  setMethod: PropTypes.func.isRequired
+  setMethod: PropTypes.func.isRequired,
+  thresholds: PropTypes.object.isRequired,
+  setThresholds: PropTypes.func.isRequired
 };

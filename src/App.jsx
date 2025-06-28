@@ -88,7 +88,14 @@ export default function App() {
   const [hkSIRPropagationStatus, setHkSIRPropagationStatus] = useState('');
   const [showHkSIRPropagationResult, setShowHkSIRPropagationResult] = useState(false);
   // Estado para el método de propagación
-  const [method, setMethod] = useState('sma'); // Por defecto EMA
+  const [method, setMethod] = useState('ema'); // Por defecto EMA
+  // Estado para los umbrales
+  const [thresholds, setThresholds] = useState({
+    "High-Credibility Informant": { forward: 0.8, modify: 0.2, ignore: 0.05, alpha: 0.3 },
+    "Emotionally-Driven Amplifier": { forward: 0.95, modify: 0.6, ignore: 0.1, alpha: 0.8 },
+    "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
+    "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
+  });
 
   // Claves de emociones
   const emotionKeys = [
@@ -183,6 +190,12 @@ export default function App() {
     setIsNodeStatesModalOpen(false);
     setModalNode(null);
     setMethod('ema'); // Resetear método a EMA por defecto
+    setThresholds({
+      "High-Credibility Informant": { forward: 0.8, modify: 0.2, ignore: 0.05, alpha: 0.3 },
+      "Emotionally-Driven Amplifier": { forward: 0.95, modify: 0.6, ignore: 0.1, alpha: 0.8 },
+      "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
+      "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
+    });
   };
 
   // Cargar CSV
@@ -534,7 +547,7 @@ export default function App() {
   };
 
   // Manejar propagación
-  const handlePropagation = async ({ selectedUser, message, method }) => {
+  const handlePropagation = async ({ selectedUser, message, method, thresholds }) => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
       return;
@@ -548,6 +561,7 @@ export default function App() {
       formData.append('xlsx_file', xlsxFile);
       formData.append('max_steps', 4);
       formData.append('method', method);
+      formData.append('thresholds', JSON.stringify(thresholds));
       const response = await axios.post('http://localhost:8000/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -674,6 +688,12 @@ const handleRipDsnPropagation = async ({ selectedUser, message }) => {
       setIsNodeStatesModalOpen(false);
       setModalNode(null);
       setMethod('ema');
+      setThresholds({
+        "High-Credibility Informant": { forward: 0.8, modify: 0.2, ignore: 0.05, alpha: 0.3 },
+        "Emotionally-Driven Amplifier": { forward: 0.95, modify: 0.6, ignore: 0.1, alpha: 0.8 },
+        "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
+        "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
+      });
     } else if (viewMode === 'rip-dsn') {
       setMessage('');
       setSelectedUser('');
@@ -1009,6 +1029,8 @@ const handleRipDsnPropagation = async ({ selectedUser, message }) => {
               propagationStatus={propagationStatus}
               method={method}
               setMethod={setMethod}
+              thresholds={thresholds}
+              setThresholds={setThresholds}
             />
             <NodeModal
               isOpen={isNodeModalOpen}

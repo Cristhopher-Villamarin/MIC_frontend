@@ -3,8 +3,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 200vw;
+  height: 200vh;
   background-color: rgba(0, 0, 0, 0.3); /* Overlay más suave */
   z-index: 99;
 }
@@ -15,35 +15,38 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #ffffff;
-  padding: 24px;
+  padding: 40px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 100;
-  max-width: 400px;
-  width: 90%;
+  width: 90vw; /* 90% del ancho de la ventana */
+  height: 85vh; /* 85% de la altura de la ventana */
+  max-width: none; /* Quitar límite máximo de ancho */
+  max-height: none; /* Quitar límite máximo de altura */
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  overflow-y: auto; /* Permitir scroll si el contenido es muy largo */
 }
 
 .modal-title {
-  font-size: 18px;
+  font-size: 20px; /* Aumentado de 18px a 20px */
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
 }
 
 .modal-select {
-  padding: 8px;
+  padding: 12px; /* Aumentado de 8px a 12px */
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px; /* Aumentado de 14px a 16px */
   color: #1a1a1a;
   background-color: #fafafa;
   appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236b7280'><path d='M0 2l5 5 5-5z'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 8px center;
+  background-position: right 12px center; /* Ajustado para el nuevo padding */
   background-size: 10px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -56,14 +59,14 @@
 }
 
 .modal-textarea {
-  padding: 8px;
+  padding: 16px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px;
   color: #1a1a1a;
   background-color: #fafafa;
-  height: 80px;
-  resize: none;
+  height: 200px; /* Aumentado significativamente para aprovechar el espacio */
+  resize: vertical;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -75,21 +78,21 @@
 }
 
 .modal-status {
-  font-size: 13px;
+  font-size: 14px; /* Aumentado de 13px a 14px */
   color: #6b7280;
 }
 
 .modal-status-error {
-  font-size: 13px;
+  font-size: 14px; /* Aumentado de 13px a 14px */
   color: #e63946; /* Rojo suave */
 }
 
 .modal-vector {
   background-color: #f9fafb;
-  padding: 12px;
+  padding: 20px;
   border-radius: 6px;
-  font-size: 13px;
-  max-height: 200px;
+  font-size: 15px;
+  max-height: 400px; /* Aumentado para aprovechar el espacio vertical */
   overflow-y: auto;
   color: #1a1a1a;
 }
@@ -100,18 +103,18 @@
 
 .modal-pre {
   margin: 8px 0 0 0;
-  font-size: 12px;
+  font-size: 13px; /* Aumentado de 12px a 13px */
   color: #1a1a1a;
   white-space: pre-wrap;
 }
 
 .modal-close-button {
-  padding: 8px 16px;
+  padding: 12px 20px; /* Aumentado de 8px 16px a 12px 20px */
   border: none;
   border-radius: 6px;
   background-color: #e63946; /* Rojo suave */
   color: white;
-  font-size: 14px;
+  font-size: 16px; /* Aumentado de 14px a 16px */
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
@@ -124,4 +127,21 @@
 
 .modal-close-button:active {
   transform: translateY(0);
+}
+
+/* Responsive: Para pantallas más pequeñas */
+@media (max-width: 768px) {
+  .modal {
+    width: 95vw; /* Casi toda la pantalla en móviles */
+    height: 90vh; /* 90% de altura en móviles */
+    padding: 20px;
+  }
+  
+  .modal-textarea {
+    height: 150px; /* Reducir un poco en móviles */
+  }
+  
+  .modal-vector {
+    max-height: 300px; /* Reducir en móviles */
+  }
 }
