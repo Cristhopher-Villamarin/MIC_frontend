@@ -1,147 +1,334 @@
-/* src/components/PropagationModal.css */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200vw;
-  height: 200vh;
-  background-color: rgba(0, 0, 0, 0.3); /* Overlay más suave */
-  z-index: 99;
+/* Color Palette */
+:root {
+  --primary-color: #3b82f6; /* Vibrant blue */
+  --primary-hover: #2563eb; /* Darker blue for hover */
+  --error-color: #ef4444; /* Modern red */
+  --error-hover: #dc2626; /* Darker red for hover */
+  --text-primary: #111827; /* Dark gray for text */
+  --text-secondary: #6b7280; /* Lighter gray for secondary text */
+  --background-light: #ffffff; /* White background */
+  --background-subtle: #f8fafc; /* Light gray for inputs */
+  --background-vector: #f1f5f9; /* Subtle background for vector */
+  --border-color: #e2e8f0; /* Light border */
+  --shadow-color: rgba(0, 0, 0, 0.05); /* Soft shadow */
+  --overlay-color: rgba(0, 0, 0, 0.4); /* Slightly darker overlay */
+  --glass-bg: rgba(255, 255, 255, 0.7); /* Glassmorphism effect */
+  --glass-blur: blur(12px); /* Backdrop blur */
 }
 
+/* Overlay Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--overlay-color);
+  z-index: 999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Modal Container */
 .modal {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #ffffff;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  width: 90vw; /* 90% del ancho de la ventana */
-  height: 85vh; /* 85% de la altura de la ventana */
-  max-width: none; /* Quitar límite máximo de ancho */
-  max-height: none; /* Quitar límite máximo de altura */
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+  width: min(90vw, 900px);
+  height: min(85vh, 700px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  overflow-y: auto; /* Permitir scroll si el contenido es muy largo */
+  gap: 1.5rem;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
 }
 
+/* Typography */
 .modal-title {
-  font-size: 20px; /* Aumentado de 18px a 20px */
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgb(255, 255, 255);
   margin: 0;
+  letter-spacing: -0.025em;
 }
 
+.modal-status {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.modal-status-error {
+  font-size: 0.875rem;
+  color: var(--error-color);
+  font-weight: 500;
+}
+
+/* Form Elements */
 .modal-select {
-  padding: 12px; /* Aumentado de 8px a 12px */
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 16px; /* Aumentado de 14px a 16px */
-  color: #1a1a1a;
-  background-color: #fafafa;
-  appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236b7280'><path d='M0 2l5 5 5-5z'/></svg>");
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background-color: var(--background-subtle);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280'><path d='M0 3l6 6 6-6z'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 12px center; /* Ajustado para el nuevo padding */
-  background-size: 10px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-position: right 1rem center;
+  background-size: 12px;
+  appearance: none;
+  transition: all 0.2s ease-in-out;
 }
 
 .modal-select:hover,
 .modal-select:focus {
-  border-color: #4b89dc;
-  box-shadow: 0 0 0 2px rgba(75, 137, 220, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   outline: none;
+  background-color: var(--background-light);
 }
 
 .modal-textarea {
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 16px;
-  color: #1a1a1a;
-  background-color: #fafafa;
-  height: 200px; /* Aumentado significativamente para aprovechar el espacio */
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background-color: var(--background-subtle);
+  min-height: 10rem;
   resize: vertical;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease-in-out;
 }
 
 .modal-textarea:hover,
 .modal-textarea:focus {
-  border-color: #4b89dc;
-  box-shadow: 0 0 0 2px rgba(75, 137, 220, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   outline: none;
+  background-color: var(--background-light);
 }
 
-.modal-status {
-  font-size: 14px; /* Aumentado de 13px a 14px */
-  color: #6b7280;
-}
-
-.modal-status-error {
-  font-size: 14px; /* Aumentado de 13px a 14px */
-  color: #e63946; /* Rojo suave */
-}
-
+/* Vector Display */
 .modal-vector {
-  background-color: #f9fafb;
-  padding: 20px;
-  border-radius: 6px;
-  font-size: 15px;
-  max-height: 400px; /* Aumentado para aprovechar el espacio vertical */
+  background-color: var(--background-vector);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  max-height: 20rem;
   overflow-y: auto;
-  color: #1a1a1a;
+  border: 1px solid var(--border-color);
 }
 
 .modal-vector b {
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.modal-pre {
-  margin: 8px 0 0 0;
-  font-size: 13px; /* Aumentado de 12px a 13px */
-  color: #1a1a1a;
-  white-space: pre-wrap;
+/* Button Container for EMA/SMA and Thresholds */
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Method Selection Container */
+.method-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+/* Method Label */
+.method-label {
+  font-size: 0.9375rem;
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Button Styles */
+.button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: var(--primary-color);
+  color: var(--background-light);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  min-height: 50px;
+}
+
+.button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.button.propagate-button {
+  padding: 0.5rem 1rem; /* Smaller padding for Propagar Mensaje */
+  font-size: 0.875rem; /* Smaller font size */
+  background-color: #cfc89f; /* Beige color */
+  color: var(--text-primary); /* Dark text for contrast */
+  min-width: 120px; /* Minimum width for consistency */
+  min-height: 50px;
+}
+
+.button.propagate-button:hover {
+  background-color: #6b6b5c; /* Slightly darker beige for hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: white;
+}
+
+.button.propagate-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.button-disabled {
+  border: none;
+  border-radius: 0.5rem;
+  background-color: var(--text-secondary);
+  color: var(--background-light);
+  font-size: 0.875rem; /* Match propagate-button font size */
+  font-weight: 500;
+  cursor: not-allowed;
+  min-width: 120px; /* Match minimum width */
+  text-align: center;
+  opacity: 0.6;
+  min-height: 50px;
 }
 
 .modal-close-button {
-  padding: 12px 20px; /* Aumentado de 8px 16px a 12px 20px */
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 6px;
-  background-color: #e63946; /* Rojo suave */
-  color: white;
-  font-size: 16px; /* Aumentado de 14px a 16px */
+  border-radius: 0.5rem;
+  background-color: var(--error-color);
+  color: var(--background-light);
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease-in-out;
 }
 
 .modal-close-button:hover {
-  background-color: #d00000; /* Rojo más oscuro */
-  transform: translateY(-1px);
+  background-color: var(--error-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .modal-close-button:active {
   transform: translateY(0);
+  box-shadow: none;
 }
 
-/* Responsive: Para pantallas más pequeñas */
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translate(-50%, -60%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+/*&nbsp;Responsive Design */
 @media (max-width: 768px) {
   .modal {
-    width: 95vw; /* Casi toda la pantalla en móviles */
-    height: 90vh; /* 90% de altura en móviles */
-    padding: 20px;
+    width: 95vw;
+    height: 90vh;
+    padding: 1.5rem;
   }
-  
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
   .modal-textarea {
-    height: 150px; /* Reducir un poco en móviles */
+    min-height: 8rem;
   }
-  
+
   .modal-vector {
-    max-height: 300px; /* Reducir en móviles */
+    max-height: 15rem;
+  }
+
+  .button-container {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .method-selection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .method-label {
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .button,
+  .button.propagate-button,
+  .button-disabled {
+    width: 100%; /* Full width for mobile */
+    min-width: unset; /* Remove min-width constraint */
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.125rem;
+  }
+
+  .modal-select,
+  .modal-textarea {
+    font-size: 0.875rem;
+    padding: 0.625rem;
+  }
+
+  .button,
+  .button.propagate-button,
+  .button-disabled,
+  .modal-close-button {
+    padding: 0.5rem 1rem; /* Smaller padding */
+    font-size: 0.8125rem; /* Smaller font size for very small screens */
+  }
+
+  .modal-vector {
+    padding: 1rem;
+  }
+
+  .method-label {
+    font-size: 0.8125rem;
   }
 }

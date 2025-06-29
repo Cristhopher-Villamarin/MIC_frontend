@@ -45,24 +45,29 @@ export default function PropagationModal({
           onChange={e => setMessage(e.target.value)}
           className="modal-textarea"
         />
-        <select
-          value={method}
-          onChange={e => setMethod(e.target.value)}
-          className="modal-select"
-        >
-          <option value="ema">Media Móvil Exponencial (EMA)</option>
-          <option value="sma">Media Móvil Simple (SMA)</option>
-        </select>
-        <button
-          onClick={() => setIsThresholdsModalOpen(true)}
-          className="button"
-        >
-          Configurar Umbrales
-        </button>
+        <div className="button-container">
+          <div className="method-selection">
+            <span className="method-label">Seleccionar tipo de media móvil</span>
+            <select
+              value={method}
+              onChange={e => setMethod(e.target.value)}
+              className="modal-select"
+            >
+              <option value="ema">Media Móvil Exponencial (EMA)</option>
+              <option value="sma">Media Móvil Simple (SMA)</option>
+            </select>
+          </div>
+          <button
+            onClick={() => setIsThresholdsModalOpen(true)}
+            className="button"
+          >
+            Configurar Umbrales
+          </button>
+        </div>
         <button
           onClick={() => handlePropagation({ selectedUser, message, method, thresholds })}
           disabled={!selectedUser || !message.trim()}
-          className={selectedUser && message.trim() ? 'button' : 'button-disabled'}
+          className={selectedUser && message.trim() ? 'button propagate-button' : 'button-disabled'}
         >
           Propagar Mensaje
         </button>
