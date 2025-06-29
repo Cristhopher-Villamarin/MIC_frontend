@@ -115,6 +115,77 @@
   background-color: var(--background-light);
 }
 
+/* File Input Styles */
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-label {
+  font-size: 0.9375rem;
+  color: white;
+  font-weight: 500;
+}
+
+.file-input {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background-color: var(--background-subtle);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.file-input:hover,
+.file-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+  background-color: var(--background-light);
+}
+
+/* Messages List Styles */
+.messages-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.messages-list-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgb(255, 255, 255);
+  margin: 0;
+}
+
+.messages-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background-color: var(--background-subtle);
+}
+
+.message-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.message-checkbox {
+  cursor: pointer;
+}
+
+.message-text {
+  word-break: break-word;
+}
+
 /* Vector Display */
 .modal-vector {
   background-color: var(--background-vector);
@@ -179,6 +250,14 @@
 .button:active {
   transform: translateY(0);
   box-shadow: none;
+}
+
+.button.dataset-button {
+  background-color: #10b981; /* Green for dataset button */
+}
+
+.button.dataset-button:hover {
+  background-color: #059669; /* Darker green for hover */
 }
 
 .button.propagate-button {
@@ -256,7 +335,7 @@
   }
 }
 
-/*&nbsp;Responsive Design */
+/* Responsive Design */
 @media (max-width: 768px) {
   .modal {
     width: 95vw;
@@ -294,10 +373,19 @@
   }
 
   .button,
+  .button.dataset-button,
   .button.propagate-button,
   .button-disabled {
     width: 100%; /* Full width for mobile */
     min-width: unset; /* Remove min-width constraint */
+  }
+
+  .messages-list-container {
+    max-height: 200px;
+  }
+
+  .messages-list {
+    max-height: 150px;
   }
 }
 
@@ -317,6 +405,7 @@
   }
 
   .button,
+  .button.dataset-button,
   .button.propagate-button,
   .button-disabled,
   .modal-close-button {
@@ -329,6 +418,18 @@
   }
 
   .method-label {
+    font-size: 0.8125rem;
+  }
+
+  .file-label {
+    font-size: 0.875rem;
+  }
+
+  .messages-list-title {
+    font-size: 1rem;
+  }
+
+  .message-item {
     font-size: 0.8125rem;
   }
 }

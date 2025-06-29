@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import ThresholdsModal from './ThresholdsModal';
+import MessagesDatasetModal from './MessagesDatasetModal';
 import './PropagationModal.css';
 
 export default function PropagationModal({
@@ -19,6 +20,7 @@ export default function PropagationModal({
   setThresholds
 }) {
   const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
+  const [isMessagesDatasetModalOpen, setIsMessagesDatasetModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -39,6 +41,12 @@ export default function PropagationModal({
             </option>
           ))}
         </select>
+        <button
+          onClick={() => setIsMessagesDatasetModalOpen(true)}
+          className="button dataset-button"
+        >
+          Seleccionar Dataset de Mensajes
+        </button>
         <textarea
           placeholder="Escribe el mensaje a propagar..."
           value={message}
@@ -87,6 +95,11 @@ export default function PropagationModal({
           setIsOpen={setIsThresholdsModalOpen}
           thresholds={thresholds}
           setThresholds={setThresholds}
+        />
+        <MessagesDatasetModal
+          isOpen={isMessagesDatasetModalOpen}
+          setIsOpen={setIsMessagesDatasetModalOpen}
+          setMessage={setMessage}
         />
       </div>
     </>
