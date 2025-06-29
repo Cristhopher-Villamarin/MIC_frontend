@@ -238,7 +238,7 @@
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   text-align: center;
-  min-height: 50px;
+
 }
 
 .button:hover {
@@ -289,10 +289,9 @@
   font-size: 0.875rem; /* Match propagate-button font size */
   font-weight: 500;
   cursor: not-allowed;
-  min-width: 120px; /* Match minimum width */
+  min-width: 80px; /* Match minimum width */
   text-align: center;
   opacity: 0.6;
-  min-height: 50px;
 }
 
 .modal-close-button {
