@@ -14,6 +14,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+<<<<<<< Updated upstream
   background-color: #ffffff;
   padding: 24px;
   border-radius: 12px;
@@ -24,12 +25,34 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+=======
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  padding: 2.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+  width: min(90vw, 900px);
+  height: min(90vh, 900px);
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem; /* Increased gap for better separation */
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+>>>>>>> Stashed changes
 }
 
 .modal-title {
+<<<<<<< Updated upstream
   font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
+=======
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+>>>>>>> Stashed changes
   margin: 0;
 }
 
@@ -79,6 +102,7 @@
   color: #6b7280;
 }
 
+<<<<<<< Updated upstream
 .modal-status-error {
   font-size: 13px;
   color: #e63946; /* Rojo suave */
@@ -95,14 +119,244 @@
 }
 
 .modal-vector b {
+=======
+.file-label {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
+.file-input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background-color: var(--background-subtle);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.file-input:hover,
+.file-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+  background-color: var(--background-light);
+}
+
+/* Vector Input Styles */
+.vector-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.5rem; /* Increased gap for clarity */
+  padding: 1.5rem;
+  background-color: var(--background-vector);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  margin-top: 1rem; /* Added margin to separate from button-container */
+}
+
+/* Vector Input Individual */
+.vector-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vector-input label {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.vector-input input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background-color: var(--background-subtle);
+  transition: all 0.2s ease-in-out;
+}
+
+.vector-input input:hover,
+.vector-input input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+  background-color: var(--background-light);
+}
+
+/* Messages List Styles */
+.messages-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.messages-list-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.messages-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background-color: var(--background-subtle);
+}
+
+.message-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.message-checkbox {
+  cursor: pointer;
+}
+
+.message-text {
+  word-break: break-word;
+}
+
+/* Vector Display */
+.modal-vector {
+  background-color: var(--background-vector);
+  padding: 2rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  min-height: 320px; /* Increased to accommodate all emotions */
+  overflow: visible;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Button Container for EMA/SMA and Thresholds */
+.button-container {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping to prevent overlap */
+  gap: 1.5rem; /* Increased gap for better separation */
+  align-items: center;
+  margin-bottom: 1rem; /* Added margin to separate from vector-inputs */
+}
+
+/* Method Selection Container */
+.method-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Slightly increased gap */
+  flex: 1;
+  min-width: 200px; /* Ensure sufficient width */
+}
+
+/* Method Label */
+.method-label {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+>>>>>>> Stashed changes
+  font-weight: 500;
+}
+
+<<<<<<< Updated upstream
 .modal-pre {
   margin: 8px 0 0 0;
   font-size: 12px;
   color: #1a1a1a;
   white-space: pre-wrap;
+=======
+/* Button Styles */
+.button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: var(--primary-color);
+  color: var(--background-light);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+.button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.button.dataset-button {
+  background-color: #10b981; /* Green for dataset button */
+}
+
+.button.dataset-button:hover {
+  background-color: #059669; /* Darker green for hover */
+}
+
+.button.analyze-button {
+  background-color: #8b5cf6; /* Purple for analyze button */
+}
+
+.button.analyze-button:hover {
+  background-color: #7c3aed; /* Darker purple for hover */
+}
+
+.button.thresholds-button {
+  background-color: #f59e0b; /* Amber for thresholds button */
+}
+
+.button.thresholds-button:hover {
+  background-color: #d97706; /* Darker amber for hover */
+}
+
+.button.propagate-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9375rem;
+  background-color: #10b981; /* Green for consistency */
+  color: var(--background-light);
+  min-width: 120px;
+  min-height: 40px;
+}
+
+.button.propagate-button:hover {
+  background-color: #059669; /* Darker green for hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.button.propagate-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.button-disabled {
+  border: none;
+  border-radius: 0.5rem;
+  background-color: var(--text-secondary);
+  color: var(--background-light);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: not-allowed;
+  min-width: 120px;
+  text-align: center;
+  opacity: 0.6;
+>>>>>>> Stashed changes
 }
 
 .modal-close-button {
@@ -124,4 +378,114 @@
 
 .modal-close-button:active {
   transform: translateY(0);
+<<<<<<< Updated upstream
+=======
+  box-shadow: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translate(-50%, -60%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal {
+    width: 95vw;
+    height: 90vh;
+    padding: 1.5rem;
+    gap: 2rem; /* Adjusted gap for smaller screens */
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .modal-textarea {
+    min-height: 8rem;
+  }
+
+  .button-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .method-selection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .method-label {
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .button,
+  .button.dataset-button,
+  .button.analyze-button,
+  .button.thresholds-button,
+  .button.propagate-button,
+  .button-disabled {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .messages-list-container {
+    max-height: 200px;
+  }
+
+  .messages-list {
+    max-height: 150px;
+  }
+
+  .vector-inputs {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .modal-vector {
+    min-height: 280px; /* Adjusted for smaller screens */
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 1rem;
+    gap: 1.5rem; /* Further reduced gap */
+  }
+
+  .modal-title {
+    font-size: 1.125rem;
+  }
+
+  .modal-select,
+  .modal-textarea,
+  .file-input {
+    font-size: 0.875rem;
+    padding: 0.625rem;
+  }
+
+  .vector-inputs {
+    grid-template-columns: 1fr; /* Single column on very small screens */
+  }
+
+  .modal-vector {
+    min-height: 240px; /* Adjusted for very small screens */
+    padding: 1rem;
+  }
+>>>>>>> Stashed changes
 }
