@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect } from 'react';
 import './PropagationModal.css';
 
 export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVector }) {
@@ -8,19 +7,10 @@ export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVecto
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
   ];
 
-  // Initialize local state and sync with vector prop
-  const [localVector, setLocalVector] = useState(vector);
-
-  // Sync localVector with vector prop when it changes
-  useEffect(() => {
-    console.log('EmotionVectorModal received vector:', vector); // Debugging
-    setLocalVector(vector);
-  }, [vector]);
-
   const handleInputChange = (key, value) => {
     const newValue = parseFloat(value);
     if (!isNaN(newValue)) {
-      setLocalVector(prev => ({
+      setVector(prev => ({
         ...prev,
         [key]: Math.max(0, Math.min(1, newValue)) // Clamp values between 0 and 1
       }));
@@ -28,8 +18,7 @@ export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVecto
   };
 
   const handleUpdate = () => {
-    console.log('Updating vector:', localVector); // Debugging
-    setVector(localVector); // Update the parent component's vector
+    setVector(vector); // Update the vector in the parent component
     setIsOpen(false); // Close the modal
   };
 
@@ -51,7 +40,7 @@ export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVecto
                 <input
                   type="number"
                   id={key}
-                  value={localVector[key] !== undefined ? Number(localVector[key]).toFixed(3) : '0.000'}
+                  value={vector && vector[key] !== undefined ? vector[key].toFixed(3) : '0.000'}
                   onChange={e => handleInputChange(key, e.target.value)}
                   step="0.001"
                   min="0"
