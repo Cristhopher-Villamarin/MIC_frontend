@@ -41,10 +41,10 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 1000;
   width: min(90vw, 900px);
-  height: min(85vh, 700px);
+  height: min(90vh, 700px); /* Reduced height since vector is in another modal */
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   overflow-y: auto;
   animation: slideIn 0.3s ease-out;
 }
@@ -53,7 +53,7 @@
 .modal-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: rgb(255, 255, 255);
+  color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.025em;
 }
@@ -124,17 +124,17 @@
 
 .file-label {
   font-size: 0.9375rem;
-  color: white;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .file-input {
-  padding: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   background-color: var(--background-subtle);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   transition: all 0.2s ease-in-out;
 }
 
@@ -146,6 +146,21 @@
   background-color: var(--background-light);
 }
 
+/* Vector Input Styles */
+.vector-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.25rem;
+  padding: 1rem;
+}
+
+/* Vector Input Individual */
+.vector-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 /* Messages List Styles */
 .messages-list-container {
   display: flex;
@@ -154,9 +169,9 @@
 }
 
 .messages-list-title {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: rgb(255, 255, 255);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -184,22 +199,6 @@
 
 .message-text {
   word-break: break-word;
-}
-
-/* Vector Display */
-.modal-vector {
-  background-color: var(--background-vector);
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.9375rem;
-  color: var(--text-primary);
-  max-height: 20rem;
-  overflow-y: auto;
-  border: 1px solid var(--border-color);
-}
-
-.modal-vector b {
-  font-weight: 600;
 }
 
 /* Button Container for EMA/SMA and Thresholds */
@@ -238,7 +237,6 @@
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   text-align: center;
-
 }
 
 .button:hover {
@@ -260,20 +258,43 @@
   background-color: #059669; /* Darker green for hover */
 }
 
+.button.analyze-button {
+  background-color: #8b5cf6; /* Purple for analyze button */
+}
+
+.button.analyze-button:hover {
+  background-color: #7c3aed; /* Darker purple for hover */
+}
+
+.button.modify-vector-button {
+  background-color: #6d28d9; /* Deeper purple for modify vector button */
+}
+
+.button.modify-vector-button:hover {
+  background-color: #5b21b6; /* Darker purple for hover */
+}
+
+.button.thresholds-button {
+  background-color: #f59e0b; /* Amber for thresholds button */
+}
+
+.button.thresholds-button:hover {
+  background-color: #d97706; /* Darker amber for hover */
+}
+
 .button.propagate-button {
-  padding: 0.5rem 1rem; /* Smaller padding for Propagar Mensaje */
-  font-size: 0.875rem; /* Smaller font size */
-  background-color: #cfc89f; /* Beige color */
-  color: var(--text-primary); /* Dark text for contrast */
-  min-width: 120px; /* Minimum width for consistency */
-  min-height: 50px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9375rem;
+  background-color: #10b981; /* Green for consistency */
+  color: var(--background-light);
+  min-width: 120px;
+  min-height: 40px;
 }
 
 .button.propagate-button:hover {
-  background-color: #6b6b5c; /* Slightly darker beige for hover */
+  background-color: #059669; /* Darker green for hover */
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  color: white;
 }
 
 .button.propagate-button:active {
@@ -281,15 +302,23 @@
   box-shadow: none;
 }
 
+.button.update-vector-button {
+  background-color: #8b5cf6; /* Purple for update vector button */
+}
+
+.button.update-vector-button:hover {
+  background-color: #7c3aed; /* Darker purple for hover */
+}
+
 .button-disabled {
   border: none;
   border-radius: 0.5rem;
   background-color: var(--text-secondary);
   color: var(--background-light);
-  font-size: 0.875rem; /* Match propagate-button font size */
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: not-allowed;
-  min-width: 80px; /* Match minimum width */
+  min-width: 120px;
   text-align: center;
   opacity: 0.6;
 }
@@ -340,6 +369,7 @@
     width: 95vw;
     height: 90vh;
     padding: 1.5rem;
+    gap: 1.5rem;
   }
 
   .modal-title {
@@ -348,10 +378,6 @@
 
   .modal-textarea {
     min-height: 8rem;
-  }
-
-  .modal-vector {
-    max-height: 15rem;
   }
 
   .button-container {
@@ -373,10 +399,13 @@
 
   .button,
   .button.dataset-button,
+  .button.analyze-button,
+  .button.modify-vector-button,
+  .button.thresholds-button,
   .button.propagate-button,
   .button-disabled {
-    width: 100%; /* Full width for mobile */
-    min-width: unset; /* Remove min-width constraint */
+    width: 100%;
+    min-width: unset;
   }
 
   .messages-list-container {
@@ -386,11 +415,16 @@
   .messages-list {
     max-height: 150px;
   }
+
+  .vector-inputs {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
 }
 
 @media (max-width: 480px) {
   .modal {
     padding: 1rem;
+    gap: 1rem;
   }
 
   .modal-title {
@@ -398,37 +432,13 @@
   }
 
   .modal-select,
-  .modal-textarea {
+  .modal-textarea,
+  .file-input {
     font-size: 0.875rem;
     padding: 0.625rem;
   }
 
-  .button,
-  .button.dataset-button,
-  .button.propagate-button,
-  .button-disabled,
-  .modal-close-button {
-    padding: 0.5rem 1rem; /* Smaller padding */
-    font-size: 0.8125rem; /* Smaller font size for very small screens */
-  }
-
-  .modal-vector {
-    padding: 1rem;
-  }
-
-  .method-label {
-    font-size: 0.8125rem;
-  }
-
-  .file-label {
-    font-size: 0.875rem;
-  }
-
-  .messages-list-title {
-    font-size: 1rem;
-  }
-
-  .message-item {
-    font-size: 0.8125rem;
+  .vector-inputs {
+    grid-template-columns: 1fr;
   }
 }

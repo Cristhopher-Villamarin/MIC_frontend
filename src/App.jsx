@@ -27,6 +27,7 @@ import axios from 'axios';
 import './App.css';
 import { calculateCentralityMetrics } from './utils/centrality';
 import RipPropagationModal from './components/RipPropagationModal';
+
 export default function App() {
   // Estados existentes
   const [csvFile, setCsvFile] = useState(null);
@@ -96,6 +97,8 @@ export default function App() {
     "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
     "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
   });
+  // Estado para el vector emocional
+  const [emotionVector, setEmotionVector] = useState(null);
 
   // Claves de emociones
   const emotionKeys = [
@@ -196,6 +199,7 @@ export default function App() {
       "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
       "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
     });
+    setEmotionVector(null); // Resetear vector emocional
   };
 
   // Cargar CSV
@@ -547,7 +551,7 @@ export default function App() {
   };
 
   // Manejar propagación
-  const handlePropagation = async ({ selectedUser, message, method, thresholds }) => {
+  const handlePropagation = async ({ selectedUser, message, method, thresholds, csvFile, xlsxFile, emotionVector }) => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
       return;
@@ -562,6 +566,9 @@ export default function App() {
       formData.append('max_steps', 4);
       formData.append('method', method);
       formData.append('thresholds', JSON.stringify(thresholds));
+      if (emotionVector && Object.values(emotionVector).some(val => val !== 0)) {
+        formData.append('custom_vector', JSON.stringify(emotionVector));
+      }
       const response = await axios.post('http://localhost:8000/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -570,6 +577,7 @@ export default function App() {
       const propagationLog = response.data.log || [];
       console.log('Propagation log from backend:', propagationLog);
       setPropagationLog(propagationLog);
+      setEmotionVector(emotionVector); // Store the emotion vector for PropagationResult
       const linksToHighlight = propagationLog
         .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
         .sort((a, b) => a.t - b.t)
@@ -597,81 +605,82 @@ export default function App() {
   };
 
   // Manejar propagación RIP-DSN
-const handleRipDsnPropagation = async ({ selectedUser, message }) => {
-  if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
-    setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
-    return;
-  }
-  setRipDsnPropagationStatus('Iniciando propagación…');
-  try {
-    const formData = new FormData();
-    formData.append('seed_user', selectedUser);
-    formData.append('message', message);
-    formData.append('nodes_csv_file', nodesCsvFile);
-    formData.append('links_csv_file', linksCsvFile);
-    formData.append('max_steps', 4);
-    const response = await axios.post('http://localhost:8000/propagate', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    setRipDsnPropagationResult(response.data);
-    setRipDsnPropagationStatus('Propagación completada.');
-    const propagationLog = response.data.log || [];
-    console.log('RIP-DSN Propagation log from backend:', propagationLog);
-    setRipDsnPropagationLog(propagationLog);
-
-    let linksToHighlight = propagationLog
-      .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
-      .sort((a, b) => a.t - b.t)
-      .map((entry, index) => ({
-        source: String(entry.sender),
-        target: String(entry.receiver),
-        timeStep: entry.t,
-        animationDelay: index * 4000,
-      }));
-
-    const involvedNodeIds = new Set(linksToHighlight.flatMap(link => [link.source, link.target]));
-    const allLinks = realWorldLinksAll.filter(link => {
-      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-      const targetId = link.target.id ? String(link.target.id) : String(link.target);
-      return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
-    });
-
-    linksToHighlight.forEach(link => {
-      const sourceId = link.source;
-      const targetId = link.target;
-      const nextLinks = allLinks.filter(l => {
-        const lSourceId = l.source.id ? String(l.source.id) : String(l.source);
-        const lTargetId = l.target.id ? String(l.target.id) : String(l.target);
-        return lSourceId === targetId && involvedNodeIds.has(lTargetId) && !linksToHighlight.some(l => l.source === lSourceId && l.target === lTargetId);
+  const handleRipDsnPropagation = async ({ selectedUser, message }) => {
+    if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
+      setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
+      return;
+    }
+    setRipDsnPropagationStatus('Iniciando propagación…');
+    try {
+      const formData = new FormData();
+      formData.append('seed_user', selectedUser);
+      formData.append('message', message);
+      formData.append('nodes_csv_file', nodesCsvFile);
+      formData.append('links_csv_file', linksCsvFile);
+      formData.append('max_steps', 4);
+      const response = await axios.post('http://localhost:8000/propagate', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      nextLinks.forEach(nextLink => {
-        const nextTargetId = nextLink.target.id ? String(nextLink.target.id) : String(nextLink.target);
-        const maxTimeStep = Math.max(...linksToHighlight.map(l => l.timeStep)) + 1;
-        if (!linksToHighlight.some(l => l.source === targetId && l.target === nextTargetId)) {
-          linksToHighlight.push({
-            source: targetId,
-            target: nextTargetId,
-            timeStep: maxTimeStep,
-            animationDelay: linksToHighlight.length * 4000,
-          });
-          involvedNodeIds.add(nextTargetId);
-        }
-      });
-    });
+      setRipDsnPropagationResult(response.data);
+      setRipDsnPropagationStatus('Propagación completada.');
+      const propagationLog = response.data.log || [];
+      console.log('RIP-DSN Propagation log from backend:', propagationLog);
+      setRipDsnPropagationLog(propagationLog);
 
-    console.log('Total RIP-DSN highlightedLinks (incluyendo secundarias):', linksToHighlight);
-    setRipDsnHighlightedLinks(linksToHighlight);
-    setHighlightId(selectedUser);
-    setIsPropagationModalOpen(false);
-  } catch (error) {
-    console.error('RIP-DSN Propagation error:', error);
-    const errorMessage = error.response?.data?.detail
-      ? error.response.data.detail
-      : error.message || 'Error desconocido';
-    setRipDsnPropagationStatus(`Error: ${errorMessage}`);
-    setRipDsnPropagationResult(null);
-  }
-};
+      let linksToHighlight = propagationLog
+        .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
+        .sort((a, b) => a.t - b.t)
+        .map((entry, index) => ({
+          source: String(entry.sender),
+          target: String(entry.receiver),
+          timeStep: entry.t,
+          animationDelay: index * 4000,
+        }));
+
+      const involvedNodeIds = new Set(linksToHighlight.flatMap(link => [link.source, link.target]));
+      const allLinks = realWorldLinksAll.filter(link => {
+        const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+        const targetId = link.target.id ? String(link.target.id) : String(link.target);
+        return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
+      });
+
+      linksToHighlight.forEach(link => {
+        const sourceId = link.source;
+        const targetId = link.target;
+        const nextLinks = allLinks.filter(l => {
+          const lSourceId = l.source.id ? String(l.source.id) : String(l.source);
+          const lTargetId = l.target.id ? String(l.target.id) : String(l.target);
+          return lSourceId === targetId && involvedNodeIds.has(lTargetId) && !linksToHighlight.some(l => l.source === lSourceId && l.target === lTargetId);
+        });
+        nextLinks.forEach(nextLink => {
+          const nextTargetId = nextLink.target.id ? String(nextLink.target.id) : String(nextLink.target);
+          const maxTimeStep = Math.max(...linksToHighlight.map(l => l.timeStep)) + 1;
+          if (!linksToHighlight.some(l => l.source === targetId && l.target === nextTargetId)) {
+            linksToHighlight.push({
+              source: targetId,
+              target: nextTargetId,
+              timeStep: maxTimeStep,
+              animationDelay: linksToHighlight.length * 4000,
+            });
+            involvedNodeIds.add(nextTargetId);
+          }
+        });
+      });
+
+      console.log('Total RIP-DSN highlightedLinks (incluyendo secundarias):', linksToHighlight);
+      setRipDsnHighlightedLinks(linksToHighlight);
+      setHighlightId(selectedUser);
+      setIsPropagationModalOpen(false);
+    } catch (error) {
+      console.error('RIP-DSN Propagation error:', error);
+      const errorMessage = error.response?.data?.detail
+        ? error.response.data.detail
+        : error.message || 'Error desconocido';
+      setRipDsnPropagationStatus(`Error: ${errorMessage}`);
+      setRipDsnPropagationResult(null);
+    }
+  };
+
   // Resetear vista
   const handleResetView = () => {
     setHighlightId('');
@@ -694,6 +703,7 @@ const handleRipDsnPropagation = async ({ selectedUser, message }) => {
         "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
         "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
       });
+      setEmotionVector(null);
     } else if (viewMode === 'rip-dsn') {
       setMessage('');
       setSelectedUser('');
@@ -943,7 +953,7 @@ const handleRipDsnPropagation = async ({ selectedUser, message }) => {
                 Iniciar Propagación
               </button>
             </div>
-          <RipPropagationModal
+            <RipPropagationModal
               isOpen={isPropagationModalOpen}
               setIsOpen={setIsPropagationModalOpen}
               selectedUser={selectedUser}
@@ -1031,6 +1041,8 @@ const handleRipDsnPropagation = async ({ selectedUser, message }) => {
               setMethod={setMethod}
               thresholds={thresholds}
               setThresholds={setThresholds}
+              csvFile={csvFile}
+              xlsxFile={xlsxFile}
             />
             <NodeModal
               isOpen={isNodeModalOpen}
@@ -1051,7 +1063,9 @@ const handleRipDsnPropagation = async ({ selectedUser, message }) => {
                 setPropagationResult(null);
                 setPropagationLog([]);
                 setHighlightedLinks([]);
+                setEmotionVector(null);
               }}
+              emotionVector={emotionVector}
             />
             <div className="graph-container">
               <Graph3D
