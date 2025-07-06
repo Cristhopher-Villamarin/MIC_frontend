@@ -4,8 +4,8 @@
   --primary-hover: #2563eb; /* Darker blue for hover */
   --error-color: #ef4444; /* Modern red */
   --error-hover: #dc2626; /* Darker red for hover */
-  --text-primary: #111827; /* Dark gray for text */
-  --text-secondary: #6b7280; /* Lighter gray for secondary text */
+  --text-primary: #000000; /* Dark gray for text */
+  --text-secondary: #ffffff; /* Lighter gray for secondary text */
   --background-light: #ffffff; /* White background */
   --background-subtle: #f8fafc; /* Light gray for inputs */
   --background-vector: #f1f5f9; /* Subtle background for vector */
@@ -63,6 +63,12 @@
   color: var(--text-secondary);
   font-weight: 400;
   line-height: 1.5;
+}
+
+
+.modal-white {
+
+  color: var(--text-secondary);
 }
 
 .modal-status-error {
@@ -125,6 +131,12 @@
 .file-label {
   font-size: 0.9375rem;
   color: var(--text-primary);
+  font-weight: 500;
+}
+
+.file-label2 {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 

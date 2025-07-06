@@ -8,12 +8,39 @@ export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVecto
   ];
 
   const handleInputChange = (key, value) => {
+    // Permitir entrada vacía o solo punto decimal para una mejor UX
+    if (value === '' || value === '.') {
+      setVector(prev => ({
+        ...prev,
+        [key]: value
+      }));
+      return;
+    }
+
     const newValue = parseFloat(value);
     if (!isNaN(newValue)) {
       setVector(prev => ({
         ...prev,
         [key]: Math.max(0, Math.min(1, newValue)) // Clamp values between 0 and 1
       }));
+    }
+  };
+
+  const handleBlur = (key, value) => {
+    // Formatear el valor al salir del input
+    if (value === '' || value === '.') {
+      setVector(prev => ({
+        ...prev,
+        [key]: 0
+      }));
+    } else {
+      const newValue = parseFloat(value);
+      if (!isNaN(newValue)) {
+        setVector(prev => ({
+          ...prev,
+          [key]: Number(Math.max(0, Math.min(1, newValue)).toFixed(3))
+        }));
+      }
     }
   };
 
@@ -30,18 +57,19 @@ export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVecto
       <div className="modal">
         <h3 className="modal-title">Editar Vector Emocional</h3>
         <div className="modal-vector">
-          <h4 className="messages-list-title">Vector Emocional</h4>
+   
           <div className="vector-inputs">
             {emotionKeys.map(key => (
               <div key={key} className="vector-input">
-                <label htmlFor={key} className="file-label">
+                <label htmlFor={key} className="file-label2">
                   {key.charAt(0).toUpperCase() + key.slice(1)}:
                 </label>
                 <input
                   type="number"
                   id={key}
-                  value={vector && vector[key] !== undefined ? vector[key].toFixed(3) : '0.000'}
+                  value={vector && vector[key] !== undefined ? vector[key] : ''}
                   onChange={e => handleInputChange(key, e.target.value)}
+                  onBlur={e => handleBlur(key, e.target.value)}
                   step="0.001"
                   min="0"
                   max="1"
