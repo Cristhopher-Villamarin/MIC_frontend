@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import './PropagationModal.css'; // Reusing styles from PropagationModal.css
+import './PropagationModal.css';
 
-export default function MessagesDatasetModal({ isOpen, setIsOpen, setMessage }) {
+export default function MessagesDatasetModal({ isOpen, setIsOpen, setMessage, onMessageSelect }) {
   const [messagesFile, setMessagesFile] = useState(null);
   const [messagesList, setMessagesList] = useState([]);
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(null);
@@ -21,7 +21,6 @@ export default function MessagesDatasetModal({ isOpen, setIsOpen, setMessage }) 
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Assuming the XLSX has a column named 'message' containing the messages
       const messages = jsonData
         .filter(row => row.message && typeof row.message === 'string' && row.message.trim())
         .map(row => row.message.trim());
@@ -37,14 +36,14 @@ export default function MessagesDatasetModal({ isOpen, setIsOpen, setMessage }) 
   // Handle message selection
   const handleMessageSelect = (index) => {
     setSelectedMessageIndex(index);
+    const selectedMessage = messagesList[index];
+    setMessage(selectedMessage); // Update message in parent
+    // Do not trigger analysis here; wait for "Analizar Mensaje" button
   };
 
   // Handle confirm button
   const handleConfirm = () => {
-    if (selectedMessageIndex !== null) {
-      setMessage(messagesList[selectedMessageIndex]);
-    }
-    setIsOpen(false);
+    setIsOpen(false); // Close modal
   };
 
   // Clear state when modal closes
@@ -116,5 +115,6 @@ export default function MessagesDatasetModal({ isOpen, setIsOpen, setMessage }) 
 MessagesDatasetModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   setIsOpen: PropTypes.func.isRequired,
-  setMessage: PropTypes.func.isRequired
+  setMessage: PropTypes.func.isRequired,
+  onMessageSelect: PropTypes.func.isRequired,
 };

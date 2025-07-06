@@ -22,6 +22,7 @@ export default function PropagationModal({
   setThresholds,
   csvFile,
   xlsxFile,
+  setEmotionVector,
 }) {
   const defaultVector = {
     subjectivity: 0,
@@ -39,36 +40,40 @@ export default function PropagationModal({
   const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
   const [isMessagesDatasetModalOpen, setIsMessagesDatasetModalOpen] = useState(false);
   const [isEmotionVectorModalOpen, setIsEmotionVectorModalOpen] = useState(false);
-  const [emotionVector, setEmotionVector] = useState(defaultVector);
+  const [localEmotionVector, setLocalEmotionVector] = useState(defaultVector);
   const [analyzeStatus, setAnalyzeStatus] = useState('');
 
-  const handleAnalyze = async () => {
-    if (!message.trim()) {
-      setAnalyzeStatus('Por favor, escribe un mensaje.');
+  const handleAnalyze = async (msg = message) => {
+    if (!msg.trim()) {
+      setAnalyzeStatus('Por favor, escribe un mensaje o selecciona uno del dataset.');
       return;
     }
     setAnalyzeStatus('Analizando mensaje...');
     try {
       const formData = new FormData();
-      formData.append('message', message);
-      console.log('Enviando solicitud con mensaje:', message);
+      formData.append('message', msg);
+      console.log('Enviando solicitud con mensaje:', msg);
       const response = await axios.post('http://localhost:8000/analyze-message', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log('Respuesta del backend:', response.data);
-      setEmotionVector(response.data.vector);
+      const newVector = response.data.vector;
+      setLocalEmotionVector(newVector);
+      setEmotionVector(newVector); // Update parent state
       setAnalyzeStatus('Análisis completado.');
-      setIsEmotionVectorModalOpen(true); // Open the new modal
+      setIsEmotionVectorModalOpen(true); // Open the modal only after analysis
     } catch (error) {
       console.error('Analyze error:', error.response || error);
       setAnalyzeStatus(`Error: ${error.response?.data?.detail || error.message}`);
-      setEmotionVector(defaultVector);
+      setLocalEmotionVector(defaultVector);
+      setEmotionVector(defaultVector); // Reset parent state
     }
   };
 
   const handleUpdateVector = async (updatedVector) => {
-    setEmotionVector(updatedVector);
-    setIsEmotionVectorModalOpen(false); // Close the modal after updating
+    setLocalEmotionVector(updatedVector);
+    setEmotionVector(updatedVector); // Update parent state
+    //setIsEmotionVectorModalOpen(false); // Close the modal
     setAnalyzeStatus('Vector emocional actualizado.');
   };
 
@@ -84,16 +89,16 @@ export default function PropagationModal({
     formData.append('max_steps', 4);
     formData.append('method', params.method);
     formData.append('thresholds', JSON.stringify(params.thresholds));
-    if (emotionVector && Object.values(emotionVector).some(val => val !== 0)) {
-      console.log('Sending custom_vector:', emotionVector);
-      formData.append('custom_vector', JSON.stringify(emotionVector));
+    if (localEmotionVector && Object.values(localEmotionVector).some(val => val !== 0)) {
+      console.log('Sending custom_vector:', localEmotionVector);
+      formData.append('custom_vector', JSON.stringify(localEmotionVector));
     }
     try {
       const response = await axios.post('http://localhost:8000/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log('Respuesta de propagación:', response.data);
-      return { ...response, data: { ...response.data, custom_vector: emotionVector } }; // Include custom_vector in response
+      return { ...response, data: { ...response.data, custom_vector: localEmotionVector } };
     } catch (error) {
       console.error('Propagation error:', error.response || error);
       throw error;
@@ -130,6 +135,7 @@ export default function PropagationModal({
           value={message}
           onChange={e => {
             setMessage(e.target.value);
+            setLocalEmotionVector(defaultVector);
             setEmotionVector(defaultVector);
             setAnalyzeStatus('');
           }}
@@ -137,13 +143,13 @@ export default function PropagationModal({
         />
         <div className="button-container">
           <button
-            onClick={handleAnalyze}
+            onClick={() => handleAnalyze()}
             disabled={!message.trim()}
             className={message.trim() ? 'button analyze-button' : 'button-disabled'}
           >
             Analizar Mensaje
           </button>
-          {emotionVector && Object.values(emotionVector).some(val => val !== 0) && (
+          {localEmotionVector && Object.values(localEmotionVector).some(val => val !== 0) && (
             <button
               onClick={() => setIsEmotionVectorModalOpen(true)}
               className="button modify-vector-button"
@@ -177,7 +183,7 @@ export default function PropagationModal({
           </button>
         </div>
         <button
-          onClick={() => handlePropagation({ selectedUser, message, method, thresholds, csvFile, xlsxFile, emotionVector })}
+          onClick={() => handlePropagation({ selectedUser, message, method, thresholds, csvFile, xlsxFile, emotionVector: localEmotionVector })}
           disabled={!selectedUser || !message.trim() || !csvFile || !xlsxFile}
           className={selectedUser && message.trim() && csvFile && xlsxFile ? 'button propagate-button' : 'button-disabled'}
         >
@@ -204,11 +210,12 @@ export default function PropagationModal({
           isOpen={isMessagesDatasetModalOpen}
           setIsOpen={setIsMessagesDatasetModalOpen}
           setMessage={setMessage}
+          onMessageSelect={() => {}} // Empty callback to prevent immediate analysis
         />
         <EmotionVectorModal
           isOpen={isEmotionVectorModalOpen}
           setIsOpen={setIsEmotionVectorModalOpen}
-          vector={emotionVector}
+          vector={localEmotionVector}
           setVector={handleUpdateVector}
         />
       </div>
@@ -232,4 +239,5 @@ PropagationModal.propTypes = {
   setThresholds: PropTypes.func.isRequired,
   csvFile: PropTypes.any,
   xlsxFile: PropTypes.any,
+  setEmotionVector: PropTypes.func.isRequired,
 };

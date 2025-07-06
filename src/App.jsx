@@ -1043,6 +1043,7 @@ export default function App() {
               setThresholds={setThresholds}
               csvFile={csvFile}
               xlsxFile={xlsxFile}
+              setEmotionVector={setEmotionVector} // Pass setEmotionVector to PropagationModal
             />
             <NodeModal
               isOpen={isNodeModalOpen}

@@ -3,7 +3,7 @@ import './PropagationModal.css';
 
 export default function EmotionVectorModal({ isOpen, setIsOpen, vector, setVector }) {
   const emotionKeys = [
-    'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
+    'subjectivity', 'polarity', 'fear', 'anger', 'anticip',
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
   ];
 
