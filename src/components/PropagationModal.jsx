@@ -42,6 +42,8 @@ export default function PropagationModal({
   const [isEmotionVectorModalOpen, setIsEmotionVectorModalOpen] = useState(false);
   const [localEmotionVector, setLocalEmotionVector] = useState(defaultVector);
   const [analyzeStatus, setAnalyzeStatus] = useState('');
+  const [messageSource, setMessageSource] = useState('write'); // 'write' or 'dataset'
+  const [selectedDatasetMessage, setSelectedDatasetMessage] = useState(''); // Store dataset message separately
 
   const handleAnalyze = async (msg = message) => {
     if (!msg.trim()) {
@@ -73,7 +75,6 @@ export default function PropagationModal({
   const handleUpdateVector = async (updatedVector) => {
     setLocalEmotionVector(updatedVector);
     setEmotionVector(updatedVector); // Update parent state
-    //setIsEmotionVectorModalOpen(false); // Close the modal
     setAnalyzeStatus('Vector emocional actualizado.');
   };
 
@@ -105,6 +106,17 @@ export default function PropagationModal({
     }
   };
 
+  // Reset message when switching to 'write'
+  const handleMessageSourceChange = (source) => {
+    setMessageSource(source);
+    if (source === 'write') {
+      setMessage(''); // Clear message when switching to write
+      setLocalEmotionVector(defaultVector);
+      setEmotionVector(defaultVector);
+      setAnalyzeStatus('');
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -124,28 +136,55 @@ export default function PropagationModal({
             </option>
           ))}
         </select>
-        <button
-          onClick={() => setIsMessagesDatasetModalOpen(true)}
-          className="button dataset-button"
-        >
-          Seleccionar Dataset de Mensajes
-        </button>
-        <textarea
-          placeholder="Escribe el mensaje a propagar..."
-          value={message}
-          onChange={e => {
-            setMessage(e.target.value);
-            setLocalEmotionVector(defaultVector);
-            setEmotionVector(defaultVector);
-            setAnalyzeStatus('');
-          }}
-          className="modal-textarea"
-        />
+        <div className="message-source-container">
+          <label className="message-source-option">
+            <input
+              type="checkbox"
+              checked={messageSource === 'write'}
+              onChange={() => handleMessageSourceChange('write')}
+            /> Escribir Mensaje
+          </label>
+          <label className="message-source-option">
+            <input
+              type="checkbox"
+              checked={messageSource === 'dataset'}
+              onChange={() => handleMessageSourceChange('dataset')}
+            /> Elegir mensaje de Dataset
+          </label>
+        </div>
+        {messageSource === 'write' && (
+          <textarea
+            placeholder="Escribe el mensaje a propagar..."
+            value={message}
+            onChange={e => {
+              setMessage(e.target.value);
+              setLocalEmotionVector(defaultVector);
+              setEmotionVector(defaultVector);
+              setAnalyzeStatus('');
+            }}
+            className="modal-textarea"
+          />
+        )}
+        {messageSource === 'dataset' && (
+          <>
+            <button
+              onClick={() => setIsMessagesDatasetModalOpen(true)}
+              className="button dataset-button"
+            >
+              Seleccionar Mensaje del Dataset
+            </button>
+            {selectedDatasetMessage && (
+              <span className="modal-status">
+                Mensaje seleccionado: {selectedDatasetMessage}
+              </span>
+            )}
+          </>
+        )}
         <div className="button-container">
           <button
-            onClick={() => handleAnalyze()}
-            disabled={!message.trim()}
-            className={message.trim() ? 'button analyze-button' : 'button-disabled'}
+            onClick={() => handleAnalyze(messageSource === 'dataset' ? selectedDatasetMessage : message)}
+            disabled={!message.trim() && !selectedDatasetMessage.trim()}
+            className={(message.trim() || selectedDatasetMessage.trim()) ? 'button analyze-button' : 'button-disabled'}
           >
             Analizar Mensaje
           </button>
@@ -183,9 +222,9 @@ export default function PropagationModal({
           </button>
         </div>
         <button
-          onClick={() => handlePropagation({ selectedUser, message, method, thresholds, csvFile, xlsxFile, emotionVector: localEmotionVector })}
-          disabled={!selectedUser || !message.trim() || !csvFile || !xlsxFile}
-          className={selectedUser && message.trim() && csvFile && xlsxFile ? 'button propagate-button' : 'button-disabled'}
+          onClick={() => handlePropagation({ selectedUser, message: messageSource === 'dataset' ? selectedDatasetMessage : message, method, thresholds, csvFile, xlsxFile, emotionVector: localEmotionVector })}
+          disabled={!selectedUser || (!message.trim() && !selectedDatasetMessage.trim()) || !csvFile || !xlsxFile}
+          className={selectedUser && (message.trim() || selectedDatasetMessage.trim()) && csvFile && xlsxFile ? 'button propagate-button' : 'button-disabled'}
         >
           Propagar Mensaje
         </button>
@@ -209,8 +248,8 @@ export default function PropagationModal({
         <MessagesDatasetModal
           isOpen={isMessagesDatasetModalOpen}
           setIsOpen={setIsMessagesDatasetModalOpen}
-          setMessage={setMessage}
-          onMessageSelect={() => {}} // Empty callback to prevent immediate analysis
+          setMessage={setSelectedDatasetMessage} // Update selectedDatasetMessage instead of message
+          onMessageSelect={() => {}}
         />
         <EmotionVectorModal
           isOpen={isEmotionVectorModalOpen}

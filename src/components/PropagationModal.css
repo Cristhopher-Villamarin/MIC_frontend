@@ -41,10 +41,10 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 1000;
   width: min(90vw, 900px);
-  height: min(90vh, 700px); /* Reduced height since vector is in another modal */
+  height: min(90vh, 700px);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   overflow-y: auto;
   animation: slideIn 0.3s ease-out;
 }
@@ -63,12 +63,7 @@
   color: var(--text-secondary);
   font-weight: 400;
   line-height: 1.5;
-}
-
-
-.modal-white {
-
-  color: var(--text-secondary);
+  word-break: break-word; /* Ensure long messages wrap */
 }
 
 .modal-status-error {
@@ -131,12 +126,6 @@
 .file-label {
   font-size: 0.9375rem;
   color: var(--text-primary);
-  font-weight: 500;
-}
-
-.file-label2 {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -209,8 +198,61 @@
   cursor: pointer;
 }
 
-.message-text {
-  word-break: break-word;
+/* Message Source Selection Styles */
+.message-source-container {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--hover-color);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease-in-out;
+}
+
+.message-source-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  width: 100%; /* Ensure equal width for symmetry */
+}
+
+.message-source-option input[type="checkbox"] {
+  margin: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.message-source-option label {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin: 0;
+  user-select: none;
+  flex-grow: 1; /* Allow label to take available space */
+  text-align: center; /* Center text within label */
+}
+
+.message-source-option:hover,
+.message-source-option:focus-within {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.message-source-option:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-hover);
+}
+
+.message-source-option:checked label {
+  color: var(--text-secondary);
 }
 
 /* Button Container for EMA/SMA and Thresholds */
@@ -232,7 +274,7 @@
 /* Method Label */
 .method-label {
   font-size: 0.9375rem;
-  color: white;
+  color: var(--text-secondary);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -381,7 +423,7 @@
     width: 95vw;
     height: 90vh;
     padding: 1.5rem;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
 
   .modal-title {
@@ -420,16 +462,14 @@
     min-width: unset;
   }
 
-  .messages-list-container {
-    max-height: 200px;
+  .message-source-container {
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  .messages-list {
-    max-height: 150px;
-  }
-
-  .vector-inputs {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  .message-source-option {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -450,7 +490,11 @@
     padding: 0.625rem;
   }
 
-  .vector-inputs {
-    grid-template-columns: 1fr;
+  .message-source-container {
+    padding: 0.25rem;
+  }
+
+  .message-source-option {
+    padding: 0.5rem 0.75rem;
   }
 }
