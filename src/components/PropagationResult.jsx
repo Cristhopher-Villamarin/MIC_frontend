@@ -4,7 +4,9 @@ import './PropagationResult.css';
 
 export default function PropagationResult({ propagationLog, selectedUser, onClose }) {
   const [displayedSteps, setDisplayedSteps] = useState([]);
-  const contentRef = useRef(null); // Referencia al contenedor de contenido
+  const contentRef = useRef(null);
+  const isAutoScrollActive = useRef(true); // Estado para controlar el scroll automático
+  const lastScrollTop = useRef(0); // Almacena la última posición del scroll
 
   // Etiquetas de emociones en español
   const emotionKeys = [
@@ -27,8 +29,8 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
   };
 
   // Tiempos de animación (coinciden con Graph3D.jsx)
-  const animationDelay = 5000; // ANIMATION_DELAY de getAnimationConfig
-  const subStepDelay = animationDelay / 2; // ~1667ms
+  const animationDelay = 4000;
+  const subStepDelay = animationDelay / 3;
 
   // Ordenar el log por timeStep, excluyendo entradas inválidas
   const sortedLog = propagationLog
@@ -107,18 +109,53 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
     }
   };
 
-  // Función para activar el scroll automático
+  // Verificar si el scroll está cerca del final
+  const isAtBottom = () => {
+    if (!contentRef.current) return false;
+    const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+    return scrollTop + clientHeight >= scrollHeight - 50;
+  };
+
+  // Función para activar el scroll automático si está al final
   const scrollToLastStep = () => {
-    if (contentRef.current) {
+    if (contentRef.current && isAutoScrollActive.current && isAtBottom()) {
       setTimeout(() => {
         const lastStep = contentRef.current.querySelector('.propagation-step:last-child');
         if (lastStep) {
           lastStep.scrollIntoView({ behavior: 'smooth', block: 'end' });
-          contentRef.current.scrollTop = contentRef.current.scrollHeight;
         }
-      }, 200); // Aumentado para asegurar DOM actualizado
+      }, 200);
     }
   };
+
+  // Detectar cambios manuales en el scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!contentRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      
+      // Detectar si el usuario desplazó hacia arriba
+      if (scrollTop < lastScrollTop.current) {
+        isAutoScrollActive.current = false;
+      }
+      // Reactivar el scroll automático si el usuario está al final
+      if (isAtBottom()) {
+        isAutoScrollActive.current = true;
+      }
+      lastScrollTop.current = scrollTop;
+    };
+
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (contentElement) {
+        contentElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!propagationLog.length) return;
@@ -169,8 +206,6 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
       const stepNumber = index + 1;
       const baseDelay = index * animationDelay;
 
-      console.log(`Programando paso ${stepNumber}: relación en ${baseDelay}ms, envío en ${baseDelay + subStepDelay}ms, actualización en ${baseDelay + 2 * subStepDelay}ms`);
-
       // Paso 1: Relación (línea turquesa)
       const relationshipTimeout = setTimeout(() => {
         setDisplayedSteps(prev => [
@@ -193,7 +228,7 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
       }, baseDelay);
       timeouts.push(relationshipTimeout);
 
-      // Paso 2: Envío (línea verde)
+      // Paso 2: Envío (línea verded)
       const sentTimeout = setTimeout(() => {
         setDisplayedSteps(prev => [
           ...prev,
@@ -206,10 +241,10 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
                 </div>
                 <p className="step-description">
                   {entry.action === 'modificar'
-                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje <span className="action-badge modify-badge">MODIFICADO</span> al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
+                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
                     : entry.action === 'reenviar'
-                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> <span className="action-badge forward-badge">REENVÍA</span> el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
-                    : <>El nodo <span className="node-badge sender-node">{entry.sender}</span> <span className="action-badge send-badge">ENVÍA</span> el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>}
+                    ? <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>
+                    : <>El nodo <span className="node-badge sender-node">{entry.sender}</span> envía el mensaje al nodo <span className="node-badge receiver-node">{entry.receiver}</span></>}
                 </p>
                 {formatVector(entry.vector_sent)}
               </div>
@@ -220,7 +255,7 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
       }, baseDelay + subStepDelay);
       timeouts.push(sentTimeout);
 
-      // Paso 3: Actualización (cambio de color)
+      // Paso 3: Actualización (cambio ascendente)
       const updateTimeout = setTimeout(() => {
         setDisplayedSteps(prev => [
           ...prev,
@@ -237,7 +272,18 @@ export default function PropagationResult({ propagationLog, selectedUser, onClos
                 <div className="color-change-notice">
                   <p>🎨 El color del nodo cambia para reflejar su nuevo estado emocional</p>
                 </div>
+                <h5 className="vector-title">Estado emocional de entrada (antes)</h5>
+                {formatVector(entry.state_in_before)}
+                 <h5 className="vector-title">Estado emocional de entrada (después)</h5>
                 {formatVector(entry.state_in_after)}
+                {entry.state_out_before && entry.state_out_after && (
+                  <>
+                    <h5 className="vector-title">Estado emocional de salida (antes)</h5>
+                    {formatVector(entry.state_out_before)}
+                    <h5 className="vector-title">Estado emocional de salida (después)</h5>
+                    {formatVector(entry.state_out_after)}
+                  </>
+                )}
               </div>
             ),
           }

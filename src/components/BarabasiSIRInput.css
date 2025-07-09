@@ -1,0 +1,163 @@
+/* src/components/BarabasiSIRInput.css */
+.sir-navbar {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #2d3748 0%, #1f2937 100%);
+  color: #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
+  max-height: 120px; /* Control de altura para evitar desplazamiento del gráfico */
+}
+
+.sir-navbar-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  color: #e5e7eb;
+}
+
+.sir-navbar-controls {
+  display: flex;
+  flex-wrap: wrap; /* Allows wrapping to prevent overflow */
+  gap: 1rem; /* Consistent spacing */
+  align-items: center;
+  justify-content: center; /* Centered layout */
+  width: 100%;
+  padding: 0 1rem; /* Ensures content fits */
+  box-sizing: border-box; /* Includes padding in width calculation */
+}
+
+.sir-input-container {
+  display: flex;
+  flex-direction: row; /* Aligns label and input horizontally */
+  align-items: center; /* Vertically centers label and input */
+  min-width: 140px; /* Adjusted for better fit */
+  max-width: 250px; /* Increased to accommodate label + input */
+  margin: 0 0.25rem; /* Small margin to prevent overlap */
+}
+
+.sir-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #d1d5db;
+  margin-right: 0.5rem; /* Space between label and input */
+  white-space: nowrap; /* Prevents label wrapping */
+}
+
+.sir-input {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #4b5563;
+  background-color: #374151;
+  color: #f3f4f6;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  width: 100%; /* Allows input to take available space */
+  max-width: 180px; /* Limits input width */
+  box-sizing: border-box;
+}
+
+.sir-input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+.sir-input[type="select"] {
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="white" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px;
+}
+
+.sir-input:hover {
+  background-color: #4b5563;
+  border-color: #60a5fa;
+}
+
+.sir-button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: flex-end;
+  min-width: 140px; /* Adjusted to match input containers */
+  max-width: 180px;
+}
+
+.sir-button {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #60a5fa;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sir-button:hover {
+  background-color: #3b82f6;
+}
+
+.sir-button:active {
+  background-color: #2563eb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .sir-input-container {
+    min-width: 100%;
+    max-width: 100%;
+    flex-direction: column; /* Stacks label and input vertically on small screens */
+    align-items: flex-start; /* Aligns to left */
+  }
+
+  .sir-button-container {
+    min-width: 100%;
+  }
+
+  .sir-navbar-controls {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 0.5rem; /* Reduced padding for smaller screens */
+  }
+
+  .sir-label {
+    margin-right: 0; /* Removes right margin in column layout */
+    margin-bottom: 0.25rem; /* Adds space below label */
+  }
+
+  .sir-input {
+    max-width: 100%; /* Full width on small screens */
+  }
+}
+
+@media (max-width: 600px) {
+  .sir-navbar-title {
+    font-size: 1.2rem;
+  }
+
+  .sir-label,
+  .sir-input,
+  .sir-button {
+    font-size: 0.8rem;
+  }
+
+  .sir-input,
+  .sir-button {
+    padding: 0.5rem;
+  }
+
+  .sir-navbar-controls {
+    gap: 0.5rem; /* Tighter gap on small screens */
+  }
+}

@@ -1,67 +1,195 @@
+/* src/components/Navbar.css */
 .navbar {
-  position: fixed;
-  top: 0;
-  left: 250px; /* Ajustado: Comienza después del Sidebar */
-  width: calc(100% - 250px); /* Ajustado: Resta el ancho del Sidebar */
-  height: 64px;
-  background-color: #ffffff;
-  padding: 0 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Sombra más suave */
-  z-index: 10;
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #2d3748 0%, #1f2937 100%);
+  color: #f3f4f6;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
+  max-height: 120px; /* Control de altura para evitar desplazamiento del gráfico */
 }
 
 .navbar-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+  color: #e5e7eb;
 }
 
 .navbar-controls {
   display: flex;
+  flex-wrap: nowrap; /* Evita que los elementos se envuelvan */
+  gap: 1.5rem; /* Espacio uniforme entre elementos */
   align-items: center;
-  gap: 12px;
+  justify-content: space-between; /* Distribución uniforme */
+  width: 100%;
+  max-width: 1000px; /* Aumentado para dar más espacio horizontal */
+}
+
+.navbar-input-container,
+.navbar-select-container {
+  display: flex;
+  flex-direction: row; /* Etiqueta a la izquierda, input a la derecha */
+  align-items: center;
+  gap: 0.5rem; /* Espacio entre etiqueta e input */
+}
+
+.navbar-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #d1d5db;
+  white-space: nowrap; /* Evita que el texto se divida en varias líneas */
 }
 
 .navbar-input {
-  padding: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #1a1a1a;
-  background-color: #7ec762;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  width: 340px;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #4b5563;
+  background-color: #374151;
+  color: #f3f4f6;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: 300px; /* Ancho fijo para consistencia */
 }
 
-.navbar-input:hover,
+.navbar-input:hover {
+  background-color: #4b5563;
+  border-color: #60a5fa;
+}
+
 .navbar-input:focus {
-  border-color: #4b89dc;
-  box-shadow: 0 0 0 2px rgba(75, 137, 220, 0.1);
   outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+.navbar-input::file-selector-button {
+  padding: 0.3rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #60a5fa;
+  color: #ffffff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.navbar-input::file-selector-button:hover {
+  background-color: #3b82f6;
 }
 
 .navbar-select {
-  padding: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #1a1a1a;
-  background-color: #fafafa;
-  width: 110px;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #4b5563;
+  background-color: #374151;
+  color: #f3f4f6;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: 100px; /* Ancho fijo para consistencia */
   appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236b7280'><path d='M0 2l5 5 5-5z'/></svg>");
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="white" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>');
   background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 10px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-position: right 1rem center;
+  background-size: 12px;
 }
 
-.navbar-select:hover,
+.navbar-select:hover {
+  background-color: #4b5563;
+  border-color: #60a5fa;
+}
+
 .navbar-select:focus {
-  border-color: #4b89dc;
-  box-shadow: 0 0 0 2px rgba(75, 137, 220, 0.1);
   outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+.navbar-message {
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  background-color: rgba(248, 113, 113, 0.1);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  margin: 0;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Media Queries para responsividad */
+@media (max-width: 1024px) {
+  .navbar-controls {
+    justify-content: space-around; /* Ajuste para pantallas medianas */
+    gap: 1rem;
+  }
+
+  .navbar-input,
+  .navbar-select {
+    width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.75rem 1rem;
+    max-height: 160px; /* Más altura para apilar elementos */
+  }
+
+  .navbar-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .navbar-controls {
+    flex-direction: column; /* Apila elementos en pantallas pequeñas */
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .navbar-input-container,
+  .navbar-select-container {
+    flex-direction: row; /* Mantiene etiqueta a la izquierda */
+    width: 100%;
+    justify-content: center;
+  }
+
+  .navbar-input,
+  .navbar-select {
+    width: 180px;
+  }
+
+  .navbar-message {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-title {
+    font-size: 1.1rem;
+  }
+
+  .navbar-label {
+    font-size: 0.8rem;
+  }
+
+  .navbar-input,
+  .navbar-select {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    width: 150px;
+  }
+
+  .navbar-message {
+    font-size: 0.75rem;
+  }
 }

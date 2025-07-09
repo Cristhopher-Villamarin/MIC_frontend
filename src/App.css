@@ -1,3 +1,4 @@
+/* src/components/App.css */
 * {
   margin: 0;
   padding: 0;
@@ -8,30 +9,67 @@ body {
   font-family: 'Inter', sans-serif;
   color: #1a1a1a;
   background-color: #f5f5f5;
-  overflow-x: hidden; /* Eliminar scroll horizontal del body */
+  overflow-x: hidden;
 }
 
 .app-container {
   display: flex;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Evitar scrolls en el contenedor principal */
+  overflow: hidden;
 }
 
 .main-content {
   margin-left: 250px;
-  width: calc(100vw - 250px); /* Usar 100vw en lugar de 100% */
+  width: calc(100vw - 250px);
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Evitar scrolls en el contenido principal */
+  overflow: hidden;
 }
 
 .graph-container {
   width: 100%;
-  height: calc(100vh - 64px);
+  height: calc(100vh - 120px); /* Ajustado según max-height del navbar */
   position: relative;
-  overflow: hidden; /* Evitar scrolls en el contenedor del grafo */
+  overflow: hidden;
+  display: flex; /* Añadido para centrado */
+  justify-content: center; /* Centrado horizontal */
+  align-items: center; /* Centrado vertical */
+  overflow: visible; /* Changed from hidden to allow PropagationResult to extend */
+}
+
+.graph-container > div {
+  width: 100% !important; /* Forzar que el contenedor del gráfico ocupe todo el ancho */
+  height: 100% !important; /* Forzar que el contenedor del gráfico ocupe toda la altura */
+}
+
+.graph-container canvas {
+  display: block; /* Elimina espacios adicionales */
+  margin: 0 auto; /* Centrado adicional para el lienzo */
+}
+
+.welcome-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e5e7eb 100%);
+}
+
+.welcome-message h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.welcome-message p {
+  font-size: 1.2rem;
+  color: #4b5563;
 }
 
 .button {
@@ -44,6 +82,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-right: 10px; /* Espacio entre botones */
 }
 
 .button:hover {
@@ -64,13 +103,25 @@ body {
   font-size: 14px;
   font-weight: 500;
   cursor: not-allowed;
+  margin-right: 10px; /* Espacio entre botones */
 }
 
 .propagation-button-container {
   position: fixed;
-  top: 300px;
-  left: 320px; /* Simplificado: 250px del sidebar + 70px de margen */
+  top: 130px; /* Debajo de la navbar */
+  left: 260px; /* 250px (ancho del sidebar) + 10px (margen) */
   z-index: 9;
+  display: flex; /* Para alinear los botones horizontalmente */
+  gap: 10px; /* Espacio entre botones */
+}
+
+.nodes-button-container {
+  position: fixed;
+  top: 620px; /* Debajo de la navbar */
+  left: 30px; /* 250px (ancho del sidebar) + 10px (margen) */
+  z-index: 10000;
+  display: flex; /* Para alinear los botones horizontalmente */
+  gap: 10px; /* Espacio entre botones */
 }
 
 .legend-container {
@@ -78,14 +129,14 @@ body {
   bottom: 1rem;
   right: 1rem;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(40, 47, 78, 0.95);
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
-  color: #000000;
-  max-width: 250px; /* Limitar ancho para evitar overflow */
+  color: #ffffff;
+  max-width: 250px;
 }
 
 .legend-title {

@@ -1,10 +1,10 @@
 .search-panel {
   position: fixed;
-  top: 80px; /* Debajo de la navbar */
-  left: 270px; /* 250px (ancho del sidebar) + 20px (margen) */
-  width: 280px;
+  top: 130px; /* Debajo de la navbar */
+  left: 1090px; /* 250px (ancho del sidebar) + 20px (margen) */
+  width: 420px;
   background-color: #ffffff;
-  padding: 36px;
+  padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   z-index: 9;
@@ -13,7 +13,15 @@
   gap: 12px;
 }
 
+/* Contenedor para input y botones en la misma línea */
+.search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .search-input {
+  flex: 1; /* El input toma el espacio disponible */
   padding: 8px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
@@ -33,6 +41,7 @@
 .search-buttons {
   display: flex;
   gap: 8px;
+  flex-shrink: 0; /* Los botones mantienen su tamaño */
 }
 
 .search-status {

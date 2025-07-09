@@ -1,0 +1,130 @@
+
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.modal-section {
+  margin-bottom: 1.5rem;
+}
+
+.modal-section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #d1d5db;
+}
+
+.node-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.node-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b5563;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.node-button:hover {
+  background-color: #6b7280;
+  transform: translateY(-1px);
+}
+
+.node-button.selected {
+  background-color: #4b89dc;
+}
+
+.node-button.selected:hover {
+  background-color: #3b6db0;
+}
+
+.charts-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.modal-radar-chart {
+  background-color: #2d3748;
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 350px;
+  width: 100%;
+  margin: 0;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #d1d5db;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.modal-close-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b89dc;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #3b6db0;
+  transform: translateY(-1px);
+}
+
+.modal-close-button:active {
+  transform: translateY(0);
+}
+
+/* src/components/NodeStatesModal.csssssssssssssss */
+.node-states-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1f2937;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 80%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  z-index: 10000;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}

@@ -18,18 +18,21 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   const animationTimeoutRefs = useRef(new Set());
   const animationFrameRef = useRef(null);
   const batchUpdateRef = useRef(null);
-  
+
   // Colores inspirados en Intensamente e Intensamente 2
   const emotionColors = {
-    in_fear: '#A100A1',
-    in_anger: '#FF0000',
-    in_anticip: '#FF6200',
-    in_trust: '#00CED1',
-    in_surprise: '#FF69B4',
-    in_sadness: '#4682B4',
-    in_disgust: '#00FF00',
-    in_joy: '#FFFF00'
+    fear: '#A100A1',
+    anger: '#FF0000',
+    anticip: '#FF6200',
+    trust: '#00CED1',
+    surprise: '#FF69B4',
+    sadness: '#4682B4',
+    disgust: '#00FF00',
+    joy: '#FFFF00',
   };
+
+  // Color gris por defecto para nodos sin atributos emocionales
+  const defaultColor = '#828282';
 
   // Determinar si estamos en modo propagación y el tamaño
   const isInPropagationMode = highlightedLinks.length > 0;
@@ -40,11 +43,11 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   const getAnimationConfig = useCallback(() => {
     if (isExtensivePropagation) {
       return {
-        ANIMATION_DELAY: 4000, // Más lento para ver la secuencia
+        ANIMATION_DELAY: 4000,
         ANIMATION_DURATION: 4000,
-        BATCH_SIZE: 1, // Un enlace a la vez
+        BATCH_SIZE: 1,
         VISIBILITY_DURATION: 4000,
-        REFRESH_THROTTLE: 50 // Throttle más agresivo
+        REFRESH_THROTTLE: 50,
       };
     } else if (isLargePropagation) {
       return {
@@ -52,15 +55,15 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
         ANIMATION_DURATION: 4000,
         BATCH_SIZE: 1,
         VISIBILITY_DURATION: 4000,
-        REFRESH_THROTTLE: 50
+        REFRESH_THROTTLE: 50,
       };
     } else {
       return {
-        ANIMATION_DELAY: 4000, // Más lento para propagaciones pequeñas
+        ANIMATION_DELAY: 4000,
         ANIMATION_DURATION: 4000,
         BATCH_SIZE: 1,
         VISIBILITY_DURATION: 4000,
-        REFRESH_THROTTLE: 50
+        REFRESH_THROTTLE: 50,
       };
     }
   }, [isExtensivePropagation, isLargePropagation]);
@@ -73,7 +76,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
 
     const involvedNodeIds = new Set();
     const linkMap = new Map();
-    
+
     data.links.forEach(link => {
       const sourceId = link.source.id ? String(link.source.id) : String(link.source);
       const targetId = link.target.id ? String(link.target.id) : String(link.target);
@@ -93,14 +96,14 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
 
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
-      
+
       const originalLink = linkMap.get(key1) || linkMap.get(key2);
       if (originalLink) {
         involvedLinks.add(originalLink);
       }
     });
 
-    const filteredNodes = data.nodes.filter(node => 
+    const filteredNodes = data.nodes.filter(node =>
       involvedNodeIds.has(String(node.id))
     );
 
@@ -111,12 +114,12 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
       filteredLinks: Array.from(involvedLinks).length,
       highlightedLinks: highlightedLinks.length,
       isLarge: isLargePropagation,
-      isExtensive: isExtensivePropagation
+      isExtensive: isExtensivePropagation,
     });
 
     return {
       nodes: filteredNodes,
-      links: Array.from(involvedLinks)
+      links: Array.from(involvedLinks),
     };
   }, [data, highlightedLinks, isInPropagationMode, isLargePropagation, isExtensivePropagation]);
 
@@ -129,18 +132,17 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     if (textureCacheCleanup.current) {
       clearTimeout(textureCacheCleanup.current);
     }
-    
+
     textureCacheCleanup.current = setTimeout(() => {
-      if (textureCache.current.size > 100) { // Mantener solo las últimas 100 texturas
+      if (textureCache.current.size > 100) {
         const entries = Array.from(textureCache.current.entries());
-        const toKeep = entries.slice(-50); // Mantener solo las últimas 50
-        
+        const toKeep = entries.slice(-50);
         textureCache.current.clear();
         toKeep.forEach(([key, value]) => {
           textureCache.current.set(key, value);
         });
       }
-    }, 30000); // Limpiar cada 30 segundos
+    }, 30000);
   }, []);
 
   // Crear textura de gradiente con cache optimizado
@@ -151,7 +153,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width = 128; // Reducido de 256 para mejor rendimiento
+    canvas.width = 128;
     canvas.height = 1;
     const context = canvas.getContext('2d');
     const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
@@ -164,11 +166,11 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     });
     context.fillStyle = gradient;
     context.fillRect(0, 0, 128, 1);
-    
+
     const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter; // Optimizar filtros
+    texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    
+
     textureCache.current.set(key, texture);
     scheduleTextureCacheCleanup();
     return texture;
@@ -177,22 +179,40 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   // Obtener color del nodo (memoizado por performance)
   const getNodeColor = useCallback((node) => {
     const emotions = [
-      node.in_fear || 0, node.in_anger || 0, node.in_anticip || 0, node.in_trust || 0,
-      node.in_surprise || 0, node.in_sadness || 0, node.in_disgust || 0, node.in_joy || 0
+      ((node.in_fear || 0) + (node.out_fear || 0)) / 2,
+      ((node.in_anger || 0) + (node.out_anger || 0)) / 2,
+      ((node.in_anticip || 0) + (node.out_anticip || 0)) / 2,
+      ((node.in_trust || 0) + (node.out_trust || 0)) / 2,
+      ((node.in_surprise || 0) + (node.out_surprise || 0)) / 2,
+      ((node.in_sadness || 0) + (node.out_sadness || 0)) / 2,
+      ((node.in_disgust || 0) + (node.out_disgust || 0)) / 2,
+      ((node.in_joy || 0) + (node.out_joy || 0)) / 2,
     ];
     const emotionKeys = [
-      'in_fear', 'in_anger', 'in_anticip', 'in_trust',
-      'in_surprise', 'in_sadness', 'in_disgust', 'in_joy'
+      'fear',
+      'anger',
+      'anticip',
+      'trust',
+      'surprise',
+      'sadness',
+      'disgust',
+      'joy',
     ];
-    
+
+    // Si todas las emociones son 0 o no definidas, usar color gris
+    const hasEmotions = emotions.some(val => val !== 0);
+    if (!hasEmotions) {
+      return { color: defaultColor, opacity: 0.8 };
+    }
+
     const sortedEmotions = emotions
       .map((val, idx) => ({ val, idx }))
       .sort((a, b) => b.val - a.val)
       .slice(0, 3);
-    
+
     const colors = sortedEmotions.map(e => emotionColors[emotionKeys[e.idx]]);
     const weights = sortedEmotions.map(e => e.val);
-    
+
     return { texture: createGradientTexture(colors, weights), opacity: 0.8 };
   }, [createGradientTexture]);
 
@@ -201,7 +221,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     if (batchUpdateRef.current) {
       return;
     }
-    
+
     const config = getAnimationConfig();
     batchUpdateRef.current = setTimeout(() => {
       if (fgRef.current) {
@@ -214,7 +234,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   // Centra la red al cargar o cambiar datos filtrados
   useEffect(() => {
     if (!isTransitioning.current && fgRef.current) {
-      const delay = isExtensivePropagation ? 300 : 200; // Delay reducido
+      const delay = isExtensivePropagation ? 300 : 200;
       setTimeout(() => {
         if (fgRef.current) {
           fgRef.current.zoomToFit(400, 100);
@@ -232,7 +252,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
         }
       });
     }
-    
+
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -283,17 +303,17 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   // Calcular límites del grafo (optimizado)
   const calculateGraphBounds = useCallback((nodes) => {
     if (!nodes.length) return { maxDistance: 10 };
-    
+
     let minX = Infinity, maxX = -Infinity;
     let minY = Infinity, maxY = -Infinity;
     let minZ = Infinity, maxZ = -Infinity;
-    
+
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const x = node.x || 0;
       const y = node.y || 0;
       const z = node.z || 0;
-      
+
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
@@ -301,9 +321,9 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
       if (z < minZ) minZ = z;
       if (z > maxZ) maxZ = z;
     }
-    
+
     return {
-      maxDistance: Math.max(maxX - minX, maxY - minY, maxZ - minZ)
+      maxDistance: Math.max(maxX - minX, maxY - minY, maxZ - minZ),
     };
   }, []);
 
@@ -313,12 +333,12 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
       clearTimeout(timeoutId);
     });
     animationTimeoutRefs.current.clear();
-    
+
     if (batchUpdateRef.current) {
       clearTimeout(batchUpdateRef.current);
       batchUpdateRef.current = null;
     }
-    
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -328,7 +348,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
   // Limpiar animaciones previas
   const cleanupAnimation = useCallback(() => {
     clearAllTimeouts();
-    
+
     // Limpiar propiedades de animación de forma más eficiente
     const links = filteredData.links;
     for (let i = 0; i < links.length; i++) {
@@ -361,7 +381,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     console.log('Iniciando animación secuencial optimizada:', {
       highlightedLinks: highlightedLinks.length,
       config,
-      isExtensive: isExtensivePropagation
+      isExtensive: isExtensivePropagation,
     });
 
     // Resetear todos los enlaces de forma más eficiente
@@ -383,7 +403,15 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
         in_surprise: node.in_surprise,
         in_sadness: node.in_sadness,
         in_disgust: node.in_disgust,
-        in_joy: node.in_joy
+        in_joy: node.in_joy,
+        out_fear: node.out_fear,
+        out_anger: node.out_anger,
+        out_anticip: node.out_anticip,
+        out_trust: node.out_trust,
+        out_surprise: node.out_surprise,
+        out_sadness: node.out_sadness,
+        out_disgust: node.out_disgust,
+        out_joy: node.out_joy,
       };
     });
 
@@ -400,7 +428,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
 
     // Ordenar enlaces por timeStep
     const sortedHighlightedLinks = [...highlightedLinks].sort((a, b) => a.timeStep - b.timeStep);
-    
+
     // Función para animar un enlace específico (UNO POR UNO)
     const animateLink = (highlight, index) => {
       const sourceId = String(highlight.source);
@@ -435,9 +463,24 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
           const targetNode = filteredData.nodes.find(n => String(n.id) === targetId);
           if (targetNode && highlight.vector) {
             const emotionKeys = [
-              'in_subjectivity', 'in_polarity', 'in_fear', 'in_anger',
-              'in_anticip', 'in_trust', 'in_surprise', 'in_sadness',
-              'in_disgust', 'in_joy'
+              'in_subjectivity',
+              'in_polarity',
+              'in_fear',
+              'in_anger',
+              'in_anticip',
+              'in_trust',
+              'in_surprise',
+              'in_sadness',
+              'in_disgust',
+              'in_joy',
+              'out_fear',
+              'out_anger',
+              'out_anticip',
+              'out_trust',
+              'out_surprise',
+              'out_sadness',
+              'out_disgust',
+              'out_joy',
             ];
             emotionKeys.forEach((key, idx) => {
               if (highlight.vector[idx] !== undefined) {
@@ -458,7 +501,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     // Programar cada animación secuencialmente (UNO POR UNO)
     sortedHighlightedLinks.forEach((highlight, index) => {
       const delay = index * config.ANIMATION_DELAY;
-      
+
       const animationTimeout = setTimeout(() => {
         animateLink(highlight, index);
         animationTimeoutRefs.current.delete(animationTimeout);
@@ -479,7 +522,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     return () => {
       cleanupAnimation();
     };
-  }, [highlightedLinks, filteredData.nodes, filteredData.links, isExtensivePropagation, isLargePropagation, 
+  }, [highlightedLinks, filteredData.nodes, filteredData.links, isExtensivePropagation, isLargePropagation,
       cleanupAnimation, getAnimationConfig, throttledRefresh]);
 
   // Cleanup al desmontar
@@ -495,8 +538,8 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
 
   // Memoizar geometrías para mejor rendimiento
   const sphereGeometry = useMemo(() => {
-    return isExtensivePropagation 
-      ? new THREE.SphereGeometry(6, 8, 8) // Menos detalles para propagaciones extensas
+    return isExtensivePropagation
+      ? new THREE.SphereGeometry(6, 8, 8)
       : new THREE.SphereGeometry(6, 16, 16);
   }, [isExtensivePropagation]);
 
@@ -506,38 +549,38 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
       graphData={filteredData}
       backgroundColor="#111"
       // Configuración de enlaces
-      linkOpacity={0.85}
+      linkOpacity={0.6}
       linkWidth={link => {
         if (link.__isCurrentlyAnimating) {
-          return 1.2; // Más ancho durante la animación
+          return 1.2;
         } else if (link.__isPermanentlyHighlighted) {
-          return 1.2; // Ancho permanente
+          return 1.2;
         }
-        return 0.8; // Ancho normal
+        return 0.8;
       }}
       linkColor={link => {
         if (link.__isCurrentlyAnimating) {
-          return '#00ffff'; // Cian brillante durante la animación
+          return '#00ffff';
         } else if (link.__isPermanentlyHighlighted) {
-          return '#aaff00'; // Verde fosforescente permanente
+          return '#aaff00';
         }
-        return '#828282'; // Blanco normal
+        return '#828282';
       }}
       // Configuración de flechas
       linkDirectionalArrowLength={5}
       linkDirectionalArrowRelPos={1}
       linkDirectionalArrowColor={link => {
         if (link.__isCurrentlyAnimating) {
-          return '#00ffff'; // Cian brillante durante la animación
+          return '#00ffff';
         } else if (link.__isPermanentlyHighlighted) {
-          return '#aaff00'; // Verde fosforescente permanente
+          return '#aaff00';
         }
-        return '#FFFFFF'; // Blanco normal
+        return '#FFFFFF';
       }}
-      linkDirectionalArrowResolution={isExtensivePropagation ? 4 : 8} // Menos resolución para mejor rendimiento
+      linkDirectionalArrowResolution={isExtensivePropagation ? 4 : 8}
       // Configuración de física optimizada
-      d3VelocityDecay={isExtensivePropagation ? 0.4 : 0.3} // Más rápido para propagaciones grandes
-      warmupTicks={isExtensivePropagation ? 20 : 100} // Menos ticks para mejor rendimiento
+      d3VelocityDecay={isExtensivePropagation ? 0.4 : 0.3}
+      warmupTicks={isExtensivePropagation ? 20 : 100}
       cooldownTicks={isExtensivePropagation ? 20 : 100}
       // Event handlers
       onNodeClick={onNodeInfo}
@@ -545,13 +588,13 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
       nodeThreeObject={node => {
         const group = new THREE.Group();
 
-        const color = getNodeColor(node).texture;
+        const { texture, color, opacity } = getNodeColor(node);
 
         const material = new THREE.MeshBasicMaterial({
-          map: color instanceof THREE.Texture ? color : null,
-          color: color instanceof THREE.Texture ? null : color,
+          map: texture instanceof THREE.Texture ? texture : null,
+          color: color || (texture instanceof THREE.Texture ? null : texture),
           transparent: true,
-          opacity: getNodeColor(node).opacity
+          opacity,
         });
 
         const sphere = new THREE.Mesh(sphereGeometry, material);
@@ -559,7 +602,7 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
 
         const label = new SpriteText(String(node.id));
         label.color = 'white';
-        label.textHeight = isExtensivePropagation ? 2.5 : 3; // Texto más pequeño para mejor rendimiento
+        label.textHeight = isExtensivePropagation ? 2.5 : 3;
         label.material.depthWrite = false;
         label.material.depthTest = false;
         group.add(label);

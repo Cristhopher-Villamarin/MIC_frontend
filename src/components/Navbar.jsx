@@ -7,31 +7,33 @@ export default function Navbar({ csvFile, setCsvFile, xlsxFile, setXlsxFile, net
     <div className="navbar">
       <h1 className="navbar-title">Análisis de Redes Sociales</h1>
       <div className="navbar-controls">
-        <input
-          type="file"
-          accept=".csv"
-          onChange={e => setCsvFile(e.target.files?.[0])}
-          className="navbar-input"
-        />
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={e => setXlsxFile(e.target.files?.[0])}
-          className="navbar-input"
-        />
+        <div className="navbar-input-container">
+          <label htmlFor="xlsx-file" className="navbar-label">
+            Suba el archivo XLSX {xlsxFile ? `(${xlsxFile.name})` : ''}
+          </label>
+          <input
+            id="xlsx-file"
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={e => setXlsxFile(e.target.files?.[0])}
+            className="navbar-input"
+          />
+        </div>
         {networkList.length > 0 && (
-          <select
-            value={selectedNet}
-            onChange={e => setSelectedNet(e.target.value)}
-            className="navbar-select"
-          >
-            <option value="">Selecciona red</option>
-            {networkList.map(id => (
-              <option key={id} value={id}>
-                Red: {id}
-              </option>
-            ))}
-          </select>
+          <div className="navbar-select-container">
+            <select
+              value={selectedNet}
+              onChange={e => setSelectedNet(e.target.value)}
+              className="navbar-select"
+            >
+              <option value="">Selecciona red</option>
+              {networkList.map(id => (
+                <option key={id} value={id}>
+                  Red: {id}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
       </div>
     </div>

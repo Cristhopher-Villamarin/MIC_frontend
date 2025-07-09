@@ -22,7 +22,6 @@ export default function PropagationModal({
   setThresholds,
   csvFile,
   xlsxFile,
-  setEmotionVector,
 }) {
   const defaultVector = {
     subjectivity: 0,
@@ -40,41 +39,36 @@ export default function PropagationModal({
   const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
   const [isMessagesDatasetModalOpen, setIsMessagesDatasetModalOpen] = useState(false);
   const [isEmotionVectorModalOpen, setIsEmotionVectorModalOpen] = useState(false);
-  const [localEmotionVector, setLocalEmotionVector] = useState(defaultVector);
+  const [emotionVector, setEmotionVector] = useState(defaultVector);
   const [analyzeStatus, setAnalyzeStatus] = useState('');
-  const [messageSource, setMessageSource] = useState('write'); // 'write' or 'dataset'
-  const [selectedDatasetMessage, setSelectedDatasetMessage] = useState(''); // Store dataset message separately
 
-  const handleAnalyze = async (msg = message) => {
-    if (!msg.trim()) {
-      setAnalyzeStatus('Por favor, escribe un mensaje o selecciona uno del dataset.');
+  const handleAnalyze = async () => {
+    if (!message.trim()) {
+      setAnalyzeStatus('Por favor, escribe un mensaje.');
       return;
     }
     setAnalyzeStatus('Analizando mensaje...');
     try {
       const formData = new FormData();
-      formData.append('message', msg);
-      console.log('Enviando solicitud con mensaje:', msg);
+      formData.append('message', message);
+      console.log('Enviando solicitud con mensaje:', message);
       const response = await axios.post('http://localhost:8000/analyze-message', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log('Respuesta del backend:', response.data);
-      const newVector = response.data.vector;
-      setLocalEmotionVector(newVector);
-      setEmotionVector(newVector); // Update parent state
+      setEmotionVector(response.data.vector);
       setAnalyzeStatus('Análisis completado.');
-      setIsEmotionVectorModalOpen(true); // Open the modal only after analysis
+      setIsEmotionVectorModalOpen(true); // Open the new modal
     } catch (error) {
       console.error('Analyze error:', error.response || error);
       setAnalyzeStatus(`Error: ${error.response?.data?.detail || error.message}`);
-      setLocalEmotionVector(defaultVector);
-      setEmotionVector(defaultVector); // Reset parent state
+      setEmotionVector(defaultVector);
     }
   };
 
   const handleUpdateVector = async (updatedVector) => {
-    setLocalEmotionVector(updatedVector);
-    setEmotionVector(updatedVector); // Update parent state
+    setEmotionVector(updatedVector);
+    setIsEmotionVectorModalOpen(false); // Close the modal after updating
     setAnalyzeStatus('Vector emocional actualizado.');
   };
 
@@ -90,30 +84,19 @@ export default function PropagationModal({
     formData.append('max_steps', 4);
     formData.append('method', params.method);
     formData.append('thresholds', JSON.stringify(params.thresholds));
-    if (localEmotionVector && Object.values(localEmotionVector).some(val => val !== 0)) {
-      console.log('Sending custom_vector:', localEmotionVector);
-      formData.append('custom_vector', JSON.stringify(localEmotionVector));
+    if (emotionVector && Object.values(emotionVector).some(val => val !== 0)) {
+      console.log('Sending custom_vector:', emotionVector);
+      formData.append('custom_vector', JSON.stringify(emotionVector));
     }
     try {
       const response = await axios.post('http://localhost:8000/propagate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log('Respuesta de propagación:', response.data);
-      return { ...response, data: { ...response.data, custom_vector: localEmotionVector } };
+      return { ...response, data: { ...response.data, custom_vector: emotionVector } }; // Include custom_vector in response
     } catch (error) {
       console.error('Propagation error:', error.response || error);
       throw error;
-    }
-  };
-
-  // Reset message when switching to 'write'
-  const handleMessageSourceChange = (source) => {
-    setMessageSource(source);
-    if (source === 'write') {
-      setMessage(''); // Clear message when switching to write
-      setLocalEmotionVector(defaultVector);
-      setEmotionVector(defaultVector);
-      setAnalyzeStatus('');
     }
   };
 
@@ -136,59 +119,31 @@ export default function PropagationModal({
             </option>
           ))}
         </select>
-        <div className="message-source-container">
-          <label className="message-source-option">
-            <input
-              type="checkbox"
-              checked={messageSource === 'write'}
-              onChange={() => handleMessageSourceChange('write')}
-            /> Escribir Mensaje
-          </label>
-          <label className="message-source-option">
-            <input
-              type="checkbox"
-              checked={messageSource === 'dataset'}
-              onChange={() => handleMessageSourceChange('dataset')}
-            /> Elegir mensaje de Dataset
-          </label>
-        </div>
-        {messageSource === 'write' && (
-          <textarea
-            placeholder="Escribe el mensaje a propagar..."
-            value={message}
-            onChange={e => {
-              setMessage(e.target.value);
-              setLocalEmotionVector(defaultVector);
-              setEmotionVector(defaultVector);
-              setAnalyzeStatus('');
-            }}
-            className="modal-textarea"
-          />
-        )}
-        {messageSource === 'dataset' && (
-          <>
-            <button
-              onClick={() => setIsMessagesDatasetModalOpen(true)}
-              className="button dataset-button"
-            >
-              Seleccionar Mensaje del Dataset
-            </button>
-            {selectedDatasetMessage && (
-              <span className="modal-status">
-                Mensaje seleccionado: {selectedDatasetMessage}
-              </span>
-            )}
-          </>
-        )}
+        <button
+          onClick={() => setIsMessagesDatasetModalOpen(true)}
+          className="button dataset-button"
+        >
+          Seleccionar Dataset de Mensajes
+        </button>
+        <textarea
+          placeholder="Escribe el mensaje a propagar..."
+          value={message}
+          onChange={e => {
+            setMessage(e.target.value);
+            setEmotionVector(defaultVector);
+            setAnalyzeStatus('');
+          }}
+          className="modal-textarea"
+        />
         <div className="button-container">
           <button
-            onClick={() => handleAnalyze(messageSource === 'dataset' ? selectedDatasetMessage : message)}
-            disabled={!message.trim() && !selectedDatasetMessage.trim()}
-            className={(message.trim() || selectedDatasetMessage.trim()) ? 'button analyze-button' : 'button-disabled'}
+            onClick={handleAnalyze}
+            disabled={!message.trim()}
+            className={message.trim() ? 'button analyze-button' : 'button-disabled'}
           >
             Analizar Mensaje
           </button>
-          {localEmotionVector && Object.values(localEmotionVector).some(val => val !== 0) && (
+          {emotionVector && Object.values(emotionVector).some(val => val !== 0) && (
             <button
               onClick={() => setIsEmotionVectorModalOpen(true)}
               className="button modify-vector-button"
@@ -222,9 +177,9 @@ export default function PropagationModal({
           </button>
         </div>
         <button
-          onClick={() => handlePropagation({ selectedUser, message: messageSource === 'dataset' ? selectedDatasetMessage : message, method, thresholds, csvFile, xlsxFile, emotionVector: localEmotionVector })}
-          disabled={!selectedUser || (!message.trim() && !selectedDatasetMessage.trim()) || !csvFile || !xlsxFile}
-          className={selectedUser && (message.trim() || selectedDatasetMessage.trim()) && csvFile && xlsxFile ? 'button propagate-button' : 'button-disabled'}
+          onClick={() => handlePropagation({ selectedUser, message, method, thresholds, csvFile, xlsxFile, emotionVector })}
+          disabled={!selectedUser || !message.trim() || !csvFile || !xlsxFile}
+          className={selectedUser && message.trim() && csvFile && xlsxFile ? 'button propagate-button' : 'button-disabled'}
         >
           Propagar Mensaje
         </button>
@@ -248,13 +203,12 @@ export default function PropagationModal({
         <MessagesDatasetModal
           isOpen={isMessagesDatasetModalOpen}
           setIsOpen={setIsMessagesDatasetModalOpen}
-          setMessage={setSelectedDatasetMessage} // Update selectedDatasetMessage instead of message
-          onMessageSelect={() => {}}
+          setMessage={setMessage}
         />
         <EmotionVectorModal
           isOpen={isEmotionVectorModalOpen}
           setIsOpen={setIsEmotionVectorModalOpen}
-          vector={localEmotionVector}
+          vector={emotionVector}
           setVector={handleUpdateVector}
         />
       </div>
@@ -278,5 +232,4 @@ PropagationModal.propTypes = {
   setThresholds: PropTypes.func.isRequired,
   csvFile: PropTypes.any,
   xlsxFile: PropTypes.any,
-  setEmotionVector: PropTypes.func.isRequired,
 };
