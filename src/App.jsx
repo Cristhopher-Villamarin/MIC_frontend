@@ -23,6 +23,8 @@ import BaSIRPropagationResult from './components/BaSIRPropagationResult';
 import { readCsv, readXlsx, buildGraph, buildRealWorldGraph } from './utils/loadFiles';
 import { generateBarabasiAlbert } from './utils/BarabasiAlbert';
 import { generateHolmeKim } from './utils/HolmeKim';
+import BarabasiBehaviorGraph3D from './components/BarabasiBehaviorGraph3D';
+import HolmeKimBehaviorGraph3D from './components/HolmeKimBehaviorGraph3D';
 import axios from 'axios';
 import './App.css';
 import { calculateCentralityMetrics } from './utils/centrality';
@@ -107,101 +109,117 @@ export default function App() {
   ];
 
   // Manejador de selección de menú
-  const handleMenuSelect = (key) => {
-    console.log(`Opción seleccionada: ${key}`);
-    if (key === 'real-world') {
-      setViewMode('real-world');
-      if (!nodesCsvFile || !linksCsvFile) {
-        setRealWorldStatus('Sube los archivos CSV…');
-      }
-    } else if (key === 'real-world-rip') {
-      setViewMode('rip-dsn');
-      if (!nodesCsvFile || !linksCsvFile) {
-        setRealWorldStatus('Sube los archivos CSV…');
-      }
-    } else if (key === 'behavior-profiles') {
-      setViewMode('simulation');
-      setCsvFile(linksCsvFile);
-      if (!linksCsvFile) {
-        setStatus('Sube el archivo CSV de relaciones en "Redes del Mundo Real" primero…');
-      } else if (linksAll.length > 0) {
-        setStatus(`Red ${selectedNet}: ${graphData.nodes.length} nodos · ${graphData.links.length} enlaces`);
-      } else {
-        setStatus('CSV listo. Construyendo red básica…');
-      }
-    } else if (key === 'barabasi-albert') {
-      setViewMode('barabasi-albert');
-      if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
-        setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
-      } else {
-        setBaStatus('Ingrese el número de nodos y enlaces…');
-        setBaNodesWithCentrality([]);
-      }
-    } else if (key === 'barabasi-si') {
-      setViewMode('barabasi-si');
-      if (baGraphData.nodes.length > 0) {
-        setBaStatus(`Red Barabási-Albert (SIR): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
-      } else {
-        setBaStatus('Genere una red Barabási-Albert primero…');
-      }
-    } else if (key === 'holme-kim') {
-      setViewMode('holme-kim');
-      if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
-        setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
-      } else {
-        setHkStatus('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
-        setHkNodesWithCentrality([]);
-      }
-    } else if (key === 'holme-kim-si') {
-      setViewMode('holme-kim-si');
-      if (hkGraphData.nodes.length > 0) {
-        setHkStatus(`Red Holme-Kim (SIR): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
-      } else {
-        setHkStatus('Genere una red Holme-Kim primero…');
-      }
-    } else {
-      setViewMode('simulation');
-      setStatus('Sube el CSV y el XLSX…');
-      setCsvFile(null);
-      setXlsxFile(null);
-      setLinksAll([]);
-      setAttrsAll([]);
-      setNetworkList([]);
-      setSelectedNet('');
-      setGraphData({ nodes: [], links: [] });
+// Manejador de selección de menú
+const handleMenuSelect = (key) => {
+  console.log(`Opción seleccionada: ${key}`);
+  if (key === 'real-world') {
+    setViewMode('real-world');
+    if (!nodesCsvFile || !linksCsvFile) {
+      setRealWorldStatus('Sube los archivos CSV…');
     }
-    setSearchText('');
-    setHighlightId('');
-    setMessage('');
-    setSelectedUser('');
-    setPropagationStatus('');
-    setPropagationResult(null);
-    setHighlightedLinks([]);
-    setPropagationLog([]);
-    setRipDsnPropagationStatus('');
-    setRipDsnPropagationResult(null);
-    setRipDsnHighlightedLinks([]);
-    setRipDsnPropagationLog([]);
-    setBaSIRPropagationStatus('');
-    setBaSIRHighlightedLinks([]);
-    setBaSIRPropagationLog([]);
-    setHkSIRPropagationStatus('');
-    setHkSIRHighlightedLinks([]);
-    setHkSIRPropagationLog([]);
-    setIsNodeModalOpen(false);
-    setIsPropagationModalOpen(false);
-    setIsNodeStatesModalOpen(false);
-    setModalNode(null);
-    setMethod('ema'); // Resetear método a EMA por defecto
-    setThresholds({
-      "High-Credibility Informant": { forward: 0.8, modify: 0.2, ignore: 0.05, alpha: 0.3 },
-      "Emotionally-Driven Amplifier": { forward: 0.95, modify: 0.6, ignore: 0.1, alpha: 0.8 },
-      "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
-      "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
-    });
-    setEmotionVector(null); // Resetear vector emocional
-  };
-
+  } else if (key === 'real-world-rip') {
+    setViewMode('rip-dsn');
+    if (!nodesCsvFile || !linksCsvFile) {
+      setRealWorldStatus('Sube los archivos CSV…');
+    }
+  } else if (key === 'behavior-profiles') {
+    setViewMode('simulation');
+    setCsvFile(linksCsvFile);
+    if (!linksCsvFile) {
+      setStatus('Sube el archivo CSV de relaciones en "Redes del Mundo Real" primero…');
+    } else if (linksAll.length > 0) {
+      setStatus(`Red ${selectedNet}: ${graphData.nodes.length} nodos · ${graphData.links.length} enlaces`);
+    } else {
+      setStatus('CSV listo. Construyendo red básica…');
+    }
+  } else if (key === 'barabasi-albert') {
+    setViewMode('barabasi-albert');
+    if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
+      setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+    } else {
+      setBaStatus('Ingrese el número de nodos y enlaces…');
+      setBaNodesWithCentrality([]);
+    }
+  } else if (key === 'barabasi-si') {
+    setViewMode('barabasi-si');
+    if (baGraphData.nodes.length > 0) {
+      setBaStatus(`Red Barabási-Albert (SIR): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+    } else {
+      setBaStatus('Genere una red Barabási-Albert primero…');
+    }
+  } else if (key === 'holme-kim') {
+    setViewMode('holme-kim');
+    if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
+      setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+    } else {
+      setHkStatus('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
+      setHkNodesWithCentrality([]);
+    }
+  } else if (key === 'holme-kim-si') {
+    setViewMode('holme-kim-si');
+    if (hkGraphData.nodes.length > 0) {
+      setHkStatus(`Red Holme-Kim (SIR): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+    } else {
+      setHkStatus('Genere una red Holme-Kim primero…');
+    }
+  } else if (key === 'barabasi-behavior') {
+    setViewMode('barabasi-behavior');
+    if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
+      setBaStatus(`Red Barabási-Albert (Comportamiento): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+    } else {
+      setBaStatus('Genere una red Barabási-Albert primero…');
+      setBaNodesWithCentrality([]);
+    }
+  } else if (key === 'holme-kim-behavior') {
+    setViewMode('holme-kim-behavior');
+    if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
+      setHkStatus(`Red Holme-Kim (Comportamiento): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+    } else {
+      setHkStatus('Genere una red Holme-Kim primero…');
+      setHkNodesWithCentrality([]);
+    }
+  } else {
+    setViewMode('simulation');
+    setStatus('Sube el CSV y el XLSX…');
+    setCsvFile(null);
+    setXlsxFile(null);
+    setLinksAll([]);
+    setAttrsAll([]);
+    setNetworkList([]);
+    setSelectedNet('');
+    setGraphData({ nodes: [], links: [] });
+  }
+  setSearchText('');
+  setHighlightId('');
+  setMessage('');
+  setSelectedUser('');
+  setPropagationStatus('');
+  setPropagationResult(null);
+  setHighlightedLinks([]);
+  setPropagationLog([]);
+  setRipDsnPropagationStatus('');
+  setRipDsnPropagationResult(null);
+  setRipDsnHighlightedLinks([]);
+  setRipDsnPropagationLog([]);
+  setBaSIRPropagationStatus('');
+  setBaSIRHighlightedLinks([]);
+  setBaSIRPropagationLog([]);
+  setHkSIRPropagationStatus('');
+  setHkSIRHighlightedLinks([]);
+  setHkSIRPropagationLog([]);
+  setIsNodeModalOpen(false);
+  setIsPropagationModalOpen(false);
+  setIsNodeStatesModalOpen(false);
+  setModalNode(null);
+  setMethod('ema'); // Resetear método a EMA por defecto
+  setThresholds({
+    "High-Credibility Informant": { forward: 0.8, modify: 0.2, ignore: 0.05, alpha: 0.3 },
+    "Emotionally-Driven Amplifier": { forward: 0.95, modify: 0.6, ignore: 0.1, alpha: 0.8 },
+    "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
+    "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
+  });
+  setEmotionVector(null); // Resetear vector emocional
+};
   // Cargar CSV
   useEffect(() => {
     async function loadCsv() {
@@ -896,6 +914,33 @@ export default function App() {
                   onClose={handleCloseHkSIRPropagationResult}
                 />
               )}
+            </div>
+          </>
+        )}
+
+        {viewMode === 'barabasi-behavior' && (
+          <>
+            <div className="graph-container">
+              <BarabasiBehaviorGraph3D
+                data={baGraphData}
+                nodesWithCentrality={baNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'holme-kim-behavior' && (
+          <>
+            <div className="graph-container">
+              <HolmeKimBehaviorGraph3D
+                data={hkGraphData}
+                nodesWithCentrality={hkNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                onResetView={handleResetView}
+              />
             </div>
           </>
         )}
