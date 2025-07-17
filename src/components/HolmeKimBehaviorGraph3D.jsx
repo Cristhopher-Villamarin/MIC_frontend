@@ -19,7 +19,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
   const emotionColors = {
     fear: '#A100A1',
     anger: '#FF0000',
-    anticip: '#FF6200',
+    anticipation: '#FF6200',
     trust: '#00CED1',
     surprise: '#FF69B4',
     sadness: '#4682B4',
@@ -174,22 +174,22 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     return texture;
   }, [scheduleTextureCacheCleanup]);
 
-  // Obtener color del nodo (memoizado por performance)
+  // Obtener color del nodo (actualizado para usar emotional_vector_in y emotional_vector_out)
   const getNodeColor = useCallback((node) => {
     const emotions = [
-      ((node.in_fear || 0) + (node.out_fear || 0)) / 2,
-      ((node.in_anger || 0) + (node.out_anger || 0)) / 2,
-      ((node.in_anticip || 0) + (node.out_anticip || 0)) / 2,
-      ((node.in_trust || 0) + (node.out_trust || 0)) / 2,
-      ((node.in_surprise || 0) + (node.out_surprise || 0)) / 2,
-      ((node.in_sadness || 0) + (node.out_sadness || 0)) / 2,
-      ((node.in_disgust || 0) + (node.out_disgust || 0)) / 2,
-      ((node.in_joy || 0) + (node.out_joy || 0)) / 2,
+      ((node.emotional_vector_in?.fear || 0) + (node.emotional_vector_out?.fear || 0)) / 2,
+      ((node.emotional_vector_in?.anger || 0) + (node.emotional_vector_out?.anger || 0)) / 2,
+      ((node.emotional_vector_in?.anticipation || 0) + (node.emotional_vector_out?.anticipation || 0)) / 2,
+      ((node.emotional_vector_in?.trust || 0) + (node.emotional_vector_out?.trust || 0)) / 2,
+      ((node.emotional_vector_in?.surprise || 0) + (node.emotional_vector_out?.surprise || 0)) / 2,
+      ((node.emotional_vector_in?.sadness || 0) + (node.emotional_vector_out?.sadness || 0)) / 2,
+      ((node.emotional_vector_in?.disgust || 0) + (node.emotional_vector_out?.disgust || 0)) / 2,
+      ((node.emotional_vector_in?.joy || 0) + (node.emotional_vector_out?.joy || 0)) / 2,
     ];
     const emotionKeys = [
       'fear',
       'anger',
-      'anticip',
+      'anticipation',
       'trust',
       'surprise',
       'sadness',
@@ -273,7 +273,8 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       const { x = 0, y = 0, z = 0 } = node;
       const bounds = calculateGraphBounds(filteredData.nodes);
       const graphSize = Math.max(bounds.maxDistance, 10);
-      const distance = graphSize * 1.5;
+      const distance = Math.min(graphSize * 0.5, 50); // Cap distance to avoid moving too far
+      console.log('Camera moving to:', { x: x + distance, y: y + distance * 0.5, z }, 'target:', { x, y, z });
 
       fgRef.current.cameraPosition(
         { x: x + distance, y: y + distance * 0.5, z },
@@ -357,7 +358,8 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
     filteredData.nodes.forEach(node => {
       if (node.original_emotions) {
-        Object.assign(node, node.original_emotions);
+        node.emotional_vector_in = { ...node.original_emotions.emotional_vector_in };
+        node.emotional_vector_out = { ...node.original_emotions.emotional_vector_out };
         delete node.original_emotions;
       }
     });
@@ -390,22 +392,8 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
     filteredData.nodes.forEach(node => {
       node.original_emotions = {
-        in_fear: node.in_fear,
-        in_anger: node.in_anger,
-        in_anticip: node.in_anticip,
-        in_trust: node.in_trust,
-        in_surprise: node.in_surprise,
-        in_sadness: node.in_sadness,
-        in_disgust: node.in_disgust,
-        in_joy: node.in_joy,
-        out_fear: node.out_fear,
-        out_anger: node.out_anger,
-        out_anticip: node.out_anticip,
-        out_trust: node.out_trust,
-        out_surprise: node.out_surprise,
-        out_sadness: node.out_sadness,
-        out_disgust: node.out_disgust,
-        out_joy: node.out_joy,
+        emotional_vector_in: { ...node.emotional_vector_in },
+        emotional_vector_out: { ...node.emotional_vector_out },
       };
     });
 
@@ -449,23 +437,30 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
           const targetNode = filteredData.nodes.find(n => String(n.id) === targetId);
           if (targetNode && highlight.vector) {
             const emotionKeys = [
-              'in_subjectivity',
-              'in_polarity',
-              'in_fear',
-              'in_anger',
-              'in_anticip',
-              'in_trust',
-              'in_surprise',
-              'in_sadness',
-              'in_disgust',
-              'in_joy',
+              'subjectivity',
+              'polarity',
+              'fear',
+              'anger',
+              'anticipation',
+              'trust',
+              'surprise',
+              'sadness',
+              'disgust',
+              'joy',
             ];
-            emotionKeys.forEach((key, idx) => {
-              if (highlight.vector[idx] !== undefined) {
-                targetNode[key] = highlight.vector[idx];
-              }
-            });
-            console.log(`Actualizado estado emocional del nodo ${targetId} después de animación:`, targetNode);
+            targetNode.emotional_vector_in = {
+              subjectivity: highlight.vector[0] !== undefined ? highlight.vector[0] : targetNode.emotional_vector_in.subjectivity,
+              polarity: highlight.vector[1] !== undefined ? highlight.vector[1] : targetNode.emotional_vector_in.polarity,
+              fear: highlight.vector[2] !== undefined ? highlight.vector[2] : targetNode.emotional_vector_in.fear,
+              anger: highlight.vector[3] !== undefined ? highlight.vector[3] : targetNode.emotional_vector_in.anger,
+              anticipation: highlight.vector[4] !== undefined ? highlight.vector[4] : targetNode.emotional_vector_in.anticipation,
+              trust: highlight.vector[5] !== undefined ? highlight.vector[5] : targetNode.emotional_vector_in.trust,
+              surprise: highlight.vector[6] !== undefined ? highlight.vector[6] : targetNode.emotional_vector_in.surprise,
+              sadness: highlight.vector[7] !== undefined ? highlight.vector[7] : targetNode.emotional_vector_in.sadness,
+              disgust: highlight.vector[8] !== undefined ? highlight.vector[8] : targetNode.emotional_vector_in.disgust,
+              joy: highlight.vector[9] !== undefined ? highlight.vector[9] : targetNode.emotional_vector_in.joy,
+            };
+            console.log(`Actualizado estado emocional del nodo ${targetId} después de animación:`, targetNode.emotional_vector_in);
           }
 
           throttledRefresh();
@@ -498,8 +493,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     return () => {
       cleanupAnimation();
     };
-  }, [highlightedLinks, filteredData.nodes, filteredData.links, isExtensivePropagation, isLargePropagation,
-      cleanupAnimation, getAnimationConfig, throttledRefresh]);
+  }, [highlightedLinks, filteredData.nodes, filteredData.links, isExtensivePropagation, isLargePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh]);
 
   // Cleanup al desmontar
   useEffect(() => {
@@ -522,9 +516,10 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
   // Manejar clic en nodo
   const handleNodeClick = (node) => {
     const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
+    console.log('Node clicked:', nodeWithCentrality);
     setModalNode(nodeWithCentrality);
     setIsNodeModalOpen(true);
-    onNodeInfo(node);
+    if (onNodeInfo) onNodeInfo(node); // Ensure onNodeInfo is called only if defined
   };
 
   // Configurar fuerzas para fijar nodos en sus posiciones
@@ -623,7 +618,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
         isOpen={isNodeModalOpen}
         setIsOpen={setIsNodeModalOpen}
         modalNode={modalNode}
-        propagationLog={propagationLog} // Pass propagationLog here
+        propagationLog={propagationLog}
       />
     </>
   );
