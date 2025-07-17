@@ -310,7 +310,7 @@ const handleMenuSelect = (key) => {
 
 
 
-  const handleGenerateVectors = async (numNodes) => {
+const handleGenerateVectors = async (numNodes) => {
   if (numNodes === 0) {
     setBaStatus('No hay nodos en la red para generar vectores.');
     setHkStatus('No hay nodos en la red para generar vectores.');
@@ -327,11 +327,59 @@ const handleMenuSelect = (key) => {
     const shuffledVectors = [...vectors].sort(() => Math.random() - 0.5);
     const updatedBaNodes = baGraphData.nodes.map((node, index) => ({
       ...node,
-      ...shuffledVectors[index % shuffledVectors.length],
+      emotional_vector_in: {
+        subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
+        polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
+        fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
+        anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
+        anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
+        trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
+        surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
+        sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
+        disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
+        joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
+      },
+      emotional_vector_out: {
+        subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
+        polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
+        fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
+        anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
+        anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
+        trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
+        surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
+        sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
+        disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
+        joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
+      },
+      cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
     }));
     const updatedHkNodes = hkGraphData.nodes.map((node, index) => ({
       ...node,
-      ...shuffledVectors[index % shuffledVectors.length],
+      emotional_vector_in: {
+        subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
+        polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
+        fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
+        anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
+        anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
+        trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
+        surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
+        sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
+        disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
+        joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
+      },
+      emotional_vector_out: {
+        subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
+        polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
+        fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
+        anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
+        anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
+        trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
+        surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
+        sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
+        disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
+        joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
+      },
+      cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
     }));
 
     setBaGraphData({ ...baGraphData, nodes: updatedBaNodes });
@@ -352,7 +400,6 @@ const handleMenuSelect = (key) => {
     setHkStatus(`Error: ${error.response?.data?.detail || error.message}`);
   }
 };
-
   // Construir grafo para mundo real
   useEffect(() => {
     if (!realWorldSelectedNet || realWorldNodesAll.length === 0 || realWorldLinksAll.length === 0) {
@@ -623,6 +670,7 @@ const handleMenuSelect = (key) => {
   };
 
 
+
 const handleVectorPropagation = async ({ selectedUser, message, method, thresholds, emotionVector }) => {
   if (!selectedUser || !message.trim() || !nodeVectors.length) {
     setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y genera vectores.');
@@ -653,20 +701,30 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
     const linksCsvFile = new File([linksCsvBlob], 'links.csv', { type: 'text/csv' });
 
     // Crear un XLSX temporal con los estados de los nodos
-    const statesXlsxContent = currentGraphData.nodes.map(node => {
-      const vector = nodeVectors.find(v => v.id === node.id) || node;
-      return {
-        user_name: node.id,
-        cluster: vector.cluster || 0,
-        ...Object.fromEntries(
-          ['subjectivity', 'polarity', 'fear', 'anger', 'anticip', 'trust', 'surprise', 'sadness', 'disgust', 'joy']
-            .flatMap(key => [
-              [`in_${key}`, vector[`in_${key}`] || 0],
-              [`out_${key}`, vector[`out_${key}`] || 0]
-            ])
-        ),
-      };
-    });
+    const statesXlsxContent = currentGraphData.nodes.map(node => ({
+      user_name: node.id,
+      cluster: node.cluster || 0,
+      in_subjectivity: node.emotional_vector_in.subjectivity || 0,
+      in_polarity: node.emotional_vector_in.polarity || 0,
+      in_fear: node.emotional_vector_in.fear || 0,
+      in_anger: node.emotional_vector_in.anger || 0,
+      in_anticipation: node.emotional_vector_in.anticipation || 0,
+      in_trust: node.emotional_vector_in.trust || 0,
+      in_surprise: node.emotional_vector_in.surprise || 0,
+      in_sadness: node.emotional_vector_in.sadness || 0,
+      in_disgust: node.emotional_vector_in.disgust || 0,
+      in_joy: node.emotional_vector_in.joy || 0,
+      out_subjectivity: node.emotional_vector_out.subjectivity || 0,
+      out_polarity: node.emotional_vector_out.polarity || 0,
+      out_fear: node.emotional_vector_out.fear || 0,
+      out_anger: node.emotional_vector_out.anger || 0,
+      out_anticipation: node.emotional_vector_out.anticipation || 0,
+      out_trust: node.emotional_vector_out.trust || 0,
+      out_surprise: node.emotional_vector_out.surprise || 0,
+      out_sadness: node.emotional_vector_out.sadness || 0,
+      out_disgust: node.emotional_vector_out.disgust || 0,
+      out_joy: node.emotional_vector_out.joy || 0,
+    }));
     const ws = XLSX.utils.json_to_sheet(statesXlsxContent);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'States');
@@ -685,6 +743,50 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
     const propagationLog = response.data.log || [];
     console.log('Propagation log from backend:', propagationLog);
     setPropagationLog(propagationLog);
+
+    // Actualizar nodos con los últimos estados emocionales desde el propagationLog
+    const updatedNodes = currentGraphData.nodes.map(node => {
+      const lastEntry = propagationLog
+        .filter(entry => entry.receiver === node.id)
+        .sort((a, b) => b.t - a.t)[0];
+      if (lastEntry) {
+        return {
+          ...node,
+          emotional_vector_in: {
+            subjectivity: lastEntry.state_in_after[0] || node.emotional_vector_in.subjectivity,
+            polarity: lastEntry.state_in_after[1] || node.emotional_vector_in.polarity,
+            fear: lastEntry.state_in_after[2] || node.emotional_vector_in.fear,
+            anger: lastEntry.state_in_after[3] || node.emotional_vector_in.anger,
+            anticipation: lastEntry.state_in_after[4] || node.emotional_vector_in.anticipation,
+            trust: lastEntry.state_in_after[5] || node.emotional_vector_in.trust,
+            surprise: lastEntry.state_in_after[6] || node.emotional_vector_in.surprise,
+            sadness: lastEntry.state_in_after[7] || node.emotional_vector_in.sadness,
+            disgust: lastEntry.state_in_after[8] || node.emotional_vector_in.disgust,
+            joy: lastEntry.state_in_after[9] || node.emotional_vector_in.joy,
+          },
+          emotional_vector_out: {
+            subjectivity: lastEntry.state_out_after[0] || node.emotional_vector_out.subjectivity,
+            polarity: lastEntry.state_out_after[1] || node.emotional_vector_out.polarity,
+            fear: lastEntry.state_out_after[2] || node.emotional_vector_out.fear,
+            anger: lastEntry.state_out_after[3] || node.emotional_vector_out.anger,
+            anticipation: lastEntry.state_out_after[4] || node.emotional_vector_out.anticipation,
+            trust: lastEntry.state_out_after[5] || node.emotional_vector_out.trust,
+            surprise: lastEntry.state_out_after[6] || node.emotional_vector_out.surprise,
+            sadness: lastEntry.state_out_after[7] || node.emotional_vector_out.sadness,
+            disgust: lastEntry.state_out_after[8] || node.emotional_vector_out.disgust,
+            joy: lastEntry.state_out_after[9] || node.emotional_vector_out.joy,
+          },
+        };
+      }
+      return node;
+    });
+
+    if (viewMode === 'barabasi-behavior') {
+      setBaGraphData({ ...baGraphData, nodes: updatedNodes });
+    } else {
+      setHkGraphData({ ...hkGraphData, nodes: updatedNodes });
+    }
+
     setEmotionVector(emotionVector);
     const linksToHighlight = propagationLog
       .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
@@ -694,7 +796,7 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
         target: String(entry.receiver),
         timeStep: entry.t,
         animationDelay: index * 4000,
-        vector: entry.state_in_after,
+        vector: entry.state_in_after, // Para actualizar el color del nodo receptor
       }));
     setHighlightedLinks(linksToHighlight);
     setHighlightId(selectedUser);
@@ -706,6 +808,14 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
     setPropagationResult(null);
   }
 };
+
+// Función auxiliar para convertir string a ArrayBuffer
+function s2ab(s) {
+  const buf = new ArrayBuffer(s.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+  return buf;
+}
 
 // Función auxiliar para convertir string a ArrayBuffer
 function s2ab(s) {
@@ -1066,186 +1176,184 @@ function s2ab(s) {
         )}
 
         {viewMode === 'barabasi-behavior' && (
-      <>
-          <VectorsInput
-            onGenerateVectors={handleGenerateVectors}
-            numNodes={baGraphData.nodes.length}
-          />
-          <div className="propagation-button-container">
-            <button
-              onClick={() => setIsPropagationModalOpen(true)}
-              className="button"
-              disabled={!baGraphData.nodes.length || !nodeVectors.length}
-            >
-              Iniciar Propagación
-            </button>
-          </div>
-          <div className="nodes-button-container">
-            <button
-              onClick={() => setIsNodeStatesModalOpen(true)}
-              className={propagationLog.length ? 'button' : 'button-disabled'}
-              disabled={!propagationLog.length}
-            >
-              Ver Estados de Nodos
-            </button>
-          </div>
-          <div className="legend-container">
-            <h4 className="legend-title">Leyenda de Colores</h4>
-            <ul className="legend-list">
-              <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
-              <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
-              <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
-              <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
-              <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
-              <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
-              <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
-              <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
-            </ul>
-          </div>
-          <PropagationModal
-            isOpen={isPropagationModalOpen}
-            setIsOpen={setIsPropagationModalOpen}
-            selectedUser={selectedUser}
-            setSelectedUser={setSelectedUser}
-            message={message}
-            setMessage={setMessage}
-            nodes={baGraphData.nodes}
-            handlePropagation={handleVectorPropagation}
-            propagationStatus={propagationStatus}
-            method={method}
-            setMethod={setMethod}
-            thresholds={thresholds}
-            setThresholds={setThresholds}
-            csvFile={null}
-            xlsxFile={null}
-            setEmotionVector={setEmotionVector}
-          />
-          <NodeModal
-            isOpen={isNodeModalOpen}
-            setIsOpen={setIsNodeModalOpen}
-            modalNode={modalNode}
-            propagationLog={propagationLog}
-          />
-          <NodeStatesModal
-            isOpen={isNodeStatesModalOpen}
-            setIsOpen={setIsNodeStatesModalOpen}
-            involvedNodes={getInvolvedNodes()}
-            propagationLog={propagationLog}
-          />
-          <PropagationResult
-            propagationLog={propagationLog}
-            selectedUser={selectedUser}
-            onClose={() => {
-              setPropagationResult(null);
-              setPropagationLog([]);
-              setHighlightedLinks([]);
-              setEmotionVector(null);
-            }}
-            emotionVector={emotionVector}
-          />
-          <div className="graph-container">
-            <BarabasiBehaviorGraph3D
-              data={baGraphData}
-              nodesWithCentrality={baNodesWithCentrality}
-              onNodeInfo={handleNodeClick}
-              highlightId={highlightId}
-              highlightedLinks={highlightedLinks}
-              onResetView={handleResetView}
-              propagationLog={propagationLog} // Add propagationLog here
-            />
-          </div>
-        </>
+    <>
+    <VectorsInput
+      onGenerateVectors={handleGenerateVectors}
+      numNodes={baGraphData.nodes.length}
+    />
+    <div className="propagation-button-container">
+      <button
+        onClick={() => setIsPropagationModalOpen(true)}
+        className="button"
+        disabled={!baGraphData.nodes.length || !nodeVectors.length}
+      >
+        Iniciar Propagación
+      </button>
+    </div>
+    <div className="nodes-button-container">
+      <button
+        onClick={() => setIsNodeStatesModalOpen(true)}
+        className={propagationLog.length ? 'button' : 'button-disabled'}
+        disabled={!propagationLog.length}
+      >
+        Ver Estados de Nodos
+      </button>
+    </div>
+    <div className="legend-container">
+      <h4 className="legend-title">Leyenda de Colores</h4>
+      <ul className="legend-list">
+        <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
+        <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
+        <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
+        <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
+        <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
+        <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
+        <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
+        <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
+      </ul>
+    </div>
+    <PropagationModal
+      isOpen={isPropagationModalOpen}
+      setIsOpen={setIsPropagationModalOpen}
+      selectedUser={selectedUser}
+      setSelectedUser={setSelectedUser}
+      message={message}
+      setMessage={setMessage}
+      nodes={baGraphData.nodes}
+      handlePropagation={handleVectorPropagation} // Usar la nueva función
+      propagationStatus={propagationStatus}
+      method={method}
+      setMethod={setMethod}
+      thresholds={thresholds}
+      setThresholds={setThresholds}
+      csvFile={null}
+      xlsxFile={null}
+      setEmotionVector={setEmotionVector}
+    />
+    <NodeModal
+      isOpen={isNodeModalOpen}
+      setIsOpen={setIsNodeModalOpen}
+      modalNode={modalNode}
+      propagationLog={propagationLog}
+    />
+    <NodeStatesModal
+      isOpen={isNodeStatesModalOpen}
+      setIsOpen={setIsNodeStatesModalOpen}
+      involvedNodes={getInvolvedNodes()}
+      propagationLog={propagationLog}
+    />
+    <PropagationResult
+      propagationLog={propagationLog}
+      selectedUser={selectedUser}
+      onClose={() => {
+        setPropagationResult(null);
+        setPropagationLog([]);
+        setHighlightedLinks([]);
+        setEmotionVector(null);
+      }}
+      emotionVector={emotionVector}
+    />
+    <div className="graph-container">
+      <BarabasiBehaviorGraph3D
+        data={baGraphData}
+        nodesWithCentrality={baNodesWithCentrality}
+        onNodeInfo={handleNodeClick}
+        highlightId={highlightId}
+        highlightedLinks={highlightedLinks}
+        onResetView={handleResetView}
+      />
+    </div>
+  </>
         )}
         {viewMode === 'holme-kim-behavior' && (
-          <>
-          <VectorsInput
-            onGenerateVectors={handleGenerateVectors}
-            numNodes={hkGraphData.nodes.length}
-          />
-          <div className="propagation-button-container">
-            <button
-              onClick={() => setIsPropagationModalOpen(true)}
-              className="button"
-              disabled={!hkGraphData.nodes.length || !nodeVectors.length}
-            >
-              Iniciar Propagación
-            </button>
-          </div>
-          <div className="nodes-button-container">
-            <button
-              onClick={() => setIsNodeStatesModalOpen(true)}
-              className={propagationLog.length ? 'button' : 'button-disabled'}
-              disabled={!propagationLog.length}
-            >
-              Ver Estados de Nodos
-            </button>
-          </div>
-          <div className="legend-container">
-            <h4 className="legend-title">Leyenda de Colores</h4>
-            <ul className="legend-list">
-              <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
-              <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
-              <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
-              <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
-              <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
-              <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
-              <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
-              <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
-            </ul>
-          </div>
-          <PropagationModal
-            isOpen={isPropagationModalOpen}
-            setIsOpen={setIsPropagationModalOpen}
-            selectedUser={selectedUser}
-            setSelectedUser={setSelectedUser}
-            message={message}
-            setMessage={setMessage}
-            nodes={hkGraphData.nodes}
-            handlePropagation={handleVectorPropagation}
-            propagationStatus={propagationStatus}
-            method={method}
-            setMethod={setMethod}
-            thresholds={thresholds}
-            setThresholds={setThresholds}
-            csvFile={null}
-            xlsxFile={null}
-            setEmotionVector={setEmotionVector}
-          />
-          <NodeModal
-            isOpen={isNodeModalOpen}
-            setIsOpen={setIsNodeModalOpen}
-            modalNode={modalNode}
-            propagationLog={propagationLog}
-          />
-          <NodeStatesModal
-            isOpen={isNodeStatesModalOpen}
-            setIsOpen={setIsNodeStatesModalOpen}
-            involvedNodes={getInvolvedNodes()}
-            propagationLog={propagationLog}
-          />
-          <PropagationResult
-            propagationLog={propagationLog}
-            selectedUser={selectedUser}
-            onClose={() => {
-              setPropagationResult(null);
-              setPropagationLog([]);
-              setHighlightedLinks([]);
-              setEmotionVector(null);
-            }}
-            emotionVector={emotionVector}
-          />
-          <div className="graph-container">
-            <HolmeKimBehaviorGraph3D
-              data={hkGraphData}
-              nodesWithCentrality={hkNodesWithCentrality}
-              onNodeInfo={handleNodeClick}
-              highlightId={highlightId}
-              highlightedLinks={highlightedLinks}
-              onResetView={handleResetView}
-              propagationLog={propagationLog} // Add propagationLog here
-            />
-          </div>
-        </>
+         <>
+    <VectorsInput
+      onGenerateVectors={handleGenerateVectors}
+      numNodes={baGraphData.nodes.length}
+    />
+    <div className="propagation-button-container">
+      <button
+        onClick={() => setIsPropagationModalOpen(true)}
+        className="button"
+        disabled={!baGraphData.nodes.length || !nodeVectors.length}
+      >
+        Iniciar Propagación
+      </button>
+    </div>
+    <div className="nodes-button-container">
+      <button
+        onClick={() => setIsNodeStatesModalOpen(true)}
+        className={propagationLog.length ? 'button' : 'button-disabled'}
+        disabled={!propagationLog.length}
+      >
+        Ver Estados de Nodos
+      </button>
+    </div>
+    <div className="legend-container">
+      <h4 className="legend-title">Leyenda de Colores</h4>
+      <ul className="legend-list">
+        <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
+        <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
+        <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
+        <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
+        <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
+        <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
+        <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
+        <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
+      </ul>
+    </div>
+    <PropagationModal
+      isOpen={isPropagationModalOpen}
+      setIsOpen={setIsPropagationModalOpen}
+      selectedUser={selectedUser}
+      setSelectedUser={setSelectedUser}
+      message={message}
+      setMessage={setMessage}
+      nodes={baGraphData.nodes}
+      handlePropagation={handleVectorPropagation} // Usar la nueva función
+      propagationStatus={propagationStatus}
+      method={method}
+      setMethod={setMethod}
+      thresholds={thresholds}
+      setThresholds={setThresholds}
+      csvFile={null}
+      xlsxFile={null}
+      setEmotionVector={setEmotionVector}
+    />
+    <NodeModal
+      isOpen={isNodeModalOpen}
+      setIsOpen={setIsNodeModalOpen}
+      modalNode={modalNode}
+      propagationLog={propagationLog}
+    />
+    <NodeStatesModal
+      isOpen={isNodeStatesModalOpen}
+      setIsOpen={setIsNodeStatesModalOpen}
+      involvedNodes={getInvolvedNodes()}
+      propagationLog={propagationLog}
+    />
+    <PropagationResult
+      propagationLog={propagationLog}
+      selectedUser={selectedUser}
+      onClose={() => {
+        setPropagationResult(null);
+        setPropagationLog([]);
+        setHighlightedLinks([]);
+        setEmotionVector(null);
+      }}
+      emotionVector={emotionVector}
+    />
+    <div className="graph-container">
+      <HolmeKimBehaviorGraph3D
+        data={hkGraphData}
+        nodesWithCentrality={hkNodesWithCentrality}
+        onNodeInfo={handleNodeClick}
+        highlightId={highlightId}
+        highlightedLinks={highlightedLinks}
+        onResetView={handleResetView}
+      />
+    </div>
+  </>
         )}
         {viewMode === 'real-world' && (
           <>
