@@ -23,6 +23,7 @@ export default function PropagationModal({
   csvFile,
   xlsxFile,
   setEmotionVector,
+  isBehaviorMode, // New prop to indicate behavior mode
 }) {
   const defaultVector = {
     subjectivity: 0,
@@ -78,35 +79,6 @@ export default function PropagationModal({
     setAnalyzeStatus('Vector emocional actualizado.');
   };
 
-  const handlePropagationWithVector = async (params) => {
-    if (!params.csvFile || !params.xlsxFile) {
-      throw new Error('Archivos CSV o XLSX no están disponibles.');
-    }
-    const formData = new FormData();
-    formData.append('seed_user', params.selectedUser);
-    formData.append('message', params.message);
-    formData.append('csv_file', params.csvFile);
-    formData.append('xlsx_file', params.xlsxFile);
-    formData.append('max_steps', 4);
-    formData.append('method', params.method);
-    formData.append('thresholds', JSON.stringify(params.thresholds));
-    if (localEmotionVector && Object.values(localEmotionVector).some(val => val !== 0)) {
-      console.log('Sending custom_vector:', localEmotionVector);
-      formData.append('custom_vector', JSON.stringify(localEmotionVector));
-    }
-    try {
-      const response = await axios.post('http://localhost:8000/propagate', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      console.log('Respuesta de propagación:', response.data);
-      return { ...response, data: { ...response.data, custom_vector: localEmotionVector } };
-    } catch (error) {
-      console.error('Propagation error:', error.response || error);
-      throw error;
-    }
-  };
-
-  // Reset message when switching to 'write'
   const handleMessageSourceChange = (source) => {
     setMessageSource(source);
     if (source === 'write') {
@@ -222,9 +194,17 @@ export default function PropagationModal({
           </button>
         </div>
         <button
-          onClick={() => handlePropagation({ selectedUser, message: messageSource === 'dataset' ? selectedDatasetMessage : message, method, thresholds, csvFile, xlsxFile, emotionVector: localEmotionVector })}
-          disabled={!selectedUser || (!message.trim() && !selectedDatasetMessage.trim()) || !csvFile || !xlsxFile}
-          className={selectedUser && (message.trim() || selectedDatasetMessage.trim()) && csvFile && xlsxFile ? 'button propagate-button' : 'button-disabled'}
+          onClick={() => handlePropagation({
+            selectedUser,
+            message: messageSource === 'dataset' ? selectedDatasetMessage : message,
+            method,
+            thresholds,
+            csvFile,
+            xlsxFile,
+            emotionVector: localEmotionVector,
+          })}
+          disabled={!selectedUser || (!message.trim() && !selectedDatasetMessage.trim()) || (isBehaviorMode ? false : (!csvFile || !xlsxFile))}
+          className={selectedUser && (message.trim() || selectedDatasetMessage.trim()) && (isBehaviorMode || (csvFile && xlsxFile)) ? 'button propagate-button' : 'button-disabled'}
         >
           Propagar Mensaje
         </button>
@@ -248,7 +228,7 @@ export default function PropagationModal({
         <MessagesDatasetModal
           isOpen={isMessagesDatasetModalOpen}
           setIsOpen={setIsMessagesDatasetModalOpen}
-          setMessage={setSelectedDatasetMessage} // Update selectedDatasetMessage instead of message
+          setMessage={setSelectedDatasetMessage}
           onMessageSelect={() => {}}
         />
         <EmotionVectorModal
@@ -279,4 +259,9 @@ PropagationModal.propTypes = {
   csvFile: PropTypes.any,
   xlsxFile: PropTypes.any,
   setEmotionVector: PropTypes.func.isRequired,
+  isBehaviorMode: PropTypes.bool, // New prop
+};
+
+PropagationModal.defaultProps = {
+  isBehaviorMode: false,
 };

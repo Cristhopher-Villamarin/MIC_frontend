@@ -34,7 +34,7 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
 export default function App() {
-  // Estados existentes
+  // State declarations (unchanged from original)
   const [csvFile, setCsvFile] = useState(null);
   const [xlsxFile, setXlsxFile] = useState(null);
   const [linksAll, setLinksAll] = useState([]);
@@ -71,132 +71,118 @@ export default function App() {
   const [isNodeStatesModalOpen, setIsNodeStatesModalOpen] = useState(false);
   const [nodesWithCentrality, setNodesWithCentrality] = useState([]);
   const [realWorldNodesWithCentrality, setRealWorldNodesWithCentrality] = useState([]);
-  // Estados para Barabási-Albert
   const [baGraphData, setBaGraphData] = useState({ nodes: [], links: [] });
   const [baStatus, setBaStatus] = useState('Ingrese el número de nodos y enlaces…');
   const [baNodesWithCentrality, setBaNodesWithCentrality] = useState([]);
-  // Estados para Barabási-SIR
   const [baSIRBeta, setBaSIRBeta] = useState(0.3);
   const [baSIRGamma, setBaSIRGamma] = useState(0.1);
   const [baSIRHighlightedLinks, setBaSIRHighlightedLinks] = useState([]);
   const [baSIRPropagationLog, setBaSIRPropagationLog] = useState([]);
   const [baSIRPropagationStatus, setBaSIRPropagationStatus] = useState('');
   const [showBaSIRPropagationResult, setShowBaSIRPropagationResult] = useState(false);
-  // Estados para Holme-Kim
   const [hkGraphData, setHkGraphData] = useState({ nodes: [], links: [] });
   const [hkStatus, setHkStatus] = useState('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
   const [hkNodesWithCentrality, setHkNodesWithCentrality] = useState([]);
-  // Estados para Holme-Kim SIR
   const [hkSIRBeta, setHkSIRBeta] = useState(0.3);
   const [hkSIRGamma, setHkSIRGamma] = useState(0.1);
   const [hkSIRHighlightedLinks, setHkSIRHighlightedLinks] = useState([]);
   const [hkSIRPropagationLog, setHkSIRPropagationLog] = useState([]);
   const [hkSIRPropagationStatus, setHkSIRPropagationStatus] = useState('');
   const [showHkSIRPropagationResult, setShowHkSIRPropagationResult] = useState(false);
-  // Estado para el método de propagación
-  const [method, setMethod] = useState('ema'); // Por defecto EMA
-  // Estado para los umbrales
+  const [method, setMethod] = useState('ema');
   const [thresholds, setThresholds] = useState({
     "High-Credibility Informant": { forward: 0.8, modify: 0.2, ignore: 0.05, alpha: 0.3 },
     "Emotionally-Driven Amplifier": { forward: 0.95, modify: 0.6, ignore: 0.1, alpha: 0.8 },
     "Mobilisation-Oriented Catalyst": { forward: 0.6, modify: 0.7, ignore: 0.3, alpha: 0.7 },
     "Emotionally Exposed Participant": { forward: 0.3, modify: 0.4, ignore: 0.7, alpha: 0.6 },
   });
-  // Estado para el vector emocional
   const [emotionVector, setEmotionVector] = useState(null);
-
-
-  //Estado para vectores generados 
   const [nodeVectors, setNodeVectors] = useState([]);
 
-
-  // Claves de emociones
   const emotionKeys = [
     'subjectivity', 'polarity', 'fear', 'anger', 'anticipation',
     'trust', 'surprise', 'sadness', 'disgust', 'joy'
   ];
 
-  // Manejador de selección de menú
-// Manejador de selección de menú
-const handleMenuSelect = (key) => {
-  console.log(`Opción seleccionada: ${key}`);
-  if (key === 'real-world') {
-    setViewMode('real-world');
-    if (!nodesCsvFile || !linksCsvFile) {
-      setRealWorldStatus('Sube los archivos CSV…');
-    }
-  } else if (key === 'real-world-rip') {
-    setViewMode('rip-dsn');
-    if (!nodesCsvFile || !linksCsvFile) {
-      setRealWorldStatus('Sube los archivos CSV…');
-    }
-  } else if (key === 'behavior-profiles') {
-    setViewMode('simulation');
-    setCsvFile(linksCsvFile);
-    if (!linksCsvFile) {
-      setStatus('Sube el archivo CSV de relaciones en "Redes del Mundo Real" primero…');
-    } else if (linksAll.length > 0) {
-      setStatus(`Red ${selectedNet}: ${graphData.nodes.length} nodos · ${graphData.links.length} enlaces`);
+  const handleMenuSelect = (key) => {
+    console.log(`Opción seleccionada: ${key}`);
+    if (key === 'real-world') {
+      setViewMode('real-world');
+      if (!nodesCsvFile || !linksCsvFile) {
+        setRealWorldStatus('Sube los archivos CSV…');
+      }
+    } else if (key === 'real-world-rip') {
+      setViewMode('rip-dsn');
+      if (!nodesCsvFile || !linksCsvFile) {
+        setRealWorldStatus('Sube los archivos CSV…');
+      }
+    } else if (key === 'behavior-profiles') {
+      setViewMode('simulation');
+      setCsvFile(linksCsvFile);
+      if (!linksCsvFile) {
+        setStatus('Sube el archivo CSV de relaciones en "Redes del Mundo Real" primero…');
+      } else if (linksAll.length > 0) {
+        setStatus(`Red ${selectedNet}: ${graphData.nodes.length} nodos · ${graphData.links.length} enlaces`);
+      } else {
+        setStatus('CSV listo. Construyendo red básica…');
+      }
+    } else if (key === 'barabasi-albert') {
+      setViewMode('barabasi-albert');
+      if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
+        setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+      } else {
+        setBaStatus('Ingrese el número de nodos y enlaces…');
+        setBaNodesWithCentrality([]);
+      }
+    } else if (key === 'barabasi-si') {
+      setViewMode('barabasi-si');
+      if (baGraphData.nodes.length > 0) {
+        setBaStatus(`Red Barabási-Albert (SIR): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+      } else {
+        setBaStatus('Genere una red Barabási-Albert primero…');
+      }
+    } else if (key === 'holme-kim') {
+      setViewMode('holme-kim');
+      if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
+        setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+      } else {
+        setHkStatus('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
+        setHkNodesWithCentrality([]);
+      }
+    } else if (key === 'holme-kim-si') {
+      setViewMode('holme-kim-si');
+      if (hkGraphData.nodes.length > 0) {
+        setHkStatus(`Red Holme-Kim (SIR): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+      } else {
+        setHkStatus('Genere una red Holme-Kim primero…');
+      }
+    } else if (key === 'barabasi-behavior') {
+      setViewMode('barabasi-behavior');
+      if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
+        setBaStatus(`Red Barabási-Albert (Comportamiento): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
+      } else {
+        setBaStatus('Genere una red Barabási-Albert primero…');
+        setBaNodesWithCentrality([]);
+      }
+    } else if (key === 'holme-kim-behavior') {
+      setViewMode('holme-kim-behavior');
+      if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
+        setHkStatus(`Red Holme-Kim (Comportamiento): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
+      } else {
+        setHkStatus('Genere una red Holme-Kim primero…');
+        setHkNodesWithCentrality([]);
+      }
     } else {
-      setStatus('CSV listo. Construyendo red básica…');
+      setViewMode('simulation');
+      setStatus('Sube el CSV y el XLSX…');
+      setCsvFile(null);
+      setXlsxFile(null);
+      setLinksAll([]);
+      setAttrsAll([]);
+      setNetworkList([]);
+      setSelectedNet('');
+      setGraphData({ nodes: [], links: [] });
     }
-  } else if (key === 'barabasi-albert') {
-    setViewMode('barabasi-albert');
-    if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
-      setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
-    } else {
-      setBaStatus('Ingrese el número de nodos y enlaces…');
-      setBaNodesWithCentrality([]);
-    }
-  } else if (key === 'barabasi-si') {
-    setViewMode('barabasi-si');
-    if (baGraphData.nodes.length > 0) {
-      setBaStatus(`Red Barabási-Albert (SIR): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
-    } else {
-      setBaStatus('Genere una red Barabási-Albert primero…');
-    }
-  } else if (key === 'holme-kim') {
-    setViewMode('holme-kim');
-    if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
-      setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
-    } else {
-      setHkStatus('Ingrese el número de nodos, enlaces y probabilidad de triadas…');
-      setHkNodesWithCentrality([]);
-    }
-  } else if (key === 'holme-kim-si') {
-    setViewMode('holme-kim-si');
-    if (hkGraphData.nodes.length > 0) {
-      setHkStatus(`Red Holme-Kim (SIR): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
-    } else {
-      setHkStatus('Genere una red Holme-Kim primero…');
-    }
-  } else if (key === 'barabasi-behavior') {
-    setViewMode('barabasi-behavior');
-    if (baGraphData.nodes.length > 0 && baNodesWithCentrality.length > 0) {
-      setBaStatus(`Red Barabási-Albert (Comportamiento): ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces`);
-    } else {
-      setBaStatus('Genere una red Barabási-Albert primero…');
-      setBaNodesWithCentrality([]);
-    }
-  } else if (key === 'holme-kim-behavior') {
-    setViewMode('holme-kim-behavior');
-    if (hkGraphData.nodes.length > 0 && hkNodesWithCentrality.length > 0) {
-      setHkStatus(`Red Holme-Kim (Comportamiento): ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces`);
-    } else {
-      setHkStatus('Genere una red Holme-Kim primero…');
-      setHkNodesWithCentrality([]);
-    }
-  } else {
-    setViewMode('simulation');
-    setStatus('Sube el CSV y el XLSX…');
-    setCsvFile(null);
-    setXlsxFile(null);
-    setLinksAll([]);
-    setAttrsAll([]);
-    setNetworkList([]);
-    setSelectedNet('');
-    setGraphData({ nodes: [], links: [] });
-  }
     setSearchText('');
     setHighlightId('');
     setMessage('');
@@ -228,8 +214,9 @@ const handleMenuSelect = (key) => {
     });
     setEmotionVector(null);
     setNodeVectors([]);
-};
-  // Cargar CSV
+  };
+
+  // useEffect hooks (unchanged from original)
   useEffect(() => {
     async function loadCsv() {
       if (!csvFile) return;
@@ -246,7 +233,6 @@ const handleMenuSelect = (key) => {
     loadCsv();
   }, [csvFile]);
 
-  // Cargar XLSX
   useEffect(() => {
     async function loadXlsx() {
       if (!xlsxFile) return;
@@ -258,7 +244,6 @@ const handleMenuSelect = (key) => {
     loadXlsx();
   }, [xlsxFile]);
 
-  // Construir grafo para simulación
   useEffect(() => {
     if (!selectedNet || linksAll.length === 0) {
       setGraphData({ nodes: [], links: [] });
@@ -280,7 +265,6 @@ const handleMenuSelect = (key) => {
     setHighlightId('');
   }, [selectedNet, linksAll, attrsAll]);
 
-  // Cargar CSV de nodos para mundo real
   useEffect(() => {
     async function loadNodesCsv() {
       if (!nodesCsvFile) return;
@@ -295,7 +279,6 @@ const handleMenuSelect = (key) => {
     loadNodesCsv();
   }, [nodesCsvFile]);
 
-  // Cargar CSV de enlaces para mundo real
   useEffect(() => {
     async function loadLinksCsv() {
       if (!linksCsvFile) return;
@@ -308,99 +291,6 @@ const handleMenuSelect = (key) => {
     loadLinksCsv();
   }, [linksCsvFile]);
 
-
-
-const handleGenerateVectors = async (numNodes) => {
-  if (numNodes === 0) {
-    setBaStatus('No hay nodos en la red para generar vectores.');
-    setHkStatus('No hay nodos en la red para generar vectores.');
-    return;
-  }
-  try {
-    const response = await axios.post('http://localhost:8000/generate-vectors', { num_vectors: numNodes }, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-    const vectors = response.data.vectors || [];
-    console.log('Vectores generados:', vectors);
-
-    // Asignar vectores aleatoriamente a los nodos
-    const shuffledVectors = [...vectors].sort(() => Math.random() - 0.5);
-    const updatedBaNodes = baGraphData.nodes.map((node, index) => ({
-      ...node,
-      emotional_vector_in: {
-        subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
-        polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
-        fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
-        anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
-        anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
-        trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
-        surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
-        sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
-        disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
-        joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
-      },
-      emotional_vector_out: {
-        subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
-        polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
-        fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
-        anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
-        anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
-        trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
-        surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
-        sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
-        disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
-        joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
-      },
-      cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
-    }));
-    const updatedHkNodes = hkGraphData.nodes.map((node, index) => ({
-      ...node,
-      emotional_vector_in: {
-        subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
-        polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
-        fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
-        anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
-        anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
-        trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
-        surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
-        sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
-        disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
-        joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
-      },
-      emotional_vector_out: {
-        subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
-        polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
-        fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
-        anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
-        anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
-        trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
-        surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
-        sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
-        disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
-        joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
-      },
-      cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
-    }));
-
-    setBaGraphData({ ...baGraphData, nodes: updatedBaNodes });
-    setHkGraphData({ ...hkGraphData, nodes: updatedHkNodes });
-    setNodeVectors(vectors);
-
-    // Actualizar nodos con métricas de centralidad
-    const baNodesWithMetrics = calculateCentralityMetrics(updatedBaNodes, baGraphData.links);
-    const hkNodesWithMetrics = calculateCentralityMetrics(updatedHkNodes, hkGraphData.links);
-    setBaNodesWithCentrality(baNodesWithMetrics);
-    setHkNodesWithCentrality(hkNodesWithMetrics);
-
-    setBaStatus(`Red Barabási-Albert: ${updatedBaNodes.length} nodos · ${baGraphData.links.length} enlaces con vectores generados`);
-    setHkStatus(`Red Holme-Kim: ${updatedHkNodes.length} nodos · ${hkGraphData.links.length} enlaces con vectores generados`);
-  } catch (error) {
-    console.error('Error generating vectors:', error);
-    setBaStatus(`Error: ${error.response?.data?.detail || error.message}`);
-    setHkStatus(`Error: ${error.response?.data?.detail || error.message}`);
-  }
-};
-  // Construir grafo para mundo real
   useEffect(() => {
     if (!realWorldSelectedNet || realWorldNodesAll.length === 0 || realWorldLinksAll.length === 0) {
       setRealWorldGraphData({ nodes: [], links: [] });
@@ -419,27 +309,115 @@ const handleGenerateVectors = async (numNodes) => {
     );
   }, [realWorldSelectedNet, realWorldNodesAll, realWorldLinksAll]);
 
-  // Generar red Barabási-Albert
-  const handleGenerateBaNetwork = (numNodes, numEdges) => {
-    setBaStatus('Generando red Barabási-Albert…');
-    const data = generateBarabasiAlbert(numNodes, numEdges);
-    setBaGraphData(data);
-    const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
-    setBaNodesWithCentrality(nodesWithMetrics);
-    setBaStatus(`Red Barabási-Albert: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
+  const handleGenerateVectors = async (numNodes) => {
+    if (numNodes === 0) {
+      setBaStatus('No hay nodos en la red para generar vectores.');
+      setHkStatus('No hay nodos en la red para generar vectores.');
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:8000/generate-vectors', { num_vectors: numNodes }, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+      const vectors = response.data.vectors || [];
+      console.log('Vectores generados:', vectors);
+
+      const shuffledVectors = [...vectors].sort(() => Math.random() - 0.5);
+      const updatedBaNodes = baGraphData.nodes.map((node, index) => ({
+        ...node,
+        emotional_vector_in: {
+          subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
+          polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
+          fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
+          anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
+          anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
+          trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
+          surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
+          sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
+          disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
+          joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
+        },
+        emotional_vector_out: {
+          subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
+          polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
+          fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
+          anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
+          anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
+          trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
+          surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
+          sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
+          disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
+          joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
+        },
+        cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
+      }));
+      const updatedHkNodes = hkGraphData.nodes.map((node, index) => ({
+        ...node,
+        emotional_vector_in: {
+          subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
+          polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
+          fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
+          anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
+          anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
+          trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
+          surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
+          sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
+          disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
+          joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
+        },
+        emotional_vector_out: {
+          subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
+          polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
+          fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
+          anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
+          anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
+          trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
+          surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
+          sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
+          disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
+          joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
+        },
+        cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
+      }));
+
+      setBaGraphData({ ...baGraphData, nodes: updatedBaNodes });
+      setHkGraphData({ ...hkGraphData, nodes: updatedHkNodes });
+      setNodeVectors(vectors);
+
+      const baNodesWithMetrics = calculateCentralityMetrics(updatedBaNodes, baGraphData.links);
+      const hkNodesWithMetrics = calculateCentralityMetrics(updatedHkNodes, hkGraphData.links);
+      setBaNodesWithCentrality(baNodesWithMetrics);
+      setHkNodesWithCentrality(hkNodesWithMetrics);
+
+      setBaStatus(`Red Barabási-Albert: ${updatedBaNodes.length} nodos · ${baGraphData.links.length} enlaces con vectores generados`);
+      setHkStatus(`Red Holme-Kim: ${updatedHkNodes.length} nodos · ${hkGraphData.links.length} enlaces con vectores generados`);
+    } catch (error) {
+      console.error('Error generating vectors:', error);
+      setBaStatus(`Error: ${error.response?.data?.detail || error.message}`);
+      setHkStatus(`Error: ${error.response?.data?.detail || error.message}`);
+    }
   };
 
-  // Generar red Holme-Kim
-  const handleGenerateHkNetwork = (numNodes, numEdges, triadProb) => {
-    setHkStatus('Generando red Holme-Kim…');
-    const data = generateHolmeKim(numNodes, numEdges, triadProb);
-    setHkGraphData(data);
-    const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
-    setHkNodesWithCentrality(nodesWithMetrics);
-    setHkStatus(`Red Holme-Kim: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
-  };
+const handleGenerateBaNetwork = (numNodes, numEdges) => {
+  setBaStatus('Generando red Barabási-Albert…');
+  const data = generateBarabasiAlbert(numNodes, numEdges);
+  console.log('Nodos generados:', data.nodes); // ← Añade este log
+  setBaGraphData(data);
+  const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+  setBaNodesWithCentrality(nodesWithMetrics);
+  setBaStatus(`Red Barabási-Albert: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
+};
 
-  // Manejar propagación SIR en Barabási-Albert
+const handleGenerateHkNetwork = (numNodes, numEdges, triadProb) => {
+  setHkStatus('Generando red Holme-Kim…');
+  const data = generateHolmeKim(numNodes, numEdges, triadProb);
+  console.log('Generated Holme-Kim graph:', data); // Añade este log
+  setHkGraphData(data);
+  const nodesWithMetrics = calculateCentralityMetrics(data.nodes, data.links);
+  setHkNodesWithCentrality(nodesWithMetrics);
+  setHkStatus(`Red Holme-Kim: ${data.nodes.length} nodos · ${data.links.length} enlaces`);
+};
+
   const handleBaSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
     if (!baGraphData.nodes.length) {
       setBaSIRPropagationStatus('Por favor, genere una red Barabási-Albert primero.');
@@ -509,7 +487,6 @@ const handleGenerateVectors = async (numNodes) => {
     setBaSIRPropagationStatus('Propagación SIR inversa completada.');
   };
 
-  // Manejar propagación SIR en Holme-Kim
   const handleHkSIRPropagation = ({ beta, gamma, selectedUser, message }) => {
     if (!hkGraphData.nodes.length) {
       setHkSIRPropagationStatus('Por favor, genere una red Holme-Kim primero.');
@@ -599,8 +576,8 @@ const handleGenerateVectors = async (numNodes) => {
     setMessage('');
   };
 
-  // Manejar clics en nodos
   const handleNodeClick = (node) => {
+    console.log('Nodo seleccionado:', node.id); // ← Añade este log
     if (viewMode === 'simulation') {
       const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
       const nodeHistory = propagationLog
@@ -669,46 +646,49 @@ const handleGenerateVectors = async (numNodes) => {
     }
   };
 
-
-
 const handleVectorPropagation = async ({ selectedUser, message, method, thresholds, emotionVector }) => {
+  console.log('Nodos disponibles:', baGraphData.nodes.map(n => n.id)); // ← Añade este log
   if (!selectedUser || !message.trim() || !nodeVectors.length) {
     setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y genera vectores.');
     return;
   }
+
   setPropagationStatus('Iniciando propagación con vectores aleatorios…');
   try {
     const formData = new FormData();
-    formData.append('seed_user', selectedUser);
+    formData.append('seed_user', String(selectedUser));
     formData.append('message', message);
-    formData.append('max_steps', 4);
+    formData.append('max_steps', '4');
     formData.append('method', method);
     formData.append('thresholds', JSON.stringify(thresholds));
+    
     if (emotionVector && Object.values(emotionVector).some(val => val !== 0)) {
       formData.append('custom_vector', JSON.stringify(emotionVector));
     }
 
-    // Usar la red actual según el viewMode
     const currentGraphData = viewMode === 'barabasi-behavior' ? baGraphData : hkGraphData;
-    const currentNodesWithCentrality = viewMode === 'barabasi-behavior' ? baNodesWithCentrality : hkNodesWithCentrality;
-
-    // Crear un CSV temporal para los enlaces
+    
+    // Preparar archivo CSV de enlaces
     const linksCsvContent = currentGraphData.links.map(link => ({
-      source: link.source.id || link.source,
-      target: link.target.id || link.target,
+      source: String(link.source.id || link.source),
+      target: String(link.target.id || link.target),
     }));
+    
+    // Depurar los enlaces generados
+    console.log('Links CSV content:', linksCsvContent);
+    
     const linksCsvBlob = new Blob([Papa.unparse(linksCsvContent)], { type: 'text/csv' });
     const linksCsvFile = new File([linksCsvBlob], 'links.csv', { type: 'text/csv' });
 
-    // Crear un XLSX temporal con los estados de los nodos
+    // Preparar archivo XLSX de estados
     const statesXlsxContent = currentGraphData.nodes.map(node => ({
-      user_name: node.id,
+      user_name: String(node.id),
       cluster: node.cluster || 0,
       in_subjectivity: node.emotional_vector_in.subjectivity || 0,
       in_polarity: node.emotional_vector_in.polarity || 0,
       in_fear: node.emotional_vector_in.fear || 0,
       in_anger: node.emotional_vector_in.anger || 0,
-      in_anticipation: node.emotional_vector_in.anticipation || 0,
+      in_anticip: node.emotional_vector_in.anticipation || 0,
       in_trust: node.emotional_vector_in.trust || 0,
       in_surprise: node.emotional_vector_in.surprise || 0,
       in_sadness: node.emotional_vector_in.sadness || 0,
@@ -718,19 +698,27 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
       out_polarity: node.emotional_vector_out.polarity || 0,
       out_fear: node.emotional_vector_out.fear || 0,
       out_anger: node.emotional_vector_out.anger || 0,
-      out_anticipation: node.emotional_vector_out.anticipation || 0,
+      out_anticip: node.emotional_vector_out.anticipation || 0,
       out_trust: node.emotional_vector_out.trust || 0,
       out_surprise: node.emotional_vector_out.surprise || 0,
       out_sadness: node.emotional_vector_out.sadness || 0,
       out_disgust: node.emotional_vector_out.disgust || 0,
       out_joy: node.emotional_vector_out.joy || 0,
     }));
+    
+    // Depurar los estados generados
+    console.log('States XLSX content:', statesXlsxContent);
+    
+    // Verificar si seed_user está en los nodos
+    const seedUserInNodes = statesXlsxContent.some(node => node.user_name === String(selectedUser));
+    console.log(`Seed user ${selectedUser} in nodes:`, seedUserInNodes);
+    
     const ws = XLSX.utils.json_to_sheet(statesXlsxContent);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'States');
-    const xlsxBinary = XLSX.write(wb, 'binary');
-    const xlsxBlob = new Blob([s2ab(xlsxBinary)], { type: 'application/octet-stream' });
-    const xlsxFile = new File([xlsxBlob], 'states.xlsx', { type: 'application/octet-stream' });
+    const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const xlsxBlob = new Blob([xlsxArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const xlsxFile = new File([xlsxBlob], 'states.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
     formData.append('csv_file', linksCsvFile);
     formData.append('xlsx_file', xlsxFile);
@@ -744,10 +732,9 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
     console.log('Propagation log from backend:', propagationLog);
     setPropagationLog(propagationLog);
 
-    // Actualizar nodos con los últimos estados emocionales desde el propagationLog
     const updatedNodes = currentGraphData.nodes.map(node => {
       const lastEntry = propagationLog
-        .filter(entry => entry.receiver === node.id)
+        .filter(entry => entry.receiver === String(node.id))
         .sort((a, b) => b.t - a.t)[0];
       if (lastEntry) {
         return {
@@ -796,10 +783,10 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
         target: String(entry.receiver),
         timeStep: entry.t,
         animationDelay: index * 4000,
-        vector: entry.state_in_after, // Para actualizar el color del nodo receptor
+        vector: entry.state_in_after,
       }));
     setHighlightedLinks(linksToHighlight);
-    setHighlightId(selectedUser);
+    setHighlightId(String(selectedUser));
     setIsPropagationModalOpen(false);
     setIsNodeStatesModalOpen(false);
   } catch (error) {
@@ -809,23 +796,6 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
   }
 };
 
-// Función auxiliar para convertir string a ArrayBuffer
-function s2ab(s) {
-  const buf = new ArrayBuffer(s.length);
-  const view = new Uint8Array(buf);
-  for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-  return buf;
-}
-
-// Función auxiliar para convertir string a ArrayBuffer
-function s2ab(s) {
-  const buf = new ArrayBuffer(s.length);
-  const view = new Uint8Array(buf);
-  for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-  return buf;
-}
-
-  // Manejar propagación
   const handlePropagation = async ({ selectedUser, message, method, thresholds, csvFile, xlsxFile, emotionVector }) => {
     if (!selectedUser || !message.trim() || !csvFile || !xlsxFile) {
       setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos.');
@@ -852,7 +822,7 @@ function s2ab(s) {
       const propagationLog = response.data.log || [];
       console.log('Propagation log from backend:', propagationLog);
       setPropagationLog(propagationLog);
-      setEmotionVector(emotionVector); // Store the emotion vector for PropagationResult
+      setEmotionVector(emotionVector);
       const linksToHighlight = propagationLog
         .filter(entry => entry.sender && entry.receiver && entry.t !== undefined)
         .sort((a, b) => a.t - b.t)
@@ -879,7 +849,6 @@ function s2ab(s) {
     }
   };
 
-  // Manejar propagación RIP-DSN
   const handleRipDsnPropagation = async ({ selectedUser, message }) => {
     if (!selectedUser || !message.trim() || !nodesCsvFile || !linksCsvFile) {
       setRipDsnPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y sube ambos archivos CSV.');
@@ -956,7 +925,6 @@ function s2ab(s) {
     }
   };
 
-  // Resetear vista
   const handleResetView = () => {
     setHighlightId('');
     setSearchText('');
@@ -1004,7 +972,6 @@ function s2ab(s) {
     }
   };
 
-  // Obtener nodos involucrados
   const getInvolvedNodes = () => {
     const nodeIds = new Set();
     propagationLog.forEach(entry => {
@@ -1052,6 +1019,200 @@ function s2ab(s) {
             <h1>Bienvenido al Simulador de Redes Sociales</h1>
             <p>Selecciona una opción en el menú lateral para comenzar.</p>
           </div>
+        )}
+        {viewMode === 'simulation' && (
+          <>
+            <Navbar
+              csvFile={csvFile}
+              setCsvFile={setCsvFile}
+              xlsxFile={xlsxFile}
+              setXlsxFile={setXlsxFile}
+              networkList={networkList}
+              selectedNet={selectedNet}
+              setSelectedNet={setSelectedNet}
+            />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={status}
+              selectedNode={graphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="propagation-button-container">
+              <button
+                onClick={() => setIsPropagationModalOpen(true)}
+                className={graphData.nodes.length ? 'button' : 'button-disabled'}
+                disabled={!graphData.nodes.length}
+              >
+                Iniciar Propagación
+              </button>
+            </div>
+            <div className="nodes-button-container">
+              <button
+                onClick={() => setIsNodeStatesModalOpen(true)}
+                className={propagationLog.length ? 'button' : 'button-disabled'}
+                disabled={!propagationLog.length}
+              >
+                Ver Estados de Nodos
+              </button>
+            </div>
+            <PropagationModal
+              isOpen={isPropagationModalOpen}
+              setIsOpen={setIsPropagationModalOpen}
+              selectedUser={selectedUser}
+              setSelectedUser={setSelectedUser}
+              message={message}
+              setMessage={setMessage}
+              nodes={graphData.nodes}
+              handlePropagation={handlePropagation}
+              propagationStatus={propagationStatus}
+              method={method}
+              setMethod={setMethod}
+              thresholds={thresholds}
+              setThresholds={setThresholds}
+              csvFile={csvFile}
+              xlsxFile={xlsxFile}
+              setEmotionVector={setEmotionVector}
+              isBehaviorMode={false}
+            />
+            <NodeModal
+              isOpen={isNodeModalOpen}
+              setIsOpen={setIsNodeModalOpen}
+              modalNode={modalNode}
+              propagationLog={propagationLog}
+            />
+            <NodeStatesModal
+              isOpen={isNodeStatesModalOpen}
+              setIsOpen={setIsNodeStatesModalOpen}
+              involvedNodes={getInvolvedNodes()}
+              propagationLog={propagationLog}
+            />
+            <PropagationResult
+              propagationLog={propagationLog}
+              selectedUser={selectedUser}
+              onClose={() => {
+                setPropagationResult(null);
+                setPropagationLog([]);
+                setHighlightedLinks([]);
+                setEmotionVector(null);
+              }}
+              emotionVector={emotionVector}
+            />
+            <div className="graph-container">
+              <Graph3D
+                data={graphData}
+                nodesWithCentrality={nodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={highlightedLinks}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'real-world' && (
+          <>
+            <RealWorldNavbar
+              nodesCsvFile={nodesCsvFile}
+              setNodesCsvFile={setNodesCsvFile}
+              linksCsvFile={linksCsvFile}
+              setLinksCsvFile={setLinksCsvFile}
+              networkList={realWorldNetworkList}
+              selectedNet={realWorldSelectedNet}
+              setSelectedNet={setRealWorldSelectedNet}
+              viewMode={viewMode}
+              setCsvFile={setCsvFile}
+            />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={realWorldStatus}
+              selectedNode={realWorldGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="graph-container">
+              <RealWorldGraph3D
+                data={realWorldGraphData}
+                nodesWithCentrality={realWorldNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'rip-dsn' && (
+          <>
+            <RealWorldNavbar
+              nodesCsvFile={nodesCsvFile}
+              setNodesCsvFile={setNodesCsvFile}
+              linksCsvFile={linksCsvFile}
+              setLinksCsvFile={setLinksCsvFile}
+              networkList={realWorldNetworkList}
+              selectedNet={realWorldSelectedNet}
+              setSelectedNet={setRealWorldSelectedNet}
+              viewMode={viewMode}
+              setCsvFile={setCsvFile}
+            />
+            <SearchPanel
+              searchText={searchText}
+              setSearchText={setSearchText}
+              highlightId={highlightId}
+              setHighlightId={setHighlightId}
+              status={realWorldStatus}
+              selectedNode={realWorldGraphData.nodes.find(n => n.id === highlightId)}
+              handleResetView={handleResetView}
+            />
+            <div className="propagation-button-container">
+              <button
+                onClick={() => setIsPropagationModalOpen(true)}
+                className={realWorldGraphData.nodes.length ? 'button' : 'button-disabled'}
+                disabled={!realWorldGraphData.nodes.length}
+              >
+                Iniciar Propagación
+              </button>
+            </div>
+            <RipPropagationModal
+              isOpen={isPropagationModalOpen}
+              setIsOpen={setIsPropagationModalOpen}
+              selectedUser={selectedUser}
+              setSelectedUser={setSelectedUser}
+              message={message}
+              setMessage={setMessage}
+              nodes={realWorldGraphData.nodes}
+              handlePropagation={handleRipDsnPropagation}
+              propagationStatus={ripDsnPropagationStatus}
+            />
+            <NodeModal
+              isOpen={isNodeModalOpen}
+              setIsOpen={setIsNodeModalOpen}
+              modalNode={modalNode}
+              propagationLog={ripDsnPropagationLog}
+            />
+            <RipDsnPropagationResult
+              propagationLog={ripDsnPropagationLog}
+              selectedUser={selectedUser}
+              onClose={() => {
+                setRipDsnPropagationResult(null);
+                setRipDsnPropagationLog([]);
+                setRipDsnHighlightedLinks([]);
+              }}
+            />
+            <div className="graph-container">
+              <RipDsnGraph3D
+                data={realWorldGraphData}
+                nodesWithCentrality={realWorldNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={ripDsnHighlightedLinks}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
         )}
         {viewMode === 'barabasi-albert' && (
           <>
@@ -1174,289 +1335,17 @@ function s2ab(s) {
             </div>
           </>
         )}
-
         {viewMode === 'barabasi-behavior' && (
-    <>
-    <VectorsInput
-      onGenerateVectors={handleGenerateVectors}
-      numNodes={baGraphData.nodes.length}
-    />
-    <div className="propagation-button-container">
-      <button
-        onClick={() => setIsPropagationModalOpen(true)}
-        className="button"
-        disabled={!baGraphData.nodes.length || !nodeVectors.length}
-      >
-        Iniciar Propagación
-      </button>
-    </div>
-    <div className="nodes-button-container">
-      <button
-        onClick={() => setIsNodeStatesModalOpen(true)}
-        className={propagationLog.length ? 'button' : 'button-disabled'}
-        disabled={!propagationLog.length}
-      >
-        Ver Estados de Nodos
-      </button>
-    </div>
-    <div className="legend-container">
-      <h4 className="legend-title">Leyenda de Colores</h4>
-      <ul className="legend-list">
-        <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
-        <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
-        <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
-        <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
-        <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
-        <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
-        <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
-        <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
-      </ul>
-    </div>
-    <PropagationModal
-      isOpen={isPropagationModalOpen}
-      setIsOpen={setIsPropagationModalOpen}
-      selectedUser={selectedUser}
-      setSelectedUser={setSelectedUser}
-      message={message}
-      setMessage={setMessage}
-      nodes={baGraphData.nodes}
-      handlePropagation={handleVectorPropagation} // Usar la nueva función
-      propagationStatus={propagationStatus}
-      method={method}
-      setMethod={setMethod}
-      thresholds={thresholds}
-      setThresholds={setThresholds}
-      csvFile={null}
-      xlsxFile={null}
-      setEmotionVector={setEmotionVector}
-    />
-    <NodeModal
-      isOpen={isNodeModalOpen}
-      setIsOpen={setIsNodeModalOpen}
-      modalNode={modalNode}
-      propagationLog={propagationLog}
-    />
-    <NodeStatesModal
-      isOpen={isNodeStatesModalOpen}
-      setIsOpen={setIsNodeStatesModalOpen}
-      involvedNodes={getInvolvedNodes()}
-      propagationLog={propagationLog}
-    />
-    <PropagationResult
-      propagationLog={propagationLog}
-      selectedUser={selectedUser}
-      onClose={() => {
-        setPropagationResult(null);
-        setPropagationLog([]);
-        setHighlightedLinks([]);
-        setEmotionVector(null);
-      }}
-      emotionVector={emotionVector}
-    />
-    <div className="graph-container">
-      <BarabasiBehaviorGraph3D
-        data={baGraphData}
-        nodesWithCentrality={baNodesWithCentrality}
-        onNodeInfo={handleNodeClick}
-        highlightId={highlightId}
-        highlightedLinks={highlightedLinks}
-        onResetView={handleResetView}
-      />
-    </div>
-  </>
-        )}
-        {viewMode === 'holme-kim-behavior' && (
-         <>
-    <VectorsInput
-      onGenerateVectors={handleGenerateVectors}
-      numNodes={baGraphData.nodes.length}
-    />
-    <div className="propagation-button-container">
-      <button
-        onClick={() => setIsPropagationModalOpen(true)}
-        className="button"
-        disabled={!baGraphData.nodes.length || !nodeVectors.length}
-      >
-        Iniciar Propagación
-      </button>
-    </div>
-    <div className="nodes-button-container">
-      <button
-        onClick={() => setIsNodeStatesModalOpen(true)}
-        className={propagationLog.length ? 'button' : 'button-disabled'}
-        disabled={!propagationLog.length}
-      >
-        Ver Estados de Nodos
-      </button>
-    </div>
-    <div className="legend-container">
-      <h4 className="legend-title">Leyenda de Colores</h4>
-      <ul className="legend-list">
-        <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
-        <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
-        <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
-        <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
-        <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
-        <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
-        <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
-        <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
-      </ul>
-    </div>
-    <PropagationModal
-      isOpen={isPropagationModalOpen}
-      setIsOpen={setIsPropagationModalOpen}
-      selectedUser={selectedUser}
-      setSelectedUser={setSelectedUser}
-      message={message}
-      setMessage={setMessage}
-      nodes={baGraphData.nodes}
-      handlePropagation={handleVectorPropagation} // Usar la nueva función
-      propagationStatus={propagationStatus}
-      method={method}
-      setMethod={setMethod}
-      thresholds={thresholds}
-      setThresholds={setThresholds}
-      csvFile={null}
-      xlsxFile={null}
-      setEmotionVector={setEmotionVector}
-    />
-    <NodeModal
-      isOpen={isNodeModalOpen}
-      setIsOpen={setIsNodeModalOpen}
-      modalNode={modalNode}
-      propagationLog={propagationLog}
-    />
-    <NodeStatesModal
-      isOpen={isNodeStatesModalOpen}
-      setIsOpen={setIsNodeStatesModalOpen}
-      involvedNodes={getInvolvedNodes()}
-      propagationLog={propagationLog}
-    />
-    <PropagationResult
-      propagationLog={propagationLog}
-      selectedUser={selectedUser}
-      onClose={() => {
-        setPropagationResult(null);
-        setPropagationLog([]);
-        setHighlightedLinks([]);
-        setEmotionVector(null);
-      }}
-      emotionVector={emotionVector}
-    />
-    <div className="graph-container">
-      <HolmeKimBehaviorGraph3D
-        data={hkGraphData}
-        nodesWithCentrality={hkNodesWithCentrality}
-        onNodeInfo={handleNodeClick}
-        highlightId={highlightId}
-        highlightedLinks={highlightedLinks}
-        onResetView={handleResetView}
-      />
-    </div>
-  </>
-        )}
-        {viewMode === 'real-world' && (
           <>
-            <RealWorldNavbar
-              nodesCsvFile={nodesCsvFile}
-              setNodesCsvFile={setNodesCsvFile}
-              linksCsvFile={linksCsvFile}
-              setLinksCsvFile={setLinksCsvFile}
-              networkList={realWorldNetworkList}
-              selectedNet={realWorldSelectedNet}
-              setSelectedNet={setRealWorldSelectedNet}
-              viewMode={viewMode}
-              setCsvFile={setCsvFile}
-            />
-            <SearchPanel
-              searchText={searchText}
-              setSearchText={setSearchText}
-              highlightId={highlightId}
-              setHighlightId={setHighlightId}
-              status={realWorldStatus}
-              selectedNode={realWorldGraphData.nodes.find(n => n.id === highlightId)}
-              handleResetView={handleResetView}
-            />
-            <div className="graph-container">
-              <RealWorldGraph3D
-                data={realWorldGraphData}
-                nodesWithCentrality={realWorldNodesWithCentrality}
-                onNodeInfo={handleNodeClick}
-                highlightId={highlightId}
-                onResetView={handleResetView}
-              />
-            </div>
-          </>
-        )}
-        {viewMode === 'rip-dsn' && (
-          <>
-            <RealWorldNavbar
-              nodesCsvFile={nodesCsvFile}
-              setNodesCsvFile={setNodesCsvFile}
-              linksCsvFile={linksCsvFile}
-              setLinksCsvFile={setLinksCsvFile}
-              networkList={realWorldNetworkList}
-              selectedNet={realWorldSelectedNet}
-              setSelectedNet={setRealWorldSelectedNet}
-              viewMode={viewMode}
-              setCsvFile={setCsvFile}
+            <VectorsInput
+              onGenerateVectors={handleGenerateVectors}
+              numNodes={baGraphData.nodes.length}
             />
             <div className="propagation-button-container">
               <button
                 onClick={() => setIsPropagationModalOpen(true)}
-                className="button"
-              >
-                Iniciar Propagación
-              </button>
-            </div>
-            <RipPropagationModal
-              isOpen={isPropagationModalOpen}
-              setIsOpen={setIsPropagationModalOpen}
-              selectedUser={selectedUser}
-              setSelectedUser={setSelectedUser}
-              message={message}
-              setMessage={setMessage}
-              nodes={realWorldGraphData.nodes}
-              handlePropagation={handleRipDsnPropagation}
-              propagationStatus={ripDsnPropagationStatus}
-            />
-            {ripDsnPropagationResult && (
-              <RipDsnPropagationResult
-                propagationLog={ripDsnPropagationLog}
-                selectedUser={selectedUser}
-                onClose={() => {
-                  setRipDsnPropagationResult(null);
-                  setRipDsnPropagationLog([]);
-                  setRipDsnHighlightedLinks([]);
-                }}
-              />
-            )}
-            <div className="graph-container">
-              <RipDsnGraph3D
-                data={realWorldGraphData}
-                onNodeInfo={handleNodeClick}
-                highlightId={highlightId}
-                highlightedLinks={ripDsnHighlightedLinks}
-                onResetView={handleResetView}
-              />
-            </div>
-          </>
-        )}
-        {viewMode === 'simulation' && (
-          <>
-            <Navbar
-              csvFile={csvFile}
-              setCsvFile={setCsvFile}
-              xlsxFile={xlsxFile}
-              setXlsxFile={setXlsxFile}
-              networkList={networkList}
-              selectedNet={selectedNet}
-              setSelectedNet={setSelectedNet}
-            />
-            <div className="propagation-button-container">
-              <button
-                onClick={() => setIsPropagationModalOpen(true)}
-                className="button"
+                className={baGraphData.nodes.length && nodeVectors.length ? 'button' : 'button-disabled'}
+                disabled={!baGraphData.nodes.length || !nodeVectors.length}
               >
                 Iniciar Propagación
               </button>
@@ -1490,16 +1379,17 @@ function s2ab(s) {
               setSelectedUser={setSelectedUser}
               message={message}
               setMessage={setMessage}
-              nodes={graphData.nodes}
-              handlePropagation={handlePropagation}
+              nodes={baGraphData.nodes}
+              handlePropagation={handleVectorPropagation}
               propagationStatus={propagationStatus}
               method={method}
               setMethod={setMethod}
               thresholds={thresholds}
               setThresholds={setThresholds}
-              csvFile={csvFile}
-              xlsxFile={xlsxFile}
-              setEmotionVector={setEmotionVector} // Pass setEmotionVector to PropagationModal
+              csvFile={null}
+              xlsxFile={null}
+              setEmotionVector={setEmotionVector}
+              isBehaviorMode={true}
             />
             <NodeModal
               isOpen={isNodeModalOpen}
@@ -1525,8 +1415,100 @@ function s2ab(s) {
               emotionVector={emotionVector}
             />
             <div className="graph-container">
-              <Graph3D
-                data={graphData}
+              <BarabasiBehaviorGraph3D
+                data={baGraphData}
+                nodesWithCentrality={baNodesWithCentrality}
+                onNodeInfo={handleNodeClick}
+                highlightId={highlightId}
+                highlightedLinks={highlightedLinks}
+                onResetView={handleResetView}
+              />
+            </div>
+          </>
+        )}
+        {viewMode === 'holme-kim-behavior' && (
+          <>
+            <VectorsInput
+              onGenerateVectors={handleGenerateVectors}
+              numNodes={hkGraphData.nodes.length}
+            />
+            <div className="propagation-button-container">
+              <button
+                onClick={() => setIsPropagationModalOpen(true)}
+                className={hkGraphData.nodes.length && nodeVectors.length ? 'button' : 'button-disabled'}
+                disabled={!hkGraphData.nodes.length || !nodeVectors.length}
+              >
+                Iniciar Propagación
+              </button>
+            </div>
+            <div className="nodes-button-container">
+              <button
+                onClick={() => setIsNodeStatesModalOpen(true)}
+                className={propagationLog.length ? 'button' : 'button-disabled'}
+                disabled={!propagationLog.length}
+              >
+                Ver Estados de Nodos
+              </button>
+            </div>
+            <div className="legend-container">
+              <h4 className="legend-title">Leyenda de Colores</h4>
+              <ul className="legend-list">
+                <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
+                <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
+                <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
+                <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
+                <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
+                <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
+                <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
+                <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
+              </ul>
+            </div>
+            <PropagationModal
+              isOpen={isPropagationModalOpen}
+              setIsOpen={setIsPropagationModalOpen}
+              selectedUser={selectedUser}
+              setSelectedUser={setSelectedUser}
+              message={message}
+              setMessage={setMessage}
+              nodes={hkGraphData.nodes}
+              handlePropagation={handleVectorPropagation}
+              propagationStatus={propagationStatus}
+              method={method}
+              setMethod={setMethod}
+              thresholds={thresholds}
+              setThresholds={setThresholds}
+              csvFile={null}
+              xlsxFile={null}
+              setEmotionVector={setEmotionVector}
+              isBehaviorMode={true}
+            />
+            <NodeModal
+              isOpen={isNodeModalOpen}
+              setIsOpen={setIsNodeModalOpen}
+              modalNode={modalNode}
+              propagationLog={propagationLog}
+            />
+            <NodeStatesModal
+              isOpen={isNodeStatesModalOpen}
+              setIsOpen={setIsNodeStatesModalOpen}
+              involvedNodes={getInvolvedNodes()}
+              propagationLog={propagationLog}
+            />
+            <PropagationResult
+              propagationLog={propagationLog}
+              selectedUser={selectedUser}
+              onClose={() => {
+                setPropagationResult(null);
+                setPropagationLog([]);
+                setHighlightedLinks([]);
+                setEmotionVector(null);
+              }}
+              emotionVector={emotionVector}
+            />
+            <div className="graph-container">
+              <HolmeKimBehaviorGraph3D
+                data={hkGraphData}
+                nodesWithCentrality={hkNodesWithCentrality}
                 onNodeInfo={handleNodeClick}
                 highlightId={highlightId}
                 highlightedLinks={highlightedLinks}
