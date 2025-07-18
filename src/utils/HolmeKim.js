@@ -3,7 +3,11 @@ export function generateHolmeKim(n, m, p) {
     throw new Error('Parámetros inválidos: n ≥ 2, 1 ≤ m < n, 0 ≤ p ≤ 1');
   }
 
-  const nodes = Array.from({ length: n }, (_, i) => ({ id: String(i) }));
+  // Inicializar nodos con prefijo user_
+  const nodes = Array.from({ length: n }, (_, i) => ({
+    id: `user_${i}`, // Usar prefijo user_ (user_0, user_1, etc.)
+    cluster: null,
+  }));
   const links = [];
   const degrees = new Array(n).fill(0);
   const neighbors = Array.from({ length: n }, () => new Set());
@@ -12,11 +16,14 @@ export function generateHolmeKim(n, m, p) {
   const m0 = m + 1;
   for (let i = 0; i < m0; i++) {
     for (let j = i + 1; j < m0; j++) {
-      links.push({ source: String(i), target: String(j) });
+      links.push({
+        source: `user_${i}`, // Usar prefijo user_
+        target: `user_${j}`, // Usar prefijo user_
+      });
       degrees[i]++;
       degrees[j]++;
-      neighbors[i].add(String(j));
-      neighbors[j].add(String(i));
+      neighbors[i].add(`user_${j}`);
+      neighbors[j].add(`user_${i}`);
     }
   }
 
@@ -27,11 +34,11 @@ export function generateHolmeKim(n, m, p) {
 
     // Primer enlace por unión preferencial
     let target = selectNodeByPreferentialAttachment(degrees, connected);
-    links.push({ source: String(i), target: String(target) });
+    links.push({ source: `user_${i}`, target: `user_${target}` });
     degrees[i]++;
     degrees[target]++;
-    neighbors[i].add(String(target));
-    neighbors[target].add(String(i));
+    neighbors[i].add(`user_${target}`);
+    neighbors[target].add(`user_${i}`);
     connected.add(target);
     edgesAdded++;
 
@@ -41,39 +48,45 @@ export function generateHolmeKim(n, m, p) {
         // Formación de triada: conectar a un vecino del último nodo conectado
         const neighborArray = Array.from(neighbors[target]);
         const triadTarget = neighborArray[Math.floor(Math.random() * neighborArray.length)];
-        if (!connected.has(Number(triadTarget))) {
-          links.push({ source: String(i), target: triadTarget });
+        if (!connected.has(parseInt(triadTarget.replace('user_', '')))) {
+          links.push({ source: `user_${i}`, target: triadTarget });
           degrees[i]++;
-          degrees[Number(triadTarget)]++;
+          degrees[parseInt(triadTarget.replace('user_', ''))]++;
           neighbors[i].add(triadTarget);
-          neighbors[Number(triadTarget)].add(String(i));
-          connected.add(Number(triadTarget));
+          neighbors[parseInt(triadTarget.replace('user_', ''))].add(`user_${i}`);
+          connected.add(parseInt(triadTarget.replace('user_', '')));
           edgesAdded++;
-          target = Number(triadTarget); // Actualizar target para la próxima iteración
+          target = parseInt(triadTarget.replace('user_', '')); // Actualizar target para la próxima iteración
         } else {
           // Si el vecino ya está conectado, intentar unión preferencial
           target = selectNodeByPreferentialAttachment(degrees, connected);
-          links.push({ source: String(i), target: String(target) });
+          links.push({ source: `user_${i}`, target: `user_${target}` });
           degrees[i]++;
           degrees[target]++;
-          neighbors[i].add(String(target));
-          neighbors[target].add(String(i));
+          neighbors[i].add(`user_${target}`);
+          neighbors[target].add(`user_${i}`);
           connected.add(target);
           edgesAdded++;
         }
       } else {
         // Unión preferencial
         target = selectNodeByPreferentialAttachment(degrees, connected);
-        links.push({ source: String(i), target: String(target) });
+        links.push({ source: `user_${i}`, target: `user_${target}` });
         degrees[i]++;
         degrees[target]++;
-        neighbors[i].add(String(target));
-        neighbors[target].add(String(i));
+        neighbors[i].add(`user_${target}`);
+        neighbors[target].add(`user_${i}`);
         connected.add(target);
         edgesAdded++;
       }
     }
   }
+
+  console.log('Holme-Kim network generated:', {
+    nodes: nodes.length,
+    links: links.length,
+    nodeIds: nodes.map(n => n.id), // Log para verificar IDs
+  });
 
   return { nodes, links };
 }
@@ -90,5 +103,5 @@ function selectNodeByPreferentialAttachment(degrees, exclude) {
     r -= degrees[i];
     if (r <= 0) return i;
   }
-  return degrees.findIndex((d) => !exclude.has(d));
+  return degrees.findIndex((d, i) => !exclude.has(i));
 }

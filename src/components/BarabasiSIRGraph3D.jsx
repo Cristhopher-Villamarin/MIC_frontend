@@ -365,7 +365,7 @@ useEffect(() => {
           const sphere = new THREE.Mesh(sphereGeometry, material);
           group.add(sphere);
 
-          const label = new SpriteText(`user_${node.id}`);
+          const label = new SpriteText(node.id);
           label.color = "white";
           label.textHeight = isExtensivePropagation ? 2.5 : 3;
           label.material.depthWrite = false;
