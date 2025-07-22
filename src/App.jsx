@@ -323,74 +323,79 @@ export default function App() {
       console.log('Vectores generados:', vectors);
 
       const shuffledVectors = [...vectors].sort(() => Math.random() - 0.5);
-      const updatedBaNodes = baGraphData.nodes.map((node, index) => ({
-        ...node,
-        emotional_vector_in: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
-        },
-        emotional_vector_out: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
-        },
-        cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
-      }));
-      const updatedHkNodes = hkGraphData.nodes.map((node, index) => ({
-        ...node,
-        emotional_vector_in: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
-        },
-        emotional_vector_out: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
-        },
-        cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
-      }));
 
-      setBaGraphData({ ...baGraphData, nodes: updatedBaNodes });
-      setHkGraphData({ ...hkGraphData, nodes: updatedHkNodes });
+      // Update Barabási-Albert nodes in-place
+      baGraphData.nodes.forEach((node, index) => {
+        const vector = shuffledVectors[index % shuffledVectors.length];
+        node.emotional_vector_in = {
+          subjectivity: vector.in_subjectivity || 0,
+          polarity: vector.in_polarity || 0,
+          fear: vector.in_fear || 0,
+          anger: vector.in_anger || 0,
+          anticipation: vector.in_anticip || 0,
+          trust: vector.in_trust || 0,
+          surprise: vector.in_surprise || 0,
+          sadness: vector.in_sadness || 0,
+          disgust: vector.in_disgust || 0,
+          joy: vector.in_joy || 0,
+        };
+        node.emotional_vector_out = {
+          subjectivity: vector.out_subjectivity || 0,
+          polarity: vector.out_polarity || 0,
+          fear: vector.out_fear || 0,
+          anger: vector.out_anger || 0,
+          anticipation: vector.out_anticip || 0,
+          trust: vector.out_trust || 0,
+          surprise: vector.out_surprise || 0,
+          sadness: vector.out_sadness || 0,
+          disgust: vector.out_disgust || 0,
+          joy: vector.out_joy || 0,
+        };
+        node.cluster = vector.cluster || 0;
+      });
+
+      // Update Holme-Kim nodes in-place
+      hkGraphData.nodes.forEach((node, index) => {
+        const vector = shuffledVectors[index % shuffledVectors.length];
+        node.emotional_vector_in = {
+          subjectivity: vector.in_subjectivity || 0,
+          polarity: vector.in_polarity || 0,
+          fear: vector.in_fear || 0,
+          anger: vector.in_anger || 0,
+          anticipation: vector.in_anticip || 0,
+          trust: vector.in_trust || 0,
+          surprise: vector.in_surprise || 0,
+          sadness: vector.in_sadness || 0,
+          disgust: vector.in_disgust || 0,
+          joy: vector.in_joy || 0,
+        };
+        node.emotional_vector_out = {
+          subjectivity: vector.out_subjectivity || 0,
+          polarity: vector.out_polarity || 0,
+          fear: vector.out_fear || 0,
+          anger: vector.out_anger || 0,
+          anticipation: vector.out_anticip || 0,
+          trust: vector.out_trust || 0,
+          surprise: vector.out_surprise || 0,
+          sadness: vector.out_sadness || 0,
+          disgust: vector.out_disgust || 0,
+          joy: vector.out_joy || 0,
+        };
+        node.cluster = vector.cluster || 0;
+      });
+
+      // Force a re-render by updating state with the same object references
+      setBaGraphData({ ...baGraphData });
+      setHkGraphData({ ...hkGraphData });
       setNodeVectors(vectors);
 
-      const baNodesWithMetrics = calculateCentralityMetrics(updatedBaNodes, baGraphData.links);
-      const hkNodesWithMetrics = calculateCentralityMetrics(updatedHkNodes, hkGraphData.links);
+      const baNodesWithMetrics = calculateCentralityMetrics(baGraphData.nodes, baGraphData.links);
+      const hkNodesWithMetrics = calculateCentralityMetrics(hkGraphData.nodes, hkGraphData.links);
       setBaNodesWithCentrality(baNodesWithMetrics);
       setHkNodesWithCentrality(hkNodesWithMetrics);
 
-      setBaStatus(`Red Barabási-Albert: ${updatedBaNodes.length} nodos · ${baGraphData.links.length} enlaces con vectores generados`);
-      setHkStatus(`Red Holme-Kim: ${updatedHkNodes.length} nodos · ${hkGraphData.links.length} enlaces con vectores generados`);
+      setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces con vectores generados`);
+      setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces con vectores generados`);
     } catch (error) {
       console.error('Error generating vectors:', error);
       setBaStatus(`Error: ${error.response?.data?.detail || error.message}`);
@@ -647,7 +652,7 @@ const handleGenerateHkNetwork = (numNodes, numEdges, triadProb) => {
   };
 
 const handleVectorPropagation = async ({ selectedUser, message, method, thresholds, emotionVector }) => {
-  console.log('Nodos disponibles:', baGraphData.nodes.map(n => n.id)); // ← Añade este log
+  console.log('Nodos disponibles:', baGraphData.nodes.map(n => n.id));
   if (!selectedUser || !message.trim() || !nodeVectors.length) {
     setPropagationStatus('Por favor selecciona un usuario, escribe un mensaje y genera vectores.');
     return;
@@ -674,7 +679,6 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
       target: String(link.target.id || link.target),
     }));
     
-    // Depurar los enlaces generados
     console.log('Links CSV content:', linksCsvContent);
     
     const linksCsvBlob = new Blob([Papa.unparse(linksCsvContent)], { type: 'text/csv' });
@@ -706,10 +710,8 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
       out_joy: node.emotional_vector_out.joy || 0,
     }));
     
-    // Depurar los estados generados
     console.log('States XLSX content:', statesXlsxContent);
     
-    // Verificar si seed_user está en los nodos
     const seedUserInNodes = statesXlsxContent.some(node => node.user_name === String(selectedUser));
     console.log(`Seed user ${selectedUser} in nodes:`, seedUserInNodes);
     
@@ -732,46 +734,43 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
     console.log('Propagation log from backend:', propagationLog);
     setPropagationLog(propagationLog);
 
-    const updatedNodes = currentGraphData.nodes.map(node => {
-      const lastEntry = propagationLog
-        .filter(entry => entry.receiver === String(node.id))
-        .sort((a, b) => b.t - a.t)[0];
-      if (lastEntry) {
-        return {
-          ...node,
-          emotional_vector_in: {
-            subjectivity: lastEntry.state_in_after[0] || node.emotional_vector_in.subjectivity,
-            polarity: lastEntry.state_in_after[1] || node.emotional_vector_in.polarity,
-            fear: lastEntry.state_in_after[2] || node.emotional_vector_in.fear,
-            anger: lastEntry.state_in_after[3] || node.emotional_vector_in.anger,
-            anticipation: lastEntry.state_in_after[4] || node.emotional_vector_in.anticipation,
-            trust: lastEntry.state_in_after[5] || node.emotional_vector_in.trust,
-            surprise: lastEntry.state_in_after[6] || node.emotional_vector_in.surprise,
-            sadness: lastEntry.state_in_after[7] || node.emotional_vector_in.sadness,
-            disgust: lastEntry.state_in_after[8] || node.emotional_vector_in.disgust,
-            joy: lastEntry.state_in_after[9] || node.emotional_vector_in.joy,
-          },
-          emotional_vector_out: {
-            subjectivity: lastEntry.state_out_after[0] || node.emotional_vector_out.subjectivity,
-            polarity: lastEntry.state_out_after[1] || node.emotional_vector_out.polarity,
-            fear: lastEntry.state_out_after[2] || node.emotional_vector_out.fear,
-            anger: lastEntry.state_out_after[3] || node.emotional_vector_out.anger,
-            anticipation: lastEntry.state_out_after[4] || node.emotional_vector_out.anticipation,
-            trust: lastEntry.state_out_after[5] || node.emotional_vector_out.trust,
-            surprise: lastEntry.state_out_after[6] || node.emotional_vector_out.surprise,
-            sadness: lastEntry.state_out_after[7] || node.emotional_vector_out.sadness,
-            disgust: lastEntry.state_out_after[8] || node.emotional_vector_out.disgust,
-            joy: lastEntry.state_out_after[9] || node.emotional_vector_out.joy,
-          },
+    // Update nodes in-place
+    const currentNodes = currentGraphData.nodes;
+    propagationLog.forEach(entry => {
+      const targetNode = currentNodes.find(n => String(n.id) === String(entry.receiver));
+      if (targetNode && entry.state_in_after) {
+        targetNode.emotional_vector_in = {
+          subjectivity: entry.state_in_after[0] !== undefined ? entry.state_in_after[0] : targetNode.emotional_vector_in.subjectivity,
+          polarity: entry.state_in_after[1] !== undefined ? entry.state_in_after[1] : targetNode.emotional_vector_in.polarity,
+          fear: entry.state_in_after[2] !== undefined ? entry.state_in_after[2] : targetNode.emotional_vector_in.fear,
+          anger: entry.state_in_after[3] !== undefined ? entry.state_in_after[3] : targetNode.emotional_vector_in.anger,
+          anticipation: entry.state_in_after[4] !== undefined ? entry.state_in_after[4] : targetNode.emotional_vector_in.anticipation,
+          trust: entry.state_in_after[5] !== undefined ? entry.state_in_after[5] : targetNode.emotional_vector_in.trust,
+          surprise: entry.state_in_after[6] !== undefined ? entry.state_in_after[6] : targetNode.emotional_vector_in.surprise,
+          sadness: entry.state_in_after[7] !== undefined ? entry.state_in_after[7] : targetNode.emotional_vector_in.sadness,
+          disgust: entry.state_in_after[8] !== undefined ? entry.state_in_after[8] : targetNode.emotional_vector_in.disgust,
+          joy: entry.state_in_after[9] !== undefined ? entry.state_in_after[9] : targetNode.emotional_vector_in.joy,
+        };
+        targetNode.emotional_vector_out = {
+          subjectivity: entry.state_out_after[0] !== undefined ? entry.state_out_after[0] : targetNode.emotional_vector_out.subjectivity,
+          polarity: entry.state_out_after[1] !== undefined ? entry.state_out_after[1] : targetNode.emotional_vector_out.polarity,
+          fear: entry.state_out_after[2] !== undefined ? entry.state_out_after[2] : targetNode.emotional_vector_out.fear,
+          anger: entry.state_out_after[3] !== undefined ? entry.state_out_after[3] : targetNode.emotional_vector_out.anger,
+          anticipation: entry.state_out_after[4] !== undefined ? entry.state_out_after[4] : targetNode.emotional_vector_out.anticipation,
+          trust: entry.state_out_after[5] !== undefined ? entry.state_out_after[5] : targetNode.emotional_vector_out.trust,
+          surprise: entry.state_out_after[6] !== undefined ? entry.state_out_after[6] : targetNode.emotional_vector_out.surprise,
+          sadness: entry.state_out_after[7] !== undefined ? entry.state_out_after[7] : targetNode.emotional_vector_out.sadness,
+          disgust: entry.state_out_after[8] !== undefined ? entry.state_out_after[8] : targetNode.emotional_vector_out.disgust,
+          joy: entry.state_out_after[9] !== undefined ? entry.state_out_after[9] : targetNode.emotional_vector_out.joy,
         };
       }
-      return node;
     });
 
+    // Force a re-render by updating state with the same object references
     if (viewMode === 'barabasi-behavior') {
-      setBaGraphData({ ...baGraphData, nodes: updatedNodes });
+      setBaGraphData({ ...baGraphData });
     } else {
-      setHkGraphData({ ...hkGraphData, nodes: updatedNodes });
+      setHkGraphData({ ...hkGraphData });
     }
 
     setEmotionVector(emotionVector);

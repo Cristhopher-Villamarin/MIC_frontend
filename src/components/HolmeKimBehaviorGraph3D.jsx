@@ -15,7 +15,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
   const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
   const [modalNode, setModalNode] = useState(null);
 
-  // Colores inspirados en Intensamente e Intensamente 2
+  // Emotion colors inspired by Inside Out and Inside Out 2
   const emotionColors = {
     fear: '#A100A1',
     anger: '#FF0000',
@@ -27,15 +27,15 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     joy: '#FFFF00',
   };
 
-  // Color gris por defecto para nodos sin atributos emocionales
+  // Default grey color for nodes without emotional attributes
   const defaultColor = '#828282';
 
-  // Determinar si estamos en modo propagación y el tamaño
+  // Determine if in propagation mode and its size
   const isInPropagationMode = highlightedLinks.length > 0;
   const isLargePropagation = highlightedLinks.length > 50;
   const isExtensivePropagation = highlightedLinks.length > 200;
 
-  // Configuración dinámica basada en el tamaño de la propagación
+  // Dynamic animation configuration based on propagation size
   const getAnimationConfig = useCallback(() => {
     if (isExtensivePropagation) {
       return {
@@ -64,15 +64,17 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }
   }, [isExtensivePropagation, isLargePropagation]);
 
-  // Filtrar datos para mostrar solo nodos y enlaces involucrados en la propagación
+  // Filter data to show only nodes and links involved in propagation
   const filteredData = useMemo(() => {
     if (!isInPropagationMode) {
       return data;
     }
 
     const involvedNodeIds = new Set();
+    const involvedLinks = new Set();
     const linkMap = new Map();
 
+    // Create a map of all links for quick lookup
     data.links.forEach(link => {
       const sourceId = link.source.id ? String(link.source.id) : String(link.source);
       const targetId = link.target.id ? String(link.target.id) : String(link.target);
@@ -80,12 +82,9 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       const key2 = `${targetId}-${sourceId}`;
       linkMap.set(key1, link);
       linkMap.set(key2, link);
-      involvedNodeIds.add(sourceId);
-      involvedNodeIds.add(targetId);
     });
 
-    const involvedLinks = new Set();
-
+    // Collect nodes and links from highlightedLinks
     highlightedLinks.forEach(highlight => {
       const sourceId = String(highlight.source);
       const targetId = String(highlight.target);
@@ -94,18 +93,18 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
-
       const originalLink = linkMap.get(key1) || linkMap.get(key2);
       if (originalLink) {
         involvedLinks.add(originalLink);
       }
     });
 
+    // Filter nodes to only those involved in highlightedLinks
     const filteredNodes = data.nodes.filter(node =>
       involvedNodeIds.has(String(node.id))
     );
 
-    console.log(`Modo propagación activado:`, {
+    console.log(`Propagation mode activated:`, {
       totalNodes: data.nodes.length,
       filteredNodes: filteredNodes.length,
       totalLinks: data.links.length,
@@ -121,11 +120,11 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     };
   }, [data, highlightedLinks, isInPropagationMode, isLargePropagation, isExtensivePropagation]);
 
-  // Cache para texturas de gradiente con limpieza automática
+  // Cache for gradient textures with automatic cleanup
   const textureCache = useRef(new Map());
   const textureCacheCleanup = useRef(null);
 
-  // Limpiar cache de texturas periódicamente
+  // Periodically clean up texture cache
   const scheduleTextureCacheCleanup = useCallback(() => {
     if (textureCacheCleanup.current) {
       clearTimeout(textureCacheCleanup.current);
@@ -143,7 +142,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }, 30000);
   }, []);
 
-  // Crear textura de gradiente con cache optimizado
+  // Create gradient texture with optimized caching
   const createGradientTexture = useCallback((colors, weights) => {
     const key = JSON.stringify({ colors, weights });
     if (textureCache.current.has(key)) {
@@ -174,7 +173,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     return texture;
   }, [scheduleTextureCacheCleanup]);
 
-  // Obtener color del nodo (actualizado para usar emotional_vector_in y emotional_vector_out)
+  // Get node color based on emotional vectors
   const getNodeColor = useCallback((node) => {
     const emotions = [
       ((node.emotional_vector_in?.fear || 0) + (node.emotional_vector_out?.fear || 0)) / 2,
@@ -197,7 +196,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       'joy',
     ];
 
-    // Si todas las emociones son 0 o no definidas, usar color gris
+    // If no emotions are defined, use default grey
     const hasEmotions = emotions.some(val => val !== 0);
     if (!hasEmotions) {
       return { color: defaultColor, opacity: 0.8 };
@@ -214,7 +213,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     return { texture: createGradientTexture(colors, weights), opacity: 0.8 };
   }, [createGradientTexture]);
 
-  // Función de refresh throttled para mejor rendimiento
+  // Throttled refresh for better performance
   const throttledRefresh = useCallback(() => {
     if (batchUpdateRef.current) {
       return;
@@ -229,7 +228,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }, config.REFRESH_THROTTLE);
   }, [getAnimationConfig]);
 
-  // Centra la red al cargar o cambiar datos filtrados
+  // Center the graph on load or when filtered data changes
   useEffect(() => {
     if (!isTransitioning.current && fgRef.current) {
       const delay = isExtensivePropagation ? 300 : 200;
@@ -241,7 +240,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }
   }, [filteredData.nodes, filteredData.links, isExtensivePropagation]);
 
-  // Forzar refresco inicial (optimizado)
+  // Force initial refresh
   useEffect(() => {
     if (fgRef.current) {
       animationFrameRef.current = requestAnimationFrame(() => {
@@ -258,7 +257,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     };
   }, []);
 
-  // Enfoca al nodo destacado
+  // Focus on highlighted node
   useEffect(() => {
     if (!highlightId || !fgRef.current || !filteredData.nodes.length || isTransitioning.current) return;
 
@@ -273,8 +272,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       const { x = 0, y = 0, z = 0 } = node;
       const bounds = calculateGraphBounds(filteredData.nodes);
       const graphSize = Math.max(bounds.maxDistance, 10);
-      const distance = Math.min(graphSize * 0.5, 50); // Cap distance to avoid moving too far
-      console.log('Camera moving to:', { x: x + distance, y: y + distance * 0.5, z }, 'target:', { x, y, z });
+      const distance = Math.min(graphSize * 0.5, 50);
 
       fgRef.current.cameraPosition(
         { x: x + distance, y: y + distance * 0.5, z },
@@ -288,7 +286,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     setTimeout(focusNode, 100);
   }, [highlightId, filteredData.nodes]);
 
-  // Resetea la vista
+  // Reset view when highlightId is cleared
   useEffect(() => {
     if (!highlightId && fgRef.current && !isTransitioning.current) {
       isTransitioning.current = true;
@@ -299,7 +297,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }
   }, [highlightId]);
 
-  // Calcular límites del grafo (optimizado)
+  // Calculate graph bounds
   const calculateGraphBounds = useCallback((nodes) => {
     if (!nodes.length) return { maxDistance: 10 };
 
@@ -326,7 +324,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     };
   }, []);
 
-  // Limpiar todos los timeouts activos
+  // Clear all active timeouts
   const clearAllTimeouts = useCallback(() => {
     animationTimeoutRefs.current.forEach(timeoutId => {
       clearTimeout(timeoutId);
@@ -344,7 +342,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }
   }, []);
 
-  // Limpiar animaciones previas
+  // Clean up previous animations
   const cleanupAnimation = useCallback(() => {
     clearAllTimeouts();
 
@@ -367,7 +365,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     throttledRefresh();
   }, [filteredData.nodes, filteredData.links, clearAllTimeouts, throttledRefresh]);
 
-  // Animación secuencial optimizada
+  // Optimized sequential animation
   useEffect(() => {
     cleanupAnimation();
 
@@ -376,7 +374,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }
 
     const config = getAnimationConfig();
-    console.log('Iniciando animación secuencial optimizada:', {
+    console.log('Starting optimized sequential animation:', {
       highlightedLinks: highlightedLinks.length,
       config,
       isExtensive: isExtensivePropagation,
@@ -418,14 +416,14 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       const linkObj = linkMap.get(key1) || linkMap.get(key2);
 
       if (!linkObj) {
-        console.warn(`Enlace no encontrado: ${sourceId} -> ${targetId}`);
+        console.warn(`Link not found: ${sourceId} -> ${targetId}`);
         return;
       }
 
       linkObj.__isCurrentlyAnimating = true;
       linkObj.__isHighlighted = true;
 
-      console.log(`Animando enlace ${index + 1}/${sortedHighlightedLinks.length}: ${sourceId} -> ${targetId}`);
+      console.log(`Animating link ${index + 1}/${sortedHighlightedLinks.length}: ${sourceId} -> ${targetId}`);
 
       throttledRefresh();
 
@@ -460,7 +458,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
               disgust: highlight.vector[8] !== undefined ? highlight.vector[8] : targetNode.emotional_vector_in.disgust,
               joy: highlight.vector[9] !== undefined ? highlight.vector[9] : targetNode.emotional_vector_in.joy,
             };
-            console.log(`Actualizado estado emocional del nodo ${targetId} después de animación:`, targetNode.emotional_vector_in);
+            console.log(`Updated emotional state of node ${targetId} after animation:`, targetNode.emotional_vector_in);
           }
 
           throttledRefresh();
@@ -484,7 +482,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
     const totalDuration = sortedHighlightedLinks.length * config.ANIMATION_DELAY + config.ANIMATION_DURATION;
     const finalTimeout = setTimeout(() => {
-      console.log('Animación secuencial completada');
+      console.log('Sequential animation completed');
       animationTimeoutRefs.current.delete(finalTimeout);
     }, totalDuration);
 
@@ -495,7 +493,7 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     };
   }, [highlightedLinks, filteredData.nodes, filteredData.links, isExtensivePropagation, isLargePropagation, cleanupAnimation, getAnimationConfig, throttledRefresh]);
 
-  // Cleanup al desmontar
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearAllTimeouts();
@@ -506,43 +504,21 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     };
   }, [clearAllTimeouts]);
 
-  // Memoizar geometrías para mejor rendimiento
+  // Memoize geometries for better performance
   const sphereGeometry = useMemo(() => {
     return isExtensivePropagation
       ? new THREE.SphereGeometry(6, 8, 8)
       : new THREE.SphereGeometry(6, 16, 16);
   }, [isExtensivePropagation]);
 
-  // Manejar clic en nodo
+  // Handle node click
   const handleNodeClick = (node) => {
     const nodeWithCentrality = nodesWithCentrality.find(n => n.id === node.id) || node;
     console.log('Node clicked:', nodeWithCentrality);
     setModalNode(nodeWithCentrality);
     setIsNodeModalOpen(true);
-    if (onNodeInfo) onNodeInfo(node); // Ensure onNodeInfo is called only if defined
+    if (onNodeInfo) onNodeInfo(node);
   };
-
-  // Configurar fuerzas para fijar nodos en sus posiciones
-  useEffect(() => {
-    if (fgRef.current && data.nodes.length > 0) {
-      const graph = fgRef.current;
-      graph.d3Force('center', null); // Desactivar fuerza de centrado
-      graph.d3Force('charge', null); // Desactivar fuerza de repulsión
-      graph.d3Force('link', null); // Desactivar fuerza de enlaces
-      graph.d3Force('collide', null); // Desactivar colisiones
-
-      // Fijar posiciones iniciales
-      graph.d3Force('fix', () => {
-        data.nodes.forEach(node => {
-          node.fx = node.x;
-          node.fy = node.y;
-          node.fz = node.z;
-        });
-      });
-
-      graph.refresh(); // Aplicar cambios inmediatamente
-    }
-  }, [data.nodes]);
 
   return (
     <>

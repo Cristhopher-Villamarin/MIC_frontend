@@ -72,7 +72,9 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
     const involvedNodeIds = new Set();
     const linkMap = new Map();
+    const involvedLinks = new Set();
 
+    // Crear mapa de enlaces para búsqueda eficiente
     data.links.forEach(link => {
       const sourceId = link.source.id ? String(link.source.id) : String(link.source);
       const targetId = link.target.id ? String(link.target.id) : String(link.target);
@@ -80,12 +82,9 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       const key2 = `${targetId}-${sourceId}`;
       linkMap.set(key1, link);
       linkMap.set(key2, link);
-      involvedNodeIds.add(sourceId);
-      involvedNodeIds.add(targetId);
     });
 
-    const involvedLinks = new Set();
-
+    // Solo incluir nodos y enlaces de highlightedLinks
     highlightedLinks.forEach(highlight => {
       const sourceId = String(highlight.source);
       const targetId = String(highlight.target);
@@ -94,13 +93,13 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
-
       const originalLink = linkMap.get(key1) || linkMap.get(key2);
       if (originalLink) {
         involvedLinks.add(originalLink);
       }
     });
 
+    // Filtrar nodos que estén en involvedNodeIds
     const filteredNodes = data.nodes.filter(node =>
       involvedNodeIds.has(String(node.id))
     );
@@ -519,30 +518,8 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     console.log('Node clicked:', nodeWithCentrality);
     setModalNode(nodeWithCentrality);
     setIsNodeModalOpen(true);
-    if (onNodeInfo) onNodeInfo(node); // Ensure onNodeInfo is called only if defined
+    if (onNodeInfo) onNodeInfo(node);
   };
-
-  // Configurar fuerzas para fijar nodos en sus posiciones
-  useEffect(() => {
-    if (fgRef.current && data.nodes.length > 0) {
-      const graph = fgRef.current;
-      graph.d3Force('center', null); // Desactivar fuerza de centrado
-      graph.d3Force('charge', null); // Desactivar fuerza de repulsión
-      graph.d3Force('link', null); // Desactivar fuerza de enlaces
-      graph.d3Force('collide', null); // Desactivar colisiones
-
-      // Fijar posiciones iniciales
-      graph.d3Force('fix', () => {
-        data.nodes.forEach(node => {
-          node.fx = node.x;
-          node.fy = node.y;
-          node.fz = node.z;
-        });
-      });
-
-      graph.refresh(); // Aplicar cambios inmediatamente
-    }
-  }, [data.nodes]);
 
   return (
     <>
