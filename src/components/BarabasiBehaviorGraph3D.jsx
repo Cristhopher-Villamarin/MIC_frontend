@@ -64,17 +64,18 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     }
   }, [isExtensivePropagation, isLargePropagation]);
 
-  // Filtrar datos para mostrar solo nodos y enlaces involucrados en la propagación
+  // Filtrar nodos y enlaces solo durante la propagación
   const filteredData = useMemo(() => {
     if (!isInPropagationMode) {
       return data;
     }
 
+    // Conjuntos para nodos y enlaces involucrados en la propagación
     const involvedNodeIds = new Set();
-    const linkMap = new Map();
     const involvedLinks = new Set();
+    const linkMap = new Map();
 
-    // Crear mapa de enlaces para búsqueda eficiente
+    // Mapear enlaces para búsqueda rápida
     data.links.forEach(link => {
       const sourceId = link.source.id ? String(link.source.id) : String(link.source);
       const targetId = link.target.id ? String(link.target.id) : String(link.target);
@@ -84,41 +85,30 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       linkMap.set(key2, link);
     });
 
-    // Solo incluir nodos y enlaces de highlightedLinks
+    // Identificar nodos y enlaces involucrados en highlightedLinks
     highlightedLinks.forEach(highlight => {
       const sourceId = String(highlight.source);
       const targetId = String(highlight.target);
       involvedNodeIds.add(sourceId);
       involvedNodeIds.add(targetId);
-
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
-      const originalLink = linkMap.get(key1) || linkMap.get(key2);
-      if (originalLink) {
-        involvedLinks.add(originalLink);
+      const link = linkMap.get(key1) || linkMap.get(key2);
+      if (link) {
+        involvedLinks.add(link);
       }
     });
 
-    // Filtrar nodos que estén en involvedNodeIds
+    // Filtrar nodos
     const filteredNodes = data.nodes.filter(node =>
       involvedNodeIds.has(String(node.id))
     );
-
-    console.log(`Modo propagación activado:`, {
-      totalNodes: data.nodes.length,
-      filteredNodes: filteredNodes.length,
-      totalLinks: data.links.length,
-      filteredLinks: Array.from(involvedLinks).length,
-      highlightedLinks: highlightedLinks.length,
-      isLarge: isLargePropagation,
-      isExtensive: isExtensivePropagation,
-    });
 
     return {
       nodes: filteredNodes,
       links: Array.from(involvedLinks),
     };
-  }, [data, highlightedLinks, isInPropagationMode, isLargePropagation, isExtensivePropagation]);
+  }, [data, highlightedLinks, isInPropagationMode]);
 
   // Cache para texturas de gradiente con limpieza automática
   const textureCache = useRef(new Map());
@@ -199,7 +189,7 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     // Si todas las emociones son 0 o no definidas, usar color gris
     const hasEmotions = emotions.some(val => val !== 0);
     if (!hasEmotions) {
-      return { color: defaultColor, opacity: 0.8 };
+      return { color: defaultColor, opacity: isInPropagationMode ? 0.3 : 0.8 };
     }
 
     const sortedEmotions = emotions
@@ -211,7 +201,7 @@ function BarabasiBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
     const weights = sortedEmotions.map(e => e.val);
 
     return { texture: createGradientTexture(colors, weights), opacity: 0.8 };
-  }, [createGradientTexture]);
+  }, [createGradientTexture, isInPropagationMode]);
 
   // Función de refresh throttled para mejor rendimiento
   const throttledRefresh = useCallback(() => {
