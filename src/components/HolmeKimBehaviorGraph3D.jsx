@@ -65,25 +65,43 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
   }, [isExtensivePropagation, isLargePropagation]);
 
   // Filtrar datos para mostrar solo nodos y enlaces involucrados en la propagación
-  const filteredData = useMemo(() => {
-    if (!isInPropagationMode) {
-      return data;
-    }
-
-    const involvedNodeIds = new Set();
-    const linkMap = new Map();
-
-    data.links.forEach(link => {
+// En la parte donde definimos filteredData, agregamos validación adicional:
+const filteredData = useMemo(() => {
+  if (!isInPropagationMode) {
+    // Filtrar enlaces inválidos incluso cuando no hay propagación
+    const validLinks = data.links.filter(link => {
       const sourceId = link.source.id ? String(link.source.id) : String(link.source);
       const targetId = link.target.id ? String(link.target.id) : String(link.target);
-      const key1 = `${sourceId}-${targetId}`;
-      const key2 = `${targetId}-${sourceId}`;
-      linkMap.set(key1, link);
-      linkMap.set(key2, link);
-      involvedNodeIds.add(sourceId);
-      involvedNodeIds.add(targetId);
+      const sourceExists = data.nodes.some(n => String(n.id) === sourceId);
+      const targetExists = data.nodes.some(n => String(n.id) === targetId);
+      return sourceExists && targetExists && sourceId !== targetId;
     });
+    return { ...data, links: validLinks };
+  }
 
+  // Resto del código existente para modo propagación...
+  const involvedNodeIds = new Set();
+  const linkMap = new Map();
+
+  // Filtrar enlaces inválidos antes de procesar
+  const validLinks = data.links.filter(link => {
+    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+    const targetId = link.target.id ? String(link.target.id) : String(link.target);
+    const sourceExists = data.nodes.some(n => String(n.id) === sourceId);
+    const targetExists = data.nodes.some(n => String(n.id) === targetId);
+    return sourceExists && targetExists && sourceId !== targetId;
+  });
+
+  validLinks.forEach(link => {
+    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+    const targetId = link.target.id ? String(link.target.id) : String(link.target);
+    const key1 = `${sourceId}-${targetId}`;
+    const key2 = `${targetId}-${sourceId}`;
+    linkMap.set(key1, link);
+    linkMap.set(key2, link);
+    involvedNodeIds.add(sourceId);
+    involvedNodeIds.add(targetId);
+  });
     const involvedLinks = new Set();
 
     highlightedLinks.forEach(highlight => {

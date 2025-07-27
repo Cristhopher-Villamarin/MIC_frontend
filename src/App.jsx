@@ -105,7 +105,6 @@ export default function App() {
   ];
 
   const handleMenuSelect = (key) => {
-    console.log(`Opción seleccionada: ${key}`);
     if (key === 'real-world') {
       setViewMode('real-world');
       if (!nodesCsvFile || !linksCsvFile) {

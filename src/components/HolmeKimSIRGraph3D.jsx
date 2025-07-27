@@ -65,23 +65,28 @@ function HolmeKimSIRGraph3D({ data, nodesWithCentrality, onNodeInfo, highlighted
   }, [data.nodes, selectedUser]);
 
   // Usar la red completa, pero crear un mapa de enlaces para la animación
-  const filteredData = useMemo(() => {
-    const linkMap = new Map();
-    data.links.forEach(link => {
-      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-      const targetId = link.target.id ? String(link.target.id) : String(link.target);
-      const key1 = `${sourceId}-${targetId}`;
-      const key2 = `${targetId}-${sourceId}`;
-      linkMap.set(key1, link);
-      linkMap.set(key2, link);
-    });
+const filteredData = useMemo(() => {
+  const nodeIds = new Set(data.nodes.map(node => String(node.id)));
+  const validLinks = data.links.filter(link => {
+    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+    const targetId = link.target.id ? String(link.target.id) : String(link.target);
+    return nodeIds.has(sourceId) && nodeIds.has(targetId) && sourceId !== targetId; // <- Añadimos validación para evitar self-links
+  });
 
-    return {
-      nodes: data.nodes,
-      links: data.links,
-      linkMap,
-    };
-  }, [data]);
+  const linkMap = new Map();
+  validLinks.forEach(link => {
+    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+    const targetId = link.target.id ? String(link.target.id) : String(link.target);
+    const key = `${sourceId}-${targetId}`;
+    linkMap.set(key, link);
+  });
+
+  return {
+    nodes: data.nodes,
+    links: validLinks,
+    linkMap,
+  };
+}, [data]);
 
   // Función de refresh throttled
   const throttledRefresh = useCallback(() => {
@@ -340,9 +345,21 @@ function HolmeKimSIRGraph3D({ data, nodesWithCentrality, onNodeInfo, highlighted
           if (link.__isPermanentlyHighlighted) return permanentLinkColor;
           return defaultLinkColor;
         }}
-        linkDirectionalArrowLength={5}
+          linkDirectionalArrowLength={link => {
+            if (!link.source || !link.target || 
+                !filteredData.nodes.some(n => n.id === link.source.id) || 
+                !filteredData.nodes.some(n => n.id === link.target.id)) {
+              return 0; // No renderizar flechas para enlaces inválidos
+            }
+            return 5;
+          }}
         linkDirectionalArrowRelPos={1}
         linkDirectionalArrowColor={link => {
+          if (!link.source || !link.target || 
+              !filteredData.nodes.some(n => n.id === link.source.id) || 
+              !filteredData.nodes.some(n => n.id === link.target.id)) {
+            return "rgba(0,0,0,0)"; // Transparente para enlaces inválidos
+          }
           if (link.__isCurrentlyAnimating) return animatingLinkColor;
           if (link.__isPermanentlyHighlighted) return permanentLinkColor;
           return "#FFFFFF";
@@ -401,4 +418,4 @@ HolmeKimSIRGraph3D.propTypes = {
   message: PropTypes.string,
 };
 
-export default HolmeKimSIRGraph3D;
+export default HolmeKimSIRGraph3D; 
