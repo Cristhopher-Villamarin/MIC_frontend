@@ -3,79 +3,80 @@ export function generateHolmeKim(n, m, p) {
     throw new Error('Parámetros inválidos: n ≥ 2, 1 ≤ m < n, 0 ≤ p ≤ 1');
   }
 
-  // Inicializar nodos con prefijo user_
+  // Initialize nodes starting from user_1
   const nodes = Array.from({ length: n }, (_, i) => ({
-    id: `user_${i}`, // Usar prefijo user_ (user_0, user_1, etc.)
+    id: `user_${i + 1}`, // Start from user_1
     cluster: null,
   }));
   const links = [];
   const degrees = new Array(n).fill(0);
   const neighbors = Array.from({ length: n }, () => new Set());
 
-  // Grafo inicial completo con m0 = m + 1 nodos
+  // Create initial complete graph with m0 = m + 1 nodes
   const m0 = m + 1;
   for (let i = 0; i < m0; i++) {
     for (let j = i + 1; j < m0; j++) {
       links.push({
-        source: `user_${i}`, // Usar prefijo user_
-        target: `user_${j}`, // Usar prefijo user_
+        source: `user_${i + 1}`, // Start from user_1
+        target: `user_${j + 1}`, // Start from user_1
       });
       degrees[i]++;
       degrees[j]++;
-      neighbors[i].add(`user_${j}`);
-      neighbors[j].add(`user_${i}`);
+      neighbors[i].add(`user_${j + 1}`);
+      neighbors[j].add(`user_${i + 1}`);
     }
   }
 
-  // Añadir nodos restantes
+  // Add remaining nodes
   for (let i = m0; i < n; i++) {
     const connected = new Set();
     let edgesAdded = 0;
 
-    // Primer enlace por unión preferencial
+    // First link by preferential attachment
     let target = selectNodeByPreferentialAttachment(degrees, connected);
-    links.push({ source: `user_${i}`, target: `user_${target}` });
+    links.push({ source: `user_${i + 1}`, target: `user_${target + 1}` });
     degrees[i]++;
     degrees[target]++;
-    neighbors[i].add(`user_${target}`);
-    neighbors[target].add(`user_${i}`);
+    neighbors[i].add(`user_${target + 1}`);
+    neighbors[target].add(`user_${i + 1}`);
     connected.add(target);
     edgesAdded++;
 
-    // Enlaces restantes: triada o unión preferencial
+    // Remaining links: triad or preferential attachment
     while (edgesAdded < m) {
       if (Math.random() < p && neighbors[target].size > 0) {
-        // Formación de triada: conectar a un vecino del último nodo conectado
+        // Triad formation: connect to a neighbor of the last connected node
         const neighborArray = Array.from(neighbors[target]);
         const triadTarget = neighborArray[Math.floor(Math.random() * neighborArray.length)];
-        if (!connected.has(parseInt(triadTarget.replace('user_', '')))) {
-          links.push({ source: `user_${i}`, target: triadTarget });
+        const triadTargetIdx = parseInt(triadTarget.replace('user_', '')) - 1; // Adjust for user_1-based IDs
+        if (!connected.has(triadTargetIdx)) {
+          links.push({ source: `user_${i + 1}`, target: triadTarget });
           degrees[i]++;
-          degrees[parseInt(triadTarget.replace('user_', ''))]++;
+          degrees[triadTargetIdx]++;
           neighbors[i].add(triadTarget);
-          neighbors[parseInt(triadTarget.replace('user_', ''))].add(`user_${i}`);
-          connected.add(parseInt(triadTarget.replace('user_', '')));
+          neighbors[triadTargetIdx].add(`user_${i + 1}`);
+          connected.add(triadTargetIdx);
           edgesAdded++;
-          target = parseInt(triadTarget.replace('user_', '')); // Actualizar target para la próxima iteración
+          target = triadTargetIdx; // Update target for next iteration
         } else {
-          // Si el vecino ya está conectado, intentar unión preferencial
+          // If neighbor is already connected, try preferential attachment
           target = selectNodeByPreferentialAttachment(degrees, connected);
-          links.push({ source: `user_${i}`, target: `user_${target}` });
+          links.push({ source: `user_${i + 1}`, target: `user_${target + 1}` });
           degrees[i]++;
           degrees[target]++;
-          neighbors[i].add(`user_${target}`);
-          neighbors[target].add(`user_${i}`);
+          neighbors[i].add(`user_${target + 1}`);
+          neighbors[target].add(`user_${i + 1}`);
           connected.add(target);
           edgesAdded++;
         }
       } else {
-        // Unión preferencial
+        // Preferential attachment
         target = selectNodeByPreferentialAttachment(degrees, connected);
-        links.push({ source: `user_${i}`, target: `user_${target}` });
+        links.push({ source: `user_${i + 1}`, target: `user_${target + 1}` });
         degrees[i]++;
         degrees[target]++;
-        neighbors[i].add(`user_${target}`);
-        neighbors[target].add(`user_${i}`);
+        neighbors[i].add(`user_${target + 1}`);
+        neighbors[target].add(`user_${i + 1}`);
         connected.add(target);
         edgesAdded++;
       }
@@ -85,7 +86,7 @@ export function generateHolmeKim(n, m, p) {
   console.log('Holme-Kim network generated:', {
     nodes: nodes.length,
     links: links.length,
-    nodeIds: nodes.map(n => n.id), // Log para verificar IDs
+    nodeIds: nodes.map(n => n.id), // Log to verify IDs
   });
 
   return { nodes, links };
