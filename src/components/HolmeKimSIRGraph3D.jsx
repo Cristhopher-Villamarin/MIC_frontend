@@ -65,23 +65,28 @@ function HolmeKimSIRGraph3D({ data, nodesWithCentrality, onNodeInfo, highlighted
   }, [data.nodes, selectedUser]);
 
   // Usar la red completa, pero crear un mapa de enlaces para la animación
-  const filteredData = useMemo(() => {
-    const linkMap = new Map();
-    data.links.forEach(link => {
-      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-      const targetId = link.target.id ? String(link.target.id) : String(link.target);
-      const key1 = `${sourceId}-${targetId}`;
-      const key2 = `${targetId}-${sourceId}`;
-      linkMap.set(key1, link);
-      linkMap.set(key2, link);
-    });
+const filteredData = useMemo(() => {
+  const nodeIds = new Set(data.nodes.map(node => String(node.id)));
+  const validLinks = data.links.filter(link => {
+    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+    const targetId = link.target.id ? String(link.target.id) : String(link.target);
+    return nodeIds.has(sourceId) && nodeIds.has(targetId) && sourceId !== targetId; // <- Añadimos validación para evitar self-links
+  });
 
-    return {
-      nodes: data.nodes,
-      links: data.links,
-      linkMap,
-    };
-  }, [data]);
+  const linkMap = new Map();
+  validLinks.forEach(link => {
+    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+    const targetId = link.target.id ? String(link.target.id) : String(link.target);
+    const key = `${sourceId}-${targetId}`;
+    linkMap.set(key, link);
+  });
+
+  return {
+    nodes: data.nodes,
+    links: validLinks,
+    linkMap,
+  };
+}, [data]);
 
   // Función de refresh throttled
   const throttledRefresh = useCallback(() => {

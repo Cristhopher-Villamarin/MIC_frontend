@@ -67,8 +67,16 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
   // Filter data to show only nodes and links involved in propagation
   const filteredData = useMemo(() => {
     if (!isInPropagationMode) {
-      return data;
-    }
+    // Filtrar enlaces inválidos incluso cuando no hay propagación
+    const validLinks = data.links.filter(link => {
+      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+      const targetId = link.target.id ? String(link.target.id) : String(link.target);
+      const sourceExists = data.nodes.some(n => String(n.id) === sourceId);
+      const targetExists = data.nodes.some(n => String(n.id) === targetId);
+      return sourceExists && targetExists && sourceId !== targetId;
+    });
+    return { ...data, links: validLinks };
+  }
 
     const involvedNodeIds = new Set();
     const involvedLinks = new Set();
@@ -99,16 +107,29 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
       }
     });
 
-    // Filter nodes to only those involved in highlightedLinks
+    // Also include nodes that are part of the propagation log but might not be in highlightedLinks
+    propagationLog.forEach(entry => {
+      if (entry.sender) involvedNodeIds.add(String(entry.sender));
+      if (entry.receiver) involvedNodeIds.add(String(entry.receiver));
+    });
+
+    // Filter nodes to only those involved in propagation
     const filteredNodes = data.nodes.filter(node =>
       involvedNodeIds.has(String(node.id))
     );
+
+    // Filter links to only those between involved nodes
+    const filteredLinks = Array.from(involvedLinks).filter(link => {
+      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+      const targetId = link.target.id ? String(link.target.id) : String(link.target);
+      return involvedNodeIds.has(sourceId) && involvedNodeIds.has(targetId);
+    });
 
     console.log(`Propagation mode activated:`, {
       totalNodes: data.nodes.length,
       filteredNodes: filteredNodes.length,
       totalLinks: data.links.length,
-      filteredLinks: Array.from(involvedLinks).length,
+      filteredLinks: filteredLinks.length,
       highlightedLinks: highlightedLinks.length,
       isLarge: isLargePropagation,
       isExtensive: isExtensivePropagation,
@@ -116,10 +137,11 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
 
     return {
       nodes: filteredNodes,
-      links: Array.from(involvedLinks),
+      links: filteredLinks,
     };
-  }, [data, highlightedLinks, isInPropagationMode, isLargePropagation, isExtensivePropagation]);
+  }, [data, highlightedLinks, isInPropagationMode, isLargePropagation, isExtensivePropagation, propagationLog]);
 
+  // Rest of the component remains the same...
   // Cache for gradient textures with automatic cleanup
   const textureCache = useRef(new Map());
   const textureCacheCleanup = useRef(null);
