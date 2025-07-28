@@ -543,9 +543,23 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
           }
           return '#828282';
         }}
-        linkDirectionalArrowLength={5}
+        linkDirectionalArrowLength={link => {
+          if (!link.source || !link.target || 
+              !filteredData.nodes.some(n => n.id === link.source.id) || 
+              !filteredData.nodes.some(n => n.id === link.target.id) || 
+              link.source.id === link.target.id) {
+            return 0; // No renderizar flechas para enlaces inválidos o self-links
+          }
+          return 5;
+        }}
         linkDirectionalArrowRelPos={1}
         linkDirectionalArrowColor={link => {
+          if (!link.source || !link.target || 
+              !filteredData.nodes.some(n => n.id === link.source.id) || 
+              !filteredData.nodes.some(n => n.id === link.target.id) || 
+              link.source.id === link.target.id) {
+            return "rgba(0,0,0,0)"; // Transparente para enlaces inválidos o self-links
+          }
           if (link.__isCurrentlyAnimating) {
             return '#00ffff';
           } else if (link.__isPermanentlyHighlighted) {
