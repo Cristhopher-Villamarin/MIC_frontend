@@ -309,93 +309,137 @@ export default function App() {
   }, [realWorldSelectedNet, realWorldNodesAll, realWorldLinksAll]);
 
   const handleGenerateVectors = async (numNodes) => {
-    if (numNodes === 0) {
-      setBaStatus('No hay nodos en la red para generar vectores.');
-      setHkStatus('No hay nodos en la red para generar vectores.');
-      return;
-    }
-    try {
-      const response = await axios.post('http://localhost:8000/generate-vectors', { num_vectors: numNodes }, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      });
-      const vectors = response.data.vectors || [];
-      console.log('Vectores generados:', vectors);
+  if (numNodes === 0) {
+    setBaStatus('No hay nodos en la red para generar vectores.');
+    setHkStatus('No hay nodos en la red para generar vectores.');
+    return;
+  }
+  try {
+    const response = await axios.post('http://localhost:8000/generate-vectors', { num_vectors: numNodes }, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    const vectors = response.data.vectors || [];
+    console.log('Vectores generados:', vectors);
 
-      const shuffledVectors = [...vectors].sort(() => Math.random() - 0.5);
-      const updatedBaNodes = baGraphData.nodes.map((node, index) => ({
-        ...node,
-        emotional_vector_in: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
-        },
-        emotional_vector_out: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
-        },
-        cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
-      }));
-      const updatedHkNodes = hkGraphData.nodes.map((node, index) => ({
-        ...node,
-        emotional_vector_in: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].in_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].in_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].in_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].in_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].in_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].in_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].in_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].in_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].in_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].in_joy || 0,
-        },
-        emotional_vector_out: {
-          subjectivity: shuffledVectors[index % shuffledVectors.length].out_subjectivity || 0,
-          polarity: shuffledVectors[index % shuffledVectors.length].out_polarity || 0,
-          fear: shuffledVectors[index % shuffledVectors.length].out_fear || 0,
-          anger: shuffledVectors[index % shuffledVectors.length].out_anger || 0,
-          anticipation: shuffledVectors[index % shuffledVectors.length].out_anticip || 0,
-          trust: shuffledVectors[index % shuffledVectors.length].out_trust || 0,
-          surprise: shuffledVectors[index % shuffledVectors.length].out_surprise || 0,
-          sadness: shuffledVectors[index % shuffledVectors.length].out_sadness || 0,
-          disgust: shuffledVectors[index % shuffledVectors.length].out_disgust || 0,
-          joy: shuffledVectors[index % shuffledVectors.length].out_joy || 0,
-        },
-        cluster: shuffledVectors[index % shuffledVectors.length].cluster || 0,
-      }));
+    const shuffledVectors = [...vectors].sort(() => Math.random() - 0.5);
 
-      setBaGraphData({ ...baGraphData, nodes: updatedBaNodes });
-      setHkGraphData({ ...hkGraphData, nodes: updatedHkNodes });
-      setNodeVectors(vectors);
+    // Update Barabási-Albert nodes in-place PRESERVANDO las métricas existentes
+    baGraphData.nodes.forEach((node, index) => {
+      const vector = shuffledVectors[index % shuffledVectors.length];
+      node.emotional_vector_in = {
+        subjectivity: vector.in_subjectivity || 0,
+        polarity: vector.in_polarity || 0,
+        fear: vector.in_fear || 0,
+        anger: vector.in_anger || 0,
+        anticipation: vector.in_anticip || 0,
+        trust: vector.in_trust || 0,
+        surprise: vector.in_surprise || 0,
+        sadness: vector.in_sadness || 0,
+        disgust: vector.in_disgust || 0,
+        joy: vector.in_joy || 0,
+      };
+      node.emotional_vector_out = {
+        subjectivity: vector.out_subjectivity || 0,
+        polarity: vector.out_polarity || 0,
+        fear: vector.out_fear || 0,
+        anger: vector.out_anger || 0,
+        anticipation: vector.out_anticip || 0,
+        trust: vector.out_trust || 0,
+        surprise: vector.out_surprise || 0,
+        sadness: vector.out_sadness || 0,
+        disgust: vector.out_disgust || 0,
+        joy: vector.out_joy || 0,
+      };
+      node.cluster = vector.cluster || 0;
+    });
 
-      const baNodesWithMetrics = calculateCentralityMetrics(updatedBaNodes, baGraphData.links);
-      const hkNodesWithMetrics = calculateCentralityMetrics(updatedHkNodes, hkGraphData.links);
+    // Update Holme-Kim nodes in-place PRESERVANDO las métricas existentes
+    hkGraphData.nodes.forEach((node, index) => {
+      const vector = shuffledVectors[index % shuffledVectors.length];
+      node.emotional_vector_in = {
+        subjectivity: vector.in_subjectivity || 0,
+        polarity: vector.in_polarity || 0,
+        fear: vector.in_fear || 0,
+        anger: vector.in_anger || 0,
+        anticipation: vector.in_anticip || 0,
+        trust: vector.in_trust || 0,
+        surprise: vector.in_surprise || 0,
+        sadness: vector.in_sadness || 0,
+        disgust: vector.in_disgust || 0,
+        joy: vector.in_joy || 0,
+      };
+      node.emotional_vector_out = {
+        subjectivity: vector.out_subjectivity || 0,
+        polarity: vector.out_polarity || 0,
+        fear: vector.out_fear || 0,
+        anger: vector.out_anger || 0,
+        anticipation: vector.out_anticip || 0,
+        trust: vector.out_trust || 0,
+        surprise: vector.out_surprise || 0,
+        sadness: vector.out_sadness || 0,
+        disgust: vector.out_disgust || 0,
+        joy: vector.out_joy || 0,
+      };
+      node.cluster = vector.cluster || 0;
+    });
+
+    // Force a re-render by updating state with the same object references
+    setBaGraphData({ ...baGraphData });
+    setHkGraphData({ ...hkGraphData });
+    setNodeVectors(vectors);
+
+    // MANTENER las métricas existentes en lugar de recalcularlas
+    // Solo actualizar si no existen métricas previas
+    if (baNodesWithCentrality.length === 0) {
+      const baNodesWithMetrics = calculateCentralityMetrics(baGraphData.nodes, baGraphData.links);
       setBaNodesWithCentrality(baNodesWithMetrics);
-      setHkNodesWithCentrality(hkNodesWithMetrics);
-
-      setBaStatus(`Red Barabási-Albert: ${updatedBaNodes.length} nodos · ${baGraphData.links.length} enlaces con vectores generados`);
-      setHkStatus(`Red Holme-Kim: ${updatedHkNodes.length} nodos · ${hkGraphData.links.length} enlaces con vectores generados`);
-    } catch (error) {
-      console.error('Error generating vectors:', error);
-      setBaStatus(`Error: ${error.response?.data?.detail || error.message}`);
-      setHkStatus(`Error: ${error.response?.data?.detail || error.message}`);
+    } else {
+      // Actualizar los nodos existentes con las métricas preservadas
+      const updatedBaNodes = baNodesWithCentrality.map(nodeWithMetrics => {
+        const updatedNode = baGraphData.nodes.find(n => n.id === nodeWithMetrics.id);
+        if (updatedNode) {
+          // Preservar todas las métricas existentes y solo agregar los nuevos vectores
+          return {
+            ...nodeWithMetrics,
+            emotional_vector_in: updatedNode.emotional_vector_in,
+            emotional_vector_out: updatedNode.emotional_vector_out,
+            cluster: updatedNode.cluster
+          };
+        }
+        return nodeWithMetrics;
+      });
+      setBaNodesWithCentrality(updatedBaNodes);
     }
-  };
+
+    if (hkNodesWithCentrality.length === 0) {
+      const hkNodesWithMetrics = calculateCentralityMetrics(hkGraphData.nodes, hkGraphData.links);
+      setHkNodesWithCentrality(hkNodesWithMetrics);
+    } else {
+      // Actualizar los nodos existentes con las métricas preservadas
+      const updatedHkNodes = hkNodesWithCentrality.map(nodeWithMetrics => {
+        const updatedNode = hkGraphData.nodes.find(n => n.id === nodeWithMetrics.id);
+        if (updatedNode) {
+          // Preservar todas las métricas existentes y solo agregar los nuevos vectores
+          return {
+            ...nodeWithMetrics,
+            emotional_vector_in: updatedNode.emotional_vector_in,
+            emotional_vector_out: updatedNode.emotional_vector_out,
+            cluster: updatedNode.cluster
+          };
+        }
+        return nodeWithMetrics;
+      });
+      setHkNodesWithCentrality(updatedHkNodes);
+    }
+
+    setBaStatus(`Red Barabási-Albert: ${baGraphData.nodes.length} nodos · ${baGraphData.links.length} enlaces con vectores generados`);
+    setHkStatus(`Red Holme-Kim: ${hkGraphData.nodes.length} nodos · ${hkGraphData.links.length} enlaces con vectores generados`);
+  } catch (error) {
+    console.error('Error generating vectors:', error);
+    setBaStatus(`Error: ${error.response?.data?.detail || error.message}`);
+    setHkStatus(`Error: ${error.response?.data?.detail || error.message}`);
+  }
+};
 
 const handleGenerateBaNetwork = (numNodes, numEdges) => {
   setBaStatus('Generando red Barabási-Albert…');
