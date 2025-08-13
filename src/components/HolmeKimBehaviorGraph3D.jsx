@@ -65,45 +65,26 @@ function HolmeKimBehaviorGraph3D({ data, nodesWithCentrality, onNodeInfo, highli
   }, [isExtensivePropagation, isLargePropagation]);
 
   // Filtrar datos para mostrar solo nodos y enlaces involucrados en la propagación
-// En la parte donde definimos filteredData, agregamos validación adicional:
-const filteredData = useMemo(() => {
-  if (!isInPropagationMode) {
-    // Filtrar enlaces inválidos incluso cuando no hay propagación
-    const validLinks = data.links.filter(link => {
-      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-      const targetId = link.target.id ? String(link.target.id) : String(link.target);
-      const sourceExists = data.nodes.some(n => String(n.id) === sourceId);
-      const targetExists = data.nodes.some(n => String(n.id) === targetId);
-      return sourceExists && targetExists && sourceId !== targetId;
-    });
-    return { ...data, links: validLinks };
-  }
+  const filteredData = useMemo(() => {
+    if (!isInPropagationMode) {
+      return data;
+    }
 
-  // Resto del código existente para modo propagación...
-  const involvedNodeIds = new Set();
-  const linkMap = new Map();
-
-  // Filtrar enlaces inválidos antes de procesar
-  const validLinks = data.links.filter(link => {
-    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-    const targetId = link.target.id ? String(link.target.id) : String(link.target);
-    const sourceExists = data.nodes.some(n => String(n.id) === sourceId);
-    const targetExists = data.nodes.some(n => String(n.id) === targetId);
-    return sourceExists && targetExists && sourceId !== targetId;
-  });
-
-  validLinks.forEach(link => {
-    const sourceId = link.source.id ? String(link.source.id) : String(link.source);
-    const targetId = link.target.id ? String(link.target.id) : String(link.target);
-    const key1 = `${sourceId}-${targetId}`;
-    const key2 = `${targetId}-${sourceId}`;
-    linkMap.set(key1, link);
-    linkMap.set(key2, link);
-    involvedNodeIds.add(sourceId);
-    involvedNodeIds.add(targetId);
-  });
+    const involvedNodeIds = new Set();
     const involvedLinks = new Set();
 
+    // Crear un mapa de enlaces para búsqueda eficiente
+    const linkMap = new Map();
+    data.links.forEach(link => {
+      const sourceId = link.source.id ? String(link.source.id) : String(link.source);
+      const targetId = link.target.id ? String(link.target.id) : String(link.target);
+      const key = `${sourceId}-${targetId}`;
+      linkMap.set(key, link);
+      // También almacenar la dirección inversa para manejar grafos no dirigidos
+      linkMap.set(`${targetId}-${sourceId}`, link);
+    });
+
+    // Procesar highlightedLinks para identificar nodos y enlaces involucrados
     highlightedLinks.forEach(highlight => {
       const sourceId = String(highlight.source);
       const targetId = String(highlight.target);
@@ -112,22 +93,23 @@ const filteredData = useMemo(() => {
 
       const key1 = `${sourceId}-${targetId}`;
       const key2 = `${targetId}-${sourceId}`;
-
-      const originalLink = linkMap.get(key1) || linkMap.get(key2);
-      if (originalLink) {
-        involvedLinks.add(originalLink);
+      const link = linkMap.get(key1) || linkMap.get(key2);
+      if (link) {
+        involvedLinks.add(link);
+      } else {
+        console.warn(`Enlace no encontrado en linkMap: ${sourceId} -> ${targetId}`);
       }
     });
 
-    const filteredNodes = data.nodes.filter(node =>
-      involvedNodeIds.has(String(node.id))
-    );
+    // Filtrar nodos que están involucrados
+    const filteredNodes = data.nodes.filter(node => involvedNodeIds.has(String(node.id)));
 
-    console.log(`Modo propagación activado:`, {
+    // Log para depuración
+    console.log('Filtrando datos para propagación:', {
       totalNodes: data.nodes.length,
       filteredNodes: filteredNodes.length,
       totalLinks: data.links.length,
-      filteredLinks: Array.from(involvedLinks).length,
+      filteredLinks: involvedLinks.size,
       highlightedLinks: highlightedLinks.length,
       isLarge: isLargePropagation,
       isExtensive: isExtensivePropagation,
@@ -192,7 +174,7 @@ const filteredData = useMemo(() => {
     return texture;
   }, [scheduleTextureCacheCleanup]);
 
-  // Obtener color del nodo (actualizado para usar emotional_vector_in y emotional_vector_out)
+  // Obtener color del nodo
   const getNodeColor = useCallback((node) => {
     const emotions = [
       ((node.emotional_vector_in?.fear || 0) + (node.emotional_vector_out?.fear || 0)) / 2,
@@ -215,7 +197,6 @@ const filteredData = useMemo(() => {
       'joy',
     ];
 
-    // Si todas las emociones son 0 o no definidas, usar color gris
     const hasEmotions = emotions.some(val => val !== 0);
     if (!hasEmotions) {
       return { color: defaultColor, opacity: 0.8 };
@@ -232,7 +213,7 @@ const filteredData = useMemo(() => {
     return { texture: createGradientTexture(colors, weights), opacity: 0.8 };
   }, [createGradientTexture]);
 
-  // Función de refresh throttled para mejor rendimiento
+  // Función de refresh throttled
   const throttledRefresh = useCallback(() => {
     if (batchUpdateRef.current) {
       return;
@@ -247,6 +228,34 @@ const filteredData = useMemo(() => {
     }, config.REFRESH_THROTTLE);
   }, [getAnimationConfig]);
 
+  // Configurar fuerzas para fijar nodos en sus posiciones pero permitir manipulación
+  useEffect(() => {
+    if (fgRef.current && data.nodes.length > 0) {
+      const graph = fgRef.current;
+      
+      // Mantener la configuración original de fuerzas
+      graph.d3Force('center', null);
+      graph.d3Force('charge', null);
+      graph.d3Force('link', null);
+      graph.d3Force('collide', null);
+
+      // Usar una fuerza personalizada que respete las posiciones originales
+      // pero permita manipulación temporal
+      graph.d3Force('position', () => {
+        data.nodes.forEach(node => {
+          // Solo fijar si el nodo no está siendo arrastrado
+          if (!node.__isDragging) {
+            node.fx = node.x;
+            node.fy = node.y;
+            node.fz = node.z;
+          }
+        });
+      });
+
+      graph.refresh();
+    }
+  }, [data.nodes]);
+
   // Centra la red al cargar o cambiar datos filtrados
   useEffect(() => {
     if (!isTransitioning.current && fgRef.current) {
@@ -259,7 +268,7 @@ const filteredData = useMemo(() => {
     }
   }, [filteredData.nodes, filteredData.links, isExtensivePropagation]);
 
-  // Forzar refresco inicial (optimizado)
+  // Forzar refresco inicial
   useEffect(() => {
     if (fgRef.current) {
       animationFrameRef.current = requestAnimationFrame(() => {
@@ -291,8 +300,7 @@ const filteredData = useMemo(() => {
       const { x = 0, y = 0, z = 0 } = node;
       const bounds = calculateGraphBounds(filteredData.nodes);
       const graphSize = Math.max(bounds.maxDistance, 10);
-      const distance = Math.min(graphSize * 0.5, 50); // Cap distance to avoid moving too far
-      console.log('Camera moving to:', { x: x + distance, y: y + distance * 0.5, z }, 'target:', { x, y, z });
+      const distance = Math.min(graphSize * 0.5, 50);
 
       fgRef.current.cameraPosition(
         { x: x + distance, y: y + distance * 0.5, z },
@@ -300,24 +308,15 @@ const filteredData = useMemo(() => {
         1500
       );
 
-      isTransitioning.current = false;
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, 1500);
     };
 
     setTimeout(focusNode, 100);
   }, [highlightId, filteredData.nodes]);
 
-  // Resetea la vista
-  useEffect(() => {
-    if (!highlightId && fgRef.current && !isTransitioning.current) {
-      isTransitioning.current = true;
-      fgRef.current.zoomToFit(400, 100);
-      setTimeout(() => {
-        isTransitioning.current = false;
-      }, 500);
-    }
-  }, [highlightId]);
-
-  // Calcular límites del grafo (optimizado)
+  // Calcular límites del grafo
   const calculateGraphBounds = useCallback((nodes) => {
     if (!nodes.length) return { maxDistance: 10 };
 
@@ -325,19 +324,17 @@ const filteredData = useMemo(() => {
     let minY = Infinity, maxY = -Infinity;
     let minZ = Infinity, maxZ = -Infinity;
 
-    for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i];
+    nodes.forEach(node => {
       const x = node.x || 0;
       const y = node.y || 0;
       const z = node.z || 0;
-
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-      if (z < minZ) minZ = z;
-      if (z > maxZ) maxZ = z;
-    }
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      minZ = Math.min(minZ, z);
+      maxZ = Math.max(maxZ, z);
+    });
 
     return {
       maxDistance: Math.max(maxX - minX, maxY - minY, maxZ - minZ),
@@ -346,16 +343,12 @@ const filteredData = useMemo(() => {
 
   // Limpiar todos los timeouts activos
   const clearAllTimeouts = useCallback(() => {
-    animationTimeoutRefs.current.forEach(timeoutId => {
-      clearTimeout(timeoutId);
-    });
+    animationTimeoutRefs.current.forEach(timeoutId => clearTimeout(timeoutId));
     animationTimeoutRefs.current.clear();
-
     if (batchUpdateRef.current) {
       clearTimeout(batchUpdateRef.current);
       batchUpdateRef.current = null;
     }
-
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -365,14 +358,11 @@ const filteredData = useMemo(() => {
   // Limpiar animaciones previas
   const cleanupAnimation = useCallback(() => {
     clearAllTimeouts();
-
-    const links = filteredData.links;
-    for (let i = 0; i < links.length; i++) {
-      const link = links[i];
+    filteredData.links.forEach(link => {
       link.__isHighlighted = false;
       link.__isPermanentlyHighlighted = false;
       link.__isCurrentlyAnimating = false;
-    }
+    });
 
     filteredData.nodes.forEach(node => {
       if (node.original_emotions) {
@@ -537,30 +527,8 @@ const filteredData = useMemo(() => {
     console.log('Node clicked:', nodeWithCentrality);
     setModalNode(nodeWithCentrality);
     setIsNodeModalOpen(true);
-    if (onNodeInfo) onNodeInfo(node); // Ensure onNodeInfo is called only if defined
+    if (onNodeInfo) onNodeInfo(node);
   };
-
-  // Configurar fuerzas para fijar nodos en sus posiciones
-  useEffect(() => {
-    if (fgRef.current && data.nodes.length > 0) {
-      const graph = fgRef.current;
-      graph.d3Force('center', null); // Desactivar fuerza de centrado
-      graph.d3Force('charge', null); // Desactivar fuerza de repulsión
-      graph.d3Force('link', null); // Desactivar fuerza de enlaces
-      graph.d3Force('collide', null); // Desactivar colisiones
-
-      // Fijar posiciones iniciales
-      graph.d3Force('fix', () => {
-        data.nodes.forEach(node => {
-          node.fx = node.x;
-          node.fy = node.y;
-          node.fz = node.z;
-        });
-      });
-
-      graph.refresh(); // Aplicar cambios inmediatamente
-    }
-  }, [data.nodes]);
 
   return (
     <>
@@ -600,6 +568,19 @@ const filteredData = useMemo(() => {
         warmupTicks={isExtensivePropagation ? 20 : 100}
         cooldownTicks={isExtensivePropagation ? 20 : 100}
         onNodeClick={handleNodeClick}
+        onNodeDragEnd={node => {
+          // Permitir que el nodo se fije temporalmente después del arrastre
+          node.fx = node.x;
+          node.fy = node.y;
+          node.fz = node.z;
+          
+          // Liberar la posición fija después de un tiempo para permitir ajustes naturales
+          setTimeout(() => {
+            delete node.fx;
+            delete node.fy;
+            delete node.fz;
+          }, 3000);
+        }}
         nodeThreeObject={node => {
           const group = new THREE.Group();
 
