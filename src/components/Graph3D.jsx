@@ -231,17 +231,26 @@ function Graph3D({ data, onNodeInfo, highlightId, highlightedLinks = [], onReset
     }, config.REFRESH_THROTTLE);
   }, [getAnimationConfig]);
 
-  // Centra la red al cargar o cambiar datos filtrados
+  // Centra la red solo cuando cambia la estructura del grafo, no cuando cambian los colores
   useEffect(() => {
     if (!isTransitioning.current && fgRef.current) {
-      const delay = isExtensivePropagation ? 300 : 200;
-      setTimeout(() => {
-        if (fgRef.current) {
-          fgRef.current.zoomToFit(400, 100);
+      // Solo hacer zoom automático si es la primera carga o si cambia la cantidad de nodos
+      const shouldAutoZoom = !fgRef.current._hasInitialized || 
+                            filteredData.nodes.length !== fgRef.current._lastNodeCount;
+      
+              if (shouldAutoZoom) {
+          const delay = isExtensivePropagation ? 300 : 200;
+          setTimeout(() => {
+            if (fgRef.current) {
+              // Usar un zoom más conservador para evitar enfoque excesivo
+              fgRef.current.zoomToFit(400, 50);
+              fgRef.current._hasInitialized = true;
+              fgRef.current._lastNodeCount = filteredData.nodes.length;
+            }
+          }, delay);
         }
-      }, delay);
     }
-  }, [filteredData.nodes, filteredData.links, isExtensivePropagation]);
+  }, [filteredData.nodes.length, isExtensivePropagation]);
 
   // Forzar refresco inicial (optimizado)
   useEffect(() => {

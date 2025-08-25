@@ -1101,6 +1101,19 @@ const handleVectorPropagation = async ({ selectedUser, message, method, threshol
                 Ver Estados de Nodos
               </button>
             </div>
+            <div className="legend-container">
+              <h4 className="legend-title">Leyenda de Colores</h4>
+              <ul className="legend-list">
+                <li style={{ color: '#FFFF00' }}>Amarillo: Alegría</li>
+                <li style={{ color: '#FF0000' }}>Rojo: Ira</li>
+                <li style={{ color: '#4682B4' }}>Azul: Tristeza</li>
+                <li style={{ color: '#00FF00' }}>Verde claro: Disgusto</li>
+                <li style={{ color: '#A100A1' }}>Morado: Miedo</li>
+                <li style={{ color: '#FF6200' }}>Naranja: Anticipación</li>
+                <li style={{ color: '#00CED1' }}>Turquesa: Confianza</li>
+                <li style={{ color: '#FF69B4' }}>Rosa: Sorpresa</li>
+              </ul>
+            </div>
             <PropagationModal
               isOpen={isPropagationModalOpen}
               setIsOpen={setIsPropagationModalOpen}
