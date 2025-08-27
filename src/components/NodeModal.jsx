@@ -10,8 +10,9 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
   if (!isOpen || !modalNode) return null;
 
   // Filter propagation log for this node (as receiver or publisher)
-  const nodeHistory = propagationLog
+  let nodeHistory = propagationLog
     .filter(entry => entry.receiver === modalNode.id || entry.publisher === modalNode.id)
+    .sort((a, b) => a.t - b.t)  // Cambio: Ordenar explícitamente por timeStep (t) para asegurar orden cronológico de la propagación
     .map(entry => ({
       timeStep: entry.t,
       action: entry.action,
@@ -245,7 +246,7 @@ export default function NodeModal({ isOpen, setIsOpen, modalNode, propagationLog
               return (
                 <div key={index} className="modal-history-entry">
                   <h5 className="modal-history-header">
-                     {entry.action === 'publish' ? 'Publicación' : `Interacción con ${entry.sender}`}
+                    {entry.action === 'publish' ? 'Publicación' : `Interacción con ${entry.sender}`}
                   </h5>
                   <div className="modal-vectors-container">
                     <div className="modal-history-chart">
