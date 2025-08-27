@@ -6,8 +6,8 @@ export default function Sidebar({ onMenuSelect }) {
     {
       title: 'Visualización de Redes',
       items: [
-        { label: 'Redes Barabási-Albert', key: 'barabasi-albert'},
-        { label: 'Redes Holme-Kim Dirigidas', key: 'holme-kim'},
+        { label: 'Redes Barabási-Albert', key: 'barabasi-albert' },
+        { label: 'Redes Holme-Kim Dirigidas', key: 'holme-kim' },
         { label: 'Redes del Mundo Real', key: 'real-world' },
       ],
     },
@@ -23,6 +23,8 @@ export default function Sidebar({ onMenuSelect }) {
       title: 'Comportamiento de Usuario',
       items: [
         { label: 'Simulación con Perfiles de Comportamiento', key: 'behavior-profiles' },
+        { label: 'Barabasi Comportamiento', key: 'barabasi-behavior' },
+        { label: 'Holme Kims Comportamiento', key: 'holme-kim-behavior' },
       ],
     },
   ];

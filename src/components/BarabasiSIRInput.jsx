@@ -76,7 +76,7 @@ export default function BarabasiSIRInput({ nodes, onStartPropagation }) {
           >
             <option value="">Selecciona un nodo</option>
             {nodes.map(node => (
-              <option key={node.id} value={node.id}>{`user_${node.id}`}</option>
+              <option key={node.id} value={node.id}>{node.id}</option>
             ))}
           </select>
         </div>

@@ -151,7 +151,7 @@ function BarabasiAlbertGraph3D({ data, nodesWithCentrality, onNodeInfo, highligh
           );
           group.add(sphere);
 
-          const label = new SpriteText(`user_${node.id}`);
+          const label = new SpriteText(node.id);
           label.color = 'white';
           label.textHeight = 3;
           label.material.depthWrite = false;

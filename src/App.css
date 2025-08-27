@@ -117,7 +117,7 @@ body {
 
 .nodes-button-container {
   position: fixed;
-  top: 620px; /* Debajo de la navbar */
+  top: 720px; /* Debajo de la navbar */
   left: 30px; /* 250px (ancho del sidebar) + 10px (margen) */
   z-index: 10000;
   display: flex; /* Para alinear los botones horizontalmente */
